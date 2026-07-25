@@ -12,4 +12,10 @@ contextBridge.exposeInMainWorld("api", {
 
     /** Get full-size editor preview as base64 data-URL. Returns Promise<string|null> */
     getPreview:    (filePath) => ipcRenderer.invoke("photos:get-preview",    filePath),
+
+    /** Overwrite file at filePath with dataUrl. Returns Promise<{ok,error?}> */
+    savePhoto:     (filePath, dataUrl) => ipcRenderer.invoke("photos:save",    filePath, dataUrl),
+
+    /** Show native Save-As dialog and write dataUrl. Returns Promise<{filePath,name}|null> */
+    savePhotoAs:   (name, dataUrl)     => ipcRenderer.invoke("photos:save-as", name,     dataUrl),
 });

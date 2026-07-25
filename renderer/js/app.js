@@ -414,6 +414,13 @@ function initKeyboard() {
             doRedo();
         }
 
+        // Ctrl+S → save; Ctrl+Shift+S → save as
+        if ((e.ctrlKey || e.metaKey) && e.key === 's') {
+            e.preventDefault();
+            if (e.shiftKey) doSaveAs();
+            else            doSave();
+        }
+
         // Ctrl+A → select all
         if ((e.ctrlKey || e.metaKey) && e.key === 'a') {
             if (photos.length > 0) {
@@ -906,6 +913,148 @@ function initCropButtons() {
     if (applyAll) applyAll.addEventListener('click', applyMain);
 }
 
+// ── Save / Save As ──────────────────────────────────────
+
+/** Convert a data-URL to a Blob. */
+function dataUrlToBlob(dataUrl) {
+    const [header, data] = dataUrl.split(',');
+    const mime  = header.match(/:(.*?);/)[1];
+    const bytes = atob(data);
+    const arr   = new Uint8Array(bytes.length);
+    for (let i = 0; i < bytes.length; i++) arr[i] = bytes.charCodeAt(i);
+    return new Blob([arr], { type: mime });
+}
+
+/** Trigger a browser file download. */
+function triggerDownload(blob, filename) {
+    const url = URL.createObjectURL(blob);
+    const a   = document.createElement('a');
+    a.href     = url;
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
+}
+
+/**
+ * Return a data-URL for the current state of `photo`.
+ * Uses photo.preview if available (set after edits), otherwise reads the
+ * original File / objectUrl.
+ */
+async function getPhotoDataUrl(photo) {
+    if (photo.preview) return photo.preview;
+    if (photo.objectUrl) {
+        const response = await fetch(photo.objectUrl);
+        const blob     = await response.blob();
+        return new Promise(resolve => {
+            const reader = new FileReader();
+            reader.onload = () => resolve(reader.result);
+            reader.readAsDataURL(blob);
+        });
+    }
+    return null;
+}
+
+/** Re-encode a data-URL as a different MIME type using Canvas. */
+function reencodeAs(dataUrl, mimeType) {
+    return new Promise(resolve => {
+        const img = new Image();
+        img.onload = () => {
+            const canvas = document.createElement('canvas');
+            canvas.width  = img.naturalWidth;
+            canvas.height = img.naturalHeight;
+            canvas.getContext('2d').drawImage(img, 0, 0);
+            resolve(canvas.toDataURL(mimeType, 0.92));
+        };
+        img.src = dataUrl;
+    });
+}
+
+/**
+ * Save — overwrite the original file (Electron) or download with the
+ * same filename (browser). Standard Ctrl+S behaviour.
+ */
+async function doSave() {
+    if (selectedIndex < 0) { showToast('Откройте фото для сохранения'); return; }
+    const photo  = photos[selectedIndex];
+    const dataUrl = await getPhotoDataUrl(photo);
+    if (!dataUrl) { showToast('Нет данных для сохранения'); return; }
+
+    if (isElectron && photo.filePath) {
+        const result = await window.api.savePhoto(photo.filePath, dataUrl);
+        if (result?.ok) showToast('Файл сохранён');
+        else            showToast('Ошибка сохранения: ' + (result?.error ?? ''));
+    } else {
+        // Browser: download with the same filename
+        triggerDownload(dataUrlToBlob(dataUrl), photo.name);
+        showToast('Файл сохранён');
+    }
+}
+
+/**
+ * Save As — native dialog (Electron) or showSaveFilePicker / download
+ * fallback (browser). Standard Ctrl+Shift+S behaviour.
+ */
+async function doSaveAs() {
+    if (selectedIndex < 0) { showToast('Откройте фото для сохранения'); return; }
+    const photo   = photos[selectedIndex];
+    const dataUrl = await getPhotoDataUrl(photo);
+    if (!dataUrl) { showToast('Нет данных для сохранения'); return; }
+
+    if (isElectron) {
+        const result = await window.api.savePhotoAs(photo.name, dataUrl);
+        if (result) {
+            photo.filePath = result.filePath;
+            photo.name     = result.name;
+            rebuildGallery();
+            showToast('Сохранено: ' + result.name);
+        }
+        return;
+    }
+
+    // ── Browser ──────────────────────────────────────────
+    if (window.showSaveFilePicker) {
+        try {
+            const handle = await window.showSaveFilePicker({
+                suggestedName: photo.name,
+                types: [
+                    { description: 'JPEG', accept: { 'image/jpeg': ['.jpg', '.jpeg'] } },
+                    { description: 'PNG',  accept: { 'image/png':  ['.png']          } },
+                    { description: 'WebP', accept: { 'image/webp': ['.webp']         } },
+                ]
+            });
+            const newExt = handle.name.split('.').pop().toLowerCase();
+            let saveUrl  = dataUrl;
+            if (newExt === 'png'  && !dataUrl.startsWith('data:image/png'))
+                saveUrl = await reencodeAs(dataUrl, 'image/png');
+            else if (newExt === 'webp' && !dataUrl.startsWith('data:image/webp'))
+                saveUrl = await reencodeAs(dataUrl, 'image/webp');
+
+            const writable = await handle.createWritable();
+            await writable.write(dataUrlToBlob(saveUrl));
+            await writable.close();
+
+            photo.name = handle.name;
+            rebuildGallery();
+            showToast('Сохранено: ' + handle.name);
+        } catch (e) {
+            if (e.name !== 'AbortError') showToast('Ошибка сохранения');
+        }
+    } else {
+        // Fallback for browsers without showSaveFilePicker (Firefox, Safari)
+        triggerDownload(dataUrlToBlob(dataUrl), photo.name);
+        showToast('Файл скачан');
+    }
+}
+
+function initSaveButtons() {
+    document.querySelector('[data-action="save"]')
+        ?.addEventListener('click', doSave);
+    document.querySelector('[data-action="save-as"]')
+        ?.addEventListener('click', doSaveAs);
+}
+
 // ── Undo / Redo core (per-photo) ───────────────────────
 /**
  * Snapshot the current state of `photo` plus the current editor transforms.
@@ -1139,6 +1288,7 @@ document.addEventListener('DOMContentLoaded', () => {
     initOpacity();
     initEditorTransformButtons();
     initCropButtons();
+    initSaveButtons();
     initUndoRedo();
     initTooltips();
     updateUndoRedoBtns();

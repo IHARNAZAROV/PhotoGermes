@@ -57,6 +57,39 @@ function registerHandlers() {
             return "data:image/jpeg;base64," + buf.toString("base64");
         } catch { return null; }
     });
+
+    // Overwrite an existing file with the given data-URL
+    ipcMain.handle("photos:save", async (_e, filePath, dataUrl) => {
+        try {
+            const base64 = dataUrl.replace(/^data:image\/\w+;base64,/, "");
+            fs.writeFileSync(filePath, Buffer.from(base64, "base64"));
+            return { ok: true };
+        } catch (e) {
+            return { ok: false, error: e.message };
+        }
+    });
+
+    // Show native Save-As dialog, then write the data-URL to the chosen path
+    ipcMain.handle("photos:save-as", async (_e, suggestedName, dataUrl) => {
+        try {
+            const result = await dialog.showSaveDialog({
+                title: "Сохранить как",
+                defaultPath: suggestedName,
+                filters: [
+                    { name: "JPEG",  extensions: ["jpg", "jpeg"] },
+                    { name: "PNG",   extensions: ["png"] },
+                    { name: "WebP",  extensions: ["webp"] },
+                    { name: "Все файлы", extensions: ["*"] }
+                ]
+            });
+            if (result.canceled || !result.filePath) return null;
+            const base64 = dataUrl.replace(/^data:image\/\w+;base64,/, "");
+            fs.writeFileSync(result.filePath, Buffer.from(base64, "base64"));
+            return { filePath: result.filePath, name: path.basename(result.filePath) };
+        } catch (e) {
+            return null;
+        }
+    });
 }
 
 // ── Window ─────────────────────────────────────────────
