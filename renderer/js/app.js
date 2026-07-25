@@ -454,8 +454,10 @@ async function loadEditorPreview(photo) {
     if (isElectron && photo.filePath) {
         if (!photo.preview) photo.preview = await window.api.getPreview(photo.filePath);
         src = photo.preview;
-    } else if (photo.objectUrl) {
-        src = photo.objectUrl;
+    } else {
+        // In browser mode prefer photo.preview (updated after crop) over the
+        // original objectUrl so the editor always shows the latest version.
+        src = photo.preview || photo.objectUrl;
     }
 
     placeholder.classList.remove('loading');
