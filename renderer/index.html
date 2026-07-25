@@ -114,6 +114,17 @@
 
     <div class="header-sep"></div>
 
+    <!-- History -->
+    <button class="btn btn-outline" data-action="history">
+      <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <circle cx="8" cy="8" r="6"/>
+        <polyline points="8,5 8,8 10,10"/>
+      </svg>
+      История
+    </button>
+
+    <div class="header-sep"></div>
+
     <!-- About -->
     <button class="btn btn-outline" data-action="about">
       <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
@@ -428,143 +439,6 @@
         </div>
       </div>
 
-      <!-- Bottom toolbar -->
-      <div class="editor-toolbar">
-
-        <!-- Aspect ratio presets -->
-        <div class="editor-presets">
-
-          <!-- Preset buttons -->
-          <button class="preset-btn active">
-            <div class="preset-icon">
-              <svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="2" y="4" width="16" height="12" rx="1"/></svg>
-            </div>
-            <span class="preset-label">Свободно</span>
-          </button>
-
-          <button class="preset-btn">
-            <div class="preset-icon">
-              <svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="4" y="4" width="12" height="12" rx="1"/></svg>
-            </div>
-            <span class="preset-label">1:1</span>
-          </button>
-
-          <button class="preset-btn">
-            <div class="preset-icon">
-              <svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="2" y="5" width="16" height="10" rx="1"/></svg>
-            </div>
-            <span class="preset-label">4:3</span>
-          </button>
-
-          <button class="preset-btn">
-            <div class="preset-icon">
-              <svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="1" y="6" width="18" height="8" rx="1"/></svg>
-            </div>
-            <span class="preset-label">16:9</span>
-          </button>
-
-          <button class="preset-btn">
-            <div class="preset-icon">
-              <svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="2" y="4" width="15" height="12" rx="1"/></svg>
-            </div>
-            <span class="preset-label">3:2</span>
-          </button>
-
-          <button class="preset-btn">
-            <div class="preset-icon">
-              <svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="6" y="2" width="8" height="16" rx="1"/></svg>
-            </div>
-            <span class="preset-label">9:16</span>
-          </button>
-
-          <button class="preset-btn">
-            <div class="preset-icon">
-              <svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5">
-                <rect x="2" y="4" width="16" height="12" rx="1"/>
-                <line x1="8" y1="10" x2="12" y2="10" stroke-dasharray="2 1"/>
-              </svg>
-            </div>
-            <span class="preset-label">Польз.</span>
-          </button>
-
-          <div class="preset-sep"></div>
-
-          <!-- Rotate / flip / reset actions -->
-          <button class="preset-action" data-tooltip="Повернуть на 90°">
-            <svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
-              <path d="M15.5 12A6 6 0 1 1 14 6.5"/>
-              <polyline points="19,3.5 14.5,7 11.5,3"/>
-            </svg>
-            <span class="preset-action-label">Повернуть</span>
-          </button>
-
-          <button class="preset-action" data-tooltip="Отразить по горизонтали">
-            <svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
-              <line x1="10" y1="2" x2="10" y2="18" stroke-dasharray="3 2"/>
-              <polyline points="2,7 6,10 2,13"/>
-              <polyline points="18,7 14,10 18,13"/>
-            </svg>
-            <span class="preset-action-label">Отразить</span>
-          </button>
-
-          <button class="preset-action" data-tooltip="Сбросить кадр">
-            <svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
-              <path d="M3 10a7 7 0 1 0 1.2-4"/>
-              <polyline points="3,3 3,7 7,7"/>
-            </svg>
-            <span class="preset-action-label">Сбросить</span>
-          </button>
-
-        </div><!-- /.editor-presets -->
-
-        <!-- Frame parameters -->
-        <div class="frame-params">
-          <span class="frame-param-label">Размер кадра</span>
-
-          <div class="frame-input">
-            <input type="text" id="frame-width" value="—" aria-label="Ширина" />
-            <span class="unit">px</span>
-          </div>
-
-          <button class="frame-lock-btn" data-tooltip="Зафиксировать пропорции" title="Зафиксировать пропорции">
-            <svg width="13" height="13" viewBox="0 0 13 13" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
-              <rect x="2" y="6" width="9" height="6" rx="1.5"/>
-              <path d="M4 6V4a2.5 2.5 0 015 0v2"/>
-            </svg>
-          </button>
-
-          <div class="frame-input">
-            <input type="text" id="frame-height" value="—" aria-label="Высота" />
-            <span class="unit">px</span>
-          </div>
-
-          <div style="margin-left: 8px; display: flex; align-items: center; gap: 6px;">
-            <span class="frame-param-label">Соотношение сторон</span>
-            <div class="frame-select-wrap" id="aspect-select-wrap">
-              <button class="frame-select-btn" id="aspect-select-btn" type="button">
-                <span id="aspect-select-label">Свободно</span>
-                <svg width="10" height="10" viewBox="0 0 10 10" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
-                  <polyline points="1,3 5,7 9,3"/>
-                </svg>
-              </button>
-              <div class="frame-select-dropdown" id="aspect-select-dropdown">
-                <div class="frame-select-option active" data-value="Свободно">Свободно</div>
-                <div class="frame-select-option" data-value="1:1">1:1</div>
-                <div class="frame-select-option" data-value="4:3">4:3</div>
-                <div class="frame-select-option" data-value="16:9">16:9</div>
-                <div class="frame-select-option" data-value="3:2">3:2</div>
-                <div class="frame-select-option" data-value="9:16">9:16</div>
-              </div>
-            </div>
-          </div>
-
-          <span class="frame-hint" style="margin-left: auto;">
-            ✦ Перетащите края или углы для обрезки. Зажмите <kbd style="background:var(--color-bg);border:1px solid var(--color-border);border-radius:3px;padding:1px 4px;font-size:11px;">Shift</kbd> для сохранения пропорций.
-          </span>
-        </div><!-- /.frame-params -->
-
-      </div><!-- /.editor-toolbar -->
-
       </div><!-- /#crop-editor-view -->
 
       <!-- ══ RESIZE VIEW ══════════════════════════ -->
@@ -675,24 +549,145 @@
       <!-- ══ CROP INSPECTOR (default) ══════════════ -->
       <div id="crop-inspector-view" style="display:contents;">
 
-        <!-- Tabs -->
-        <div class="inspector-tabs">
-          <div class="inspector-tab active" data-tab="history">История</div>
-        </div>
+        <!-- Crop settings panel -->
+        <div class="inspector-crop-panel">
 
-        <!-- History panel -->
-        <div class="inspector-panel" data-panel="history" style="flex:1; overflow-y:auto;">
-          <div id="history-list">
-            <div class="history-placeholder">
-              <svg width="48" height="48" viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
-                <circle cx="24" cy="24" r="19"/>
-                <polyline points="24,14 24,24 30,30"/>
-                <path d="M10 10l4 4M38 10l-4 4"/>
+          <div class="inspector-crop-label">Параметры обрезки</div>
+
+          <!-- Presets row -->
+          <div class="editor-presets">
+
+            <button class="preset-btn active">
+              <div class="preset-icon">
+                <svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="2" y="4" width="16" height="12" rx="1"/></svg>
+              </div>
+              <span class="preset-label">Свободно</span>
+            </button>
+
+            <button class="preset-btn">
+              <div class="preset-icon">
+                <svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="4" y="4" width="12" height="12" rx="1"/></svg>
+              </div>
+              <span class="preset-label">1:1</span>
+            </button>
+
+            <button class="preset-btn">
+              <div class="preset-icon">
+                <svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="2" y="5" width="16" height="10" rx="1"/></svg>
+              </div>
+              <span class="preset-label">4:3</span>
+            </button>
+
+            <button class="preset-btn">
+              <div class="preset-icon">
+                <svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="1" y="6" width="18" height="8" rx="1"/></svg>
+              </div>
+              <span class="preset-label">16:9</span>
+            </button>
+
+            <button class="preset-btn">
+              <div class="preset-icon">
+                <svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="2" y="4" width="15" height="12" rx="1"/></svg>
+              </div>
+              <span class="preset-label">3:2</span>
+            </button>
+
+            <button class="preset-btn">
+              <div class="preset-icon">
+                <svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="6" y="2" width="8" height="16" rx="1"/></svg>
+              </div>
+              <span class="preset-label">9:16</span>
+            </button>
+
+            <button class="preset-btn">
+              <div class="preset-icon">
+                <svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5">
+                  <rect x="2" y="4" width="16" height="12" rx="1"/>
+                  <line x1="8" y1="10" x2="12" y2="10" stroke-dasharray="2 1"/>
+                </svg>
+              </div>
+              <span class="preset-label">Польз.</span>
+            </button>
+
+            <div class="preset-sep"></div>
+
+            <!-- Rotate / flip / reset -->
+            <button class="preset-action" data-tooltip="Повернуть на 90°">
+              <svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M15.5 12A6 6 0 1 1 14 6.5"/>
+                <polyline points="19,3.5 14.5,7 11.5,3"/>
               </svg>
-              <p>История действий пуста.<br/>Начните редактирование — каждое действие будет сохраняться здесь.</p>
+              <span class="preset-action-label">Повернуть</span>
+            </button>
+
+            <button class="preset-action" data-tooltip="Отразить по горизонтали">
+              <svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+                <line x1="10" y1="2" x2="10" y2="18" stroke-dasharray="3 2"/>
+                <polyline points="2,7 6,10 2,13"/>
+                <polyline points="18,7 14,10 18,13"/>
+              </svg>
+              <span class="preset-action-label">Отразить</span>
+            </button>
+
+            <button class="preset-action" data-tooltip="Сбросить кадр">
+              <svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M3 10a7 7 0 1 0 1.2-4"/>
+                <polyline points="3,3 3,7 7,7"/>
+              </svg>
+              <span class="preset-action-label">Сбросить</span>
+            </button>
+
+          </div><!-- /.editor-presets -->
+
+          <!-- Frame parameters -->
+          <div class="frame-params frame-params--inspector">
+            <div class="frame-params-row">
+              <span class="frame-param-label">Размер кадра</span>
+
+              <div class="frame-input">
+                <input type="text" id="frame-width" value="—" aria-label="Ширина" />
+                <span class="unit">px</span>
+              </div>
+
+              <button class="frame-lock-btn" data-tooltip="Зафиксировать пропорции" title="Зафиксировать пропорции">
+                <svg width="13" height="13" viewBox="0 0 13 13" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+                  <rect x="2" y="6" width="9" height="6" rx="1.5"/>
+                  <path d="M4 6V4a2.5 2.5 0 015 0v2"/>
+                </svg>
+              </button>
+
+              <div class="frame-input">
+                <input type="text" id="frame-height" value="—" aria-label="Высота" />
+                <span class="unit">px</span>
+              </div>
             </div>
-          </div>
-        </div>
+
+            <div class="frame-params-row">
+              <span class="frame-param-label">Соотношение сторон</span>
+              <div class="frame-select-wrap" id="aspect-select-wrap">
+                <button class="frame-select-btn" id="aspect-select-btn" type="button">
+                  <span id="aspect-select-label">Свободно</span>
+                  <svg width="10" height="10" viewBox="0 0 10 10" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                    <polyline points="1,3 5,7 9,3"/>
+                  </svg>
+                </button>
+                <div class="frame-select-dropdown" id="aspect-select-dropdown">
+                  <div class="frame-select-option active" data-value="Свободно">Свободно</div>
+                  <div class="frame-select-option" data-value="1:1">1:1</div>
+                  <div class="frame-select-option" data-value="4:3">4:3</div>
+                  <div class="frame-select-option" data-value="16:9">16:9</div>
+                  <div class="frame-select-option" data-value="3:2">3:2</div>
+                  <div class="frame-select-option" data-value="9:16">9:16</div>
+                </div>
+              </div>
+            </div>
+
+            <p class="frame-hint frame-hint--block">
+              ✦ Перетащите края или углы для обрезки. Зажмите <kbd>Shift</kbd> для сохранения пропорций.
+            </p>
+          </div><!-- /.frame-params -->
+
+        </div><!-- /.inspector-crop-panel -->
 
         <!-- Inspector footer buttons -->
         <div class="inspector-footer">
@@ -862,6 +857,48 @@
   ════════════════════════════════════════════════════ -->
   <!-- Hidden file input for browser fallback -->
   <input type="file" id="file-input" accept="image/*,.heic,.heif,.avif" multiple style="display:none;" />
+
+  <!-- ═══════════════════════════════════════════════════
+       HISTORY MODAL
+  ════════════════════════════════════════════════════ -->
+  <div class="history-overlay" id="history-modal" role="dialog" aria-modal="true" aria-label="История действий">
+    <div class="history-dialog">
+
+      <div class="history-dialog-header">
+        <div class="history-dialog-title">
+          <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="8" cy="8" r="6"/>
+            <polyline points="8,5 8,8 10,10"/>
+          </svg>
+          История действий
+        </div>
+        <button class="about-close" id="history-close" aria-label="Закрыть">
+          <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round">
+            <line x1="2" y1="2" x2="12" y2="12"/>
+            <line x1="12" y1="2" x2="2" y2="12"/>
+          </svg>
+        </button>
+      </div>
+
+      <div class="history-dialog-body">
+        <div id="history-list">
+          <div class="history-placeholder">
+            <svg width="48" height="48" viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="24" cy="24" r="19"/>
+              <polyline points="24,14 24,24 30,30"/>
+              <path d="M10 10l4 4M38 10l-4 4"/>
+            </svg>
+            <p>История действий пуста.<br/>Начните редактирование — каждое действие будет сохраняться здесь.</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="history-dialog-footer">
+        <button class="btn btn-outline about-close-btn" id="history-close-btn">Закрыть</button>
+      </div>
+
+    </div><!-- /.history-dialog -->
+  </div><!-- /.history-overlay -->
 
   <!-- ═══════════════════════════════════════════════════
        ABOUT MODAL

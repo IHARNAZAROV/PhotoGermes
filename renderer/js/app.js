@@ -1510,6 +1510,28 @@ function initEditorTransformButtons() {
     });
 }
 
+// ── History modal ──────────────────────────────────────
+function initHistoryModal() {
+    const modal    = document.getElementById('history-modal');
+    const openBtn  = document.querySelector('[data-action="history"]');
+    const closeBtn = document.getElementById('history-close');
+    const closeFtr = document.getElementById('history-close-btn');
+    if (!modal) return;
+
+    function open()  { modal.classList.add('open'); document.body.style.overflow = 'hidden'; }
+    function close() { modal.classList.remove('open'); document.body.style.overflow = ''; }
+
+    if (openBtn)  openBtn.addEventListener('click', open);
+    if (closeBtn) closeBtn.addEventListener('click', close);
+    if (closeFtr) closeFtr.addEventListener('click', close);
+
+    modal.addEventListener('click', e => { if (e.target === modal) close(); });
+
+    document.addEventListener('keydown', e => {
+        if (e.key === 'Escape' && modal.classList.contains('open')) close();
+    });
+}
+
 // ── About modal ────────────────────────────────────────
 function initAboutModal() {
     const modal    = document.getElementById('about-modal');
@@ -1567,5 +1589,6 @@ document.addEventListener('DOMContentLoaded', () => {
     initUndoRedo();
     initTooltips();
     updateUndoRedoBtns();
+    initHistoryModal();
     initAboutModal();
 });
