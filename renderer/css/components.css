@@ -864,6 +864,216 @@
 }
 
 /* ─────────────────────────────────────
+   Gallery header — select-all + title
+───────────────────────────────────── */
+.gallery-header-left {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+/* Select-all checkbox */
+.gallery-select-all-wrap {
+  display: flex;
+  align-items: center;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+.gallery-select-all-cb {
+  position: absolute;
+  opacity: 0;
+  width: 0;
+  height: 0;
+  pointer-events: none;
+}
+.gallery-select-all-box {
+  width: 18px;
+  height: 18px;
+  border: 1.5px solid var(--color-border2);
+  border-radius: 4px;
+  background: var(--color-panel);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background var(--transition), border-color var(--transition);
+  color: transparent;
+}
+.gallery-select-all-wrap:hover .gallery-select-all-box {
+  border-color: var(--color-primary);
+}
+.gallery-select-all-cb:checked   + .gallery-select-all-box,
+.gallery-select-all-cb:indeterminate + .gallery-select-all-box {
+  background: var(--color-primary);
+  border-color: var(--color-primary);
+  color: #fff;
+}
+/* Indeterminate dash */
+.gallery-select-all-cb:indeterminate + .gallery-select-all-box svg {
+  opacity: 0;
+}
+.gallery-select-all-cb:indeterminate + .gallery-select-all-box::after {
+  content: '';
+  width: 8px;
+  height: 2px;
+  background: #fff;
+  border-radius: 1px;
+}
+
+/* ─────────────────────────────────────
+   Selection info bar
+───────────────────────────────────── */
+.gallery-sel-bar {
+  display: none;
+  align-items: center;
+  gap: 7px;
+  padding: 7px 16px;
+  background: var(--color-primary-muted);
+  border-bottom: 1px solid rgba(22,98,76,.15);
+  font-size: var(--text-sm);
+  font-weight: 500;
+  color: var(--color-primary);
+  flex-shrink: 0;
+}
+.gallery-sel-bar.visible {
+  display: flex;
+}
+.gallery-sel-clear {
+  margin-left: auto;
+  width: 24px;
+  height: 24px;
+  border: none;
+  background: none;
+  cursor: pointer;
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--color-primary);
+  transition: background var(--transition);
+}
+.gallery-sel-clear:hover { background: rgba(22,98,76,.15); }
+
+/* ─────────────────────────────────────
+   Gallery item — checkbox overlay
+───────────────────────────────────── */
+.gallery-item-check {
+  position: absolute;
+  top: 4px;
+  left: 4px;
+  z-index: 2;
+  cursor: pointer;
+  display: block;
+  opacity: 0;
+  transition: opacity var(--transition);
+}
+.gallery-item:hover    .gallery-item-check,
+.gallery-item.checked  .gallery-item-check {
+  opacity: 1;
+}
+.gallery-check-input {
+  position: absolute;
+  opacity: 0;
+  width: 0;
+  height: 0;
+  pointer-events: none;
+}
+.gallery-check-mark {
+  width: 20px;
+  height: 20px;
+  border-radius: 5px;
+  border: 2px solid rgba(255,255,255,.9);
+  background: rgba(0,0,0,.25);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: transparent;
+  backdrop-filter: blur(2px);
+  transition: background var(--transition), color var(--transition), border-color var(--transition);
+  box-shadow: 0 1px 3px rgba(0,0,0,.25);
+}
+.gallery-check-input:checked + .gallery-check-mark {
+  background: var(--color-primary);
+  border-color: var(--color-primary);
+  color: #fff;
+}
+
+/* Checked item highlight ring */
+.gallery-item.checked {
+  background: var(--color-panel);
+  border-color: var(--color-primary);
+}
+.gallery-item.checked .gallery-thumb {
+  outline: 2px solid var(--color-primary);
+  outline-offset: -2px;
+  border-radius: var(--radius-sm);
+}
+
+/* ─────────────────────────────────────
+   Delete button in gallery footer
+───────────────────────────────────── */
+.btn-delete-checked {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  height: 34px;
+  padding: 0 12px;
+  border-radius: var(--radius-sm);
+  border: 1.5px solid var(--color-border);
+  background: transparent;
+  font-family: var(--font-family);
+  font-size: var(--text-sm);
+  font-weight: 500;
+  color: var(--color-muted);
+  cursor: pointer;
+  transition: background var(--transition), color var(--transition),
+              border-color var(--transition);
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+.btn-delete-checked:disabled {
+  opacity: .4;
+  cursor: default;
+}
+.btn-delete-checked.has-selection {
+  border-color: var(--color-danger);
+  color: var(--color-danger);
+}
+.btn-delete-checked.has-selection:hover {
+  background: var(--color-danger);
+  color: #fff;
+}
+
+/* ─────────────────────────────────────
+   Toast notification
+───────────────────────────────────── */
+#app-toast {
+  position: fixed;
+  bottom: 56px;
+  left: 50%;
+  transform: translateX(-50%) translateY(12px);
+  background: #1a1f27;
+  color: #fff;
+  font-size: var(--text-sm);
+  font-weight: 500;
+  padding: 9px 18px;
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-md);
+  pointer-events: none;
+  z-index: 999;
+  opacity: 0;
+  transition: opacity .2s ease, transform .2s ease;
+  white-space: nowrap;
+}
+#app-toast.toast-show {
+  opacity: 1;
+  transform: translateX(-50%) translateY(0);
+}
+#app-toast.toast-hide {
+  opacity: 0;
+  transform: translateX(-50%) translateY(12px);
+}
+
+/* ─────────────────────────────────────
    Gallery empty state
 ───────────────────────────────────── */
 .gallery-empty {

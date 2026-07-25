@@ -1,12 +1,15 @@
 /* ========================================================
-   app.js — photo loading + UI interactions
+   app.js — photo loading + multi-select + delete + UI
    ======================================================== */
 'use strict';
 
 // ── State ──────────────────────────────────────────────
-/** @type {Array<{name:string, filePath:string|null, width:number, height:number, sizeBytes:number, thumbnail:string|null, preview:string|null, objectUrl:string|null}>} */
+/** @type {Array<Photo>} */
 let photos = [];
-let selectedIndex = -1;
+
+let selectedIndex   = -1;   // photo open in editor
+let checkedIndices  = new Set(); // photos checked for deletion
+let lastCheckedIndex = -1;  // anchor for shift-range selection
 
 // ── Detect environment ─────────────────────────────────
 const isElectron = typeof window.api !== 'undefined';
@@ -17,7 +20,6 @@ function formatSize(bytes) {
     if (bytes >= 1024)        return (bytes / 1024).toFixed(0) + ' КБ';
     return bytes + ' Б';
 }
-
 function formatRes(w, h) {
     return (w && h) ? `${w} × ${h}` : '— × —';
 }
@@ -28,7 +30,8 @@ function renderEmptyState() {
     list.innerHTML = `
       <div class="gallery-empty">
         <div class="gallery-empty-icon">
-          <svg width="40" height="40" viewBox="0 0 40 40" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+          <svg width="40" height="40" viewBox="0 0 40 40" fill="none" stroke="currentColor"
+               stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
             <rect x="4" y="8" width="32" height="26" rx="3"/>
             <path d="M4 28l8-8 6 6 5-5 9 8"/>
             <circle cx="14" cy="17" r="3"/>
@@ -47,10 +50,8 @@ function renderEditorEmpty() {
     const img = document.getElementById('editor-img');
     if (img) { img.src = ''; img.style.display = 'none'; }
     if (placeholder) placeholder.classList.remove('has-photo');
-
     const title = document.querySelector('.editor-title');
     if (title) title.textContent = 'Редактирование';
-
     const footerFile = document.querySelector('.footer-file');
     const footerInfo = document.querySelector('.footer-info');
     const footerSel  = document.querySelector('.footer-selected');
@@ -59,10 +60,14 @@ function renderEditorEmpty() {
     if (footerSel)  footerSel.textContent  = 'Ничего не выбрано';
 }
 
-// ── Gallery rendering ──────────────────────────────────
+// ── Gallery item render ────────────────────────────────
 function renderGalleryItem(photo, index) {
     const item = document.createElement('div');
-    item.className = 'gallery-item' + (index === selectedIndex ? ' selected' : '');
+    const isSelected = index === selectedIndex;
+    const isChecked  = checkedIndices.has(index);
+    item.className = 'gallery-item'
+        + (isSelected ? ' selected' : '')
+        + (isChecked  ? ' checked'  : '');
     item.dataset.index = index;
 
     const thumbContent = photo.thumbnail
@@ -70,12 +75,24 @@ function renderGalleryItem(photo, index) {
         : `<div class="gallery-thumb-spinner"></div>`;
 
     item.innerHTML = `
-      <div class="gallery-thumb">${thumbContent}</div>
+      <div class="gallery-thumb">
+        ${thumbContent}
+        <label class="gallery-item-check" title="Выбрать для удаления">
+          <input type="checkbox" class="gallery-check-input" tabindex="-1"
+                 ${isChecked ? 'checked' : ''}/>
+          <span class="gallery-check-mark">
+            <svg width="10" height="10" viewBox="0 0 10 10" fill="none"
+                 stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <polyline points="1.5,5 4,7.5 8.5,2"/>
+            </svg>
+          </span>
+        </label>
+      </div>
       <div class="gallery-item-info">
         <div class="gallery-item-name">${photo.name}</div>
         <div class="gallery-item-meta">${formatRes(photo.width, photo.height)} &nbsp;·&nbsp; ${formatSize(photo.sizeBytes)}</div>
       </div>
-      <button class="btn-icon gallery-item-menu" data-tooltip="Меню">
+      <button class="btn-icon gallery-item-menu" data-tooltip="Меню" tabindex="-1">
         <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2">
           <circle cx="8" cy="3" r="1" fill="currentColor" stroke="none"/>
           <circle cx="8" cy="8" r="1" fill="currentColor" stroke="none"/>
@@ -84,9 +101,37 @@ function renderGalleryItem(photo, index) {
       </button>
     `;
 
-    item.addEventListener('click', (e) => {
+    // ── Click on the item body (open for editing) ──────
+    item.addEventListener('click', e => {
         if (e.target.closest('.gallery-item-menu')) return;
-        selectPhoto(index);
+        if (e.target.closest('.gallery-item-check'))  return; // handled by checkbox label
+
+        if (e.ctrlKey || e.metaKey) {
+            // Ctrl/Cmd+click → toggle check without changing editor
+            toggleCheck(index);
+        } else if (e.shiftKey && lastCheckedIndex !== -1) {
+            // Shift+click → range check
+            checkRange(lastCheckedIndex, index);
+        } else {
+            // Plain click → open in editor; clear multi-selection
+            if (checkedIndices.size > 0) {
+                clearChecks();
+            }
+            selectPhoto(index);
+        }
+    });
+
+    // ── Checkbox click (direct toggle) ────────────────
+    const checkLabel = item.querySelector('.gallery-item-check');
+    checkLabel.addEventListener('click', e => {
+        e.stopPropagation();
+        if (e.shiftKey && lastCheckedIndex !== -1) {
+            checkRange(lastCheckedIndex, index);
+            // prevent default so the native checkbox doesn't double-toggle
+            e.preventDefault();
+        } else {
+            toggleCheck(index);
+        }
     });
 
     return item;
@@ -100,34 +145,255 @@ function rebuildGallery() {
         renderEmptyState();
         renderEditorEmpty();
         updateCounts();
+        updateSelectionUI();
         return;
     }
 
     list.innerHTML = '';
-    photos.forEach((photo, i) => {
-        list.appendChild(renderGalleryItem(photo, i));
-    });
+    photos.forEach((photo, i) => list.appendChild(renderGalleryItem(photo, i)));
 
     updateCounts();
+    updateSelectionUI();
 }
 
-/** Update thumbnail for a single item without full rebuild */
+/** Patch thumbnail of one item in-place */
 function patchThumbnail(index) {
     const list = document.querySelector('.gallery-list');
     if (!list) return;
     const item = list.querySelector(`[data-index="${index}"]`);
     if (!item) return;
-    const thumb = item.querySelector('.gallery-thumb');
-    if (!thumb) return;
     const photo = photos[index];
-    if (photo.thumbnail) {
-        thumb.innerHTML = `<img src="${photo.thumbnail}" alt="${photo.name}" class="gallery-thumb-real" />`;
+    const thumb = item.querySelector('.gallery-thumb');
+    if (photo.thumbnail && thumb) {
+        // Replace only the image content, keep the checkbox label
+        let img = thumb.querySelector('.gallery-thumb-real, .gallery-thumb-spinner');
+        if (!img) img = thumb;
+        const newImg = document.createElement('img');
+        newImg.src = photo.thumbnail;
+        newImg.alt = photo.name;
+        newImg.className = 'gallery-thumb-real';
+        if (img && img !== thumb) img.replaceWith(newImg);
     }
     const meta = item.querySelector('.gallery-item-meta');
     if (meta) meta.textContent = `${formatRes(photo.width, photo.height)}\u00a0·\u00a0${formatSize(photo.sizeBytes)}`;
 }
 
-// ── Selection ──────────────────────────────────────────
+// ── Multi-select logic ─────────────────────────────────
+function toggleCheck(index) {
+    if (checkedIndices.has(index)) {
+        checkedIndices.delete(index);
+    } else {
+        checkedIndices.add(index);
+    }
+    lastCheckedIndex = index;
+    syncItemCheckedClass(index);
+    updateSelectionUI();
+}
+
+function checkRange(from, to) {
+    const lo = Math.min(from, to);
+    const hi = Math.max(from, to);
+    for (let i = lo; i <= hi; i++) checkedIndices.add(i);
+    lastCheckedIndex = to;
+    // Rebuild DOM to reflect new checked state efficiently
+    rebuildGallery();
+    updateSelectionUI();
+}
+
+function checkAll() {
+    photos.forEach((_, i) => checkedIndices.add(i));
+    lastCheckedIndex = photos.length - 1;
+    rebuildGallery();
+    updateSelectionUI();
+}
+
+function clearChecks() {
+    checkedIndices.clear();
+    lastCheckedIndex = -1;
+    rebuildGallery();
+    updateSelectionUI();
+}
+
+/** Sync checked CSS class + checkbox input for a single item without full rebuild */
+function syncItemCheckedClass(index) {
+    const list = document.querySelector('.gallery-list');
+    if (!list) return;
+    const item = list.querySelector(`[data-index="${index}"]`);
+    if (!item) return;
+    const isChecked = checkedIndices.has(index);
+    item.classList.toggle('checked', isChecked);
+    const input = item.querySelector('.gallery-check-input');
+    if (input) input.checked = isChecked;
+}
+
+// ── Selection UI (header + footer delete button) ───────
+function updateSelectionUI() {
+    const count   = checkedIndices.size;
+    const total   = photos.length;
+
+    // Select-all checkbox
+    const selectAllCb = document.getElementById('gallery-select-all');
+    if (selectAllCb) {
+        selectAllCb.checked       = count > 0 && count === total;
+        selectAllCb.indeterminate = count > 0 && count < total;
+    }
+
+    // Selection bar (header area below title)
+    const selBar   = document.getElementById('gallery-sel-bar');
+    const selCount = document.getElementById('gallery-sel-count');
+    if (selBar) selBar.classList.toggle('visible', count > 0);
+    if (selCount) {
+        selCount.textContent = count === 1
+            ? '1 фото выбрано'
+            : `${count} фото выбрано`;
+    }
+
+    // Delete button
+    const deleteBtn  = document.getElementById('btn-delete-checked');
+    const deleteLbl  = document.getElementById('delete-btn-label');
+    if (deleteBtn) {
+        deleteBtn.disabled = count === 0;
+        deleteBtn.classList.toggle('has-selection', count > 0);
+    }
+    if (deleteLbl) {
+        deleteLbl.textContent = count > 0 ? `Удалить (${count})` : 'Удалить';
+    }
+
+    // Footer selected text
+    const footerSel = document.querySelector('.footer-selected');
+    if (footerSel) {
+        if (count > 0) {
+            footerSel.textContent = count === 1
+                ? 'Отмечено: 1 фото'
+                : `Отмечено: ${count} фото`;
+        } else if (selectedIndex >= 0) {
+            footerSel.textContent = 'Выбрано: 1 фото';
+        } else {
+            footerSel.textContent = 'Ничего не выбрано';
+        }
+    }
+}
+
+// ── Delete ─────────────────────────────────────────────
+function deleteChecked() {
+    if (checkedIndices.size === 0) return;
+
+    const deletedCount = checkedIndices.size;
+
+    // Revoke objectURLs for browser mode
+    checkedIndices.forEach(i => {
+        const p = photos[i];
+        if (p && p.objectUrl) URL.revokeObjectURL(p.objectUrl);
+    });
+
+    // Remove photos (highest index first to keep indices stable)
+    const sorted = [...checkedIndices].sort((a, b) => b - a);
+    sorted.forEach(i => photos.splice(i, 1));
+
+    // Fix selectedIndex after deletion
+    if (selectedIndex >= 0) {
+        if (checkedIndices.has(selectedIndex)) {
+            // The viewed photo was deleted → pick nearest surviving photo
+            const newIndex = findNearestSurvivingIndex(sorted);
+            selectedIndex = -1;
+            checkedIndices.clear();
+            lastCheckedIndex = -1;
+            rebuildGallery();
+            if (newIndex >= 0) selectPhoto(Math.min(newIndex, photos.length - 1));
+            else renderEditorEmpty();
+        } else {
+            // Remap selectedIndex: count how many deleted indices are below it
+            const below = sorted.filter(i => i < selectedIndex).length;
+            selectedIndex -= below;
+            checkedIndices.clear();
+            lastCheckedIndex = -1;
+            rebuildGallery();
+        }
+    } else {
+        checkedIndices.clear();
+        lastCheckedIndex = -1;
+        rebuildGallery();
+    }
+
+    updateCounts();
+    showToast(`${deletedCount} ${pluralPhoto(deletedCount)} удалено`);
+}
+
+function findNearestSurvivingIndex(sortedDeleted) {
+    // sortedDeleted is DESC; original selectedIndex is in it
+    // Find the smallest index not in deleted set that was >= selectedIndex
+    const deletedSet = new Set(sortedDeleted);
+    for (let i = selectedIndex; i < photos.length + sortedDeleted.length; i++) {
+        if (!deletedSet.has(i)) return i;
+    }
+    for (let i = selectedIndex - 1; i >= 0; i--) {
+        if (!deletedSet.has(i)) return i;
+    }
+    return -1;
+}
+
+function pluralPhoto(n) {
+    if (n % 10 === 1 && n % 100 !== 11) return 'фото';
+    if ([2,3,4].includes(n % 10) && ![12,13,14].includes(n % 100)) return 'фото';
+    return 'фото';
+}
+
+// ── Toast notification ─────────────────────────────────
+function showToast(message) {
+    let toast = document.getElementById('app-toast');
+    if (!toast) {
+        toast = document.createElement('div');
+        toast.id = 'app-toast';
+        document.body.appendChild(toast);
+    }
+    toast.textContent = message;
+    toast.classList.remove('toast-hide');
+    toast.classList.add('toast-show');
+    clearTimeout(toast._timer);
+    toast._timer = setTimeout(() => {
+        toast.classList.remove('toast-show');
+        toast.classList.add('toast-hide');
+    }, 2500);
+}
+
+// ── Keyboard shortcuts ─────────────────────────────────
+function initKeyboard() {
+    document.addEventListener('keydown', e => {
+        const tag = document.activeElement?.tagName;
+        if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT') return;
+
+        // Delete / Backspace → delete checked (or selected if none checked)
+        if (e.key === 'Delete' || e.key === 'Backspace') {
+            if (checkedIndices.size > 0) {
+                e.preventDefault();
+                deleteChecked();
+            }
+        }
+
+        // Ctrl+A → select all
+        if ((e.ctrlKey || e.metaKey) && e.key === 'a') {
+            if (photos.length > 0) {
+                e.preventDefault();
+                checkAll();
+            }
+        }
+
+        // Escape → clear selection
+        if (e.key === 'Escape' && checkedIndices.size > 0) {
+            clearChecks();
+        }
+
+        // Arrow Up/Down → navigate selected photo
+        if (e.key === 'ArrowDown' || e.key === 'ArrowRight') {
+            if (selectedIndex < photos.length - 1) selectPhoto(selectedIndex + 1);
+        }
+        if (e.key === 'ArrowUp' || e.key === 'ArrowLeft') {
+            if (selectedIndex > 0) selectPhoto(selectedIndex - 1);
+        }
+    });
+}
+
+// ── View photo in editor ───────────────────────────────
 async function selectPhoto(index) {
     selectedIndex = index;
 
@@ -138,49 +404,39 @@ async function selectPhoto(index) {
     const photo = photos[index];
     if (!photo) return;
 
-    // Update editor title
-    const titleEl = document.querySelector('.editor-title');
-    if (titleEl) titleEl.textContent = `Редактирование: ${photo.name}`;
-
-    // Update footer
+    const titleEl    = document.querySelector('.editor-title');
     const footerFile = document.querySelector('.footer-file');
     const footerInfo = document.querySelector('.footer-info');
     const footerSel  = document.querySelector('.footer-selected');
+
+    if (titleEl)    titleEl.textContent    = `Редактирование: ${photo.name}`;
     if (footerFile) footerFile.textContent = photo.name;
     if (footerInfo) footerInfo.textContent = `${formatRes(photo.width, photo.height)}  ·  ${formatSize(photo.sizeBytes)}`;
-    if (footerSel)  footerSel.textContent  = 'Выбрано: 1 фото';
+    if (footerSel && checkedIndices.size === 0) footerSel.textContent = 'Выбрано: 1 фото';
 
-    // Update frame params in toolbar
     const wInput = document.getElementById('frame-width');
     const hInput = document.getElementById('frame-height');
     if (wInput && photo.width)  wInput.value = photo.width;
     if (hInput && photo.height) hInput.value = photo.height;
 
-    // Load preview into editor
-    await loadEditorPreview(photo, index);
+    await loadEditorPreview(photo);
 
-    // Scroll gallery item into view
     const list = document.querySelector('.gallery-list');
     const item = list && list.querySelector(`[data-index="${index}"]`);
     if (item) item.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
 }
 
-async function loadEditorPreview(photo, index) {
+async function loadEditorPreview(photo) {
     const placeholder = document.getElementById('editor-placeholder');
     const img = document.getElementById('editor-img');
     if (!img || !placeholder) return;
 
-    // Show spinner while loading
     placeholder.classList.add('loading');
     img.style.display = 'none';
 
     let src = null;
-
     if (isElectron && photo.filePath) {
-        // Load from IPC; cache result on the photo object
-        if (!photo.preview) {
-            photo.preview = await window.api.getPreview(photo.filePath);
-        }
+        if (!photo.preview) photo.preview = await window.api.getPreview(photo.filePath);
         src = photo.preview;
     } else if (photo.objectUrl) {
         src = photo.objectUrl;
@@ -206,118 +462,82 @@ async function openPhotos() {
         if (!paths || paths.length === 0) return;
         await addPhotosByPath(paths);
     } else {
-        // Browser fallback — hidden file input
         document.getElementById('file-input').click();
     }
 }
 
 async function addPhotosByPath(filePaths) {
-    // Filter already-added
-    const existing = new Set(photos.map(p => p.filePath));
-    const newPaths = filePaths.filter(p => !existing.has(p));
+    const existing  = new Set(photos.map(p => p.filePath));
+    const newPaths  = filePaths.filter(p => !existing.has(p));
     if (newPaths.length === 0) return;
 
     const startIndex = photos.length;
-
-    // Add placeholders immediately so the gallery updates fast
-    newPaths.forEach(filePath => {
-        photos.push({
-            name: filePath.split(/[\\/]/).pop(),
-            filePath,
-            width: 0, height: 0, sizeBytes: 0,
-            thumbnail: null, preview: null, objectUrl: null
-        });
-    });
+    newPaths.forEach(filePath => photos.push({
+        name: filePath.split(/[\\/]/).pop(),
+        filePath, width: 0, height: 0, sizeBytes: 0,
+        thumbnail: null, preview: null, objectUrl: null
+    }));
 
     rebuildGallery();
+    if (selectedIndex === -1) selectPhoto(startIndex);
 
-    // Auto-select first newly added photo
-    if (selectedIndex === -1) {
-        selectPhoto(startIndex);
-    }
-
-    // Fetch info + thumbnail for each new photo concurrently
-    await Promise.all(
-        newPaths.map(async (filePath, offset) => {
-            const idx = startIndex + offset;
-            const [info, thumbnail] = await Promise.all([
-                window.api.getInfo(filePath),
-                window.api.getThumbnail(filePath)
-            ]);
-            if (info) {
-                photos[idx].width     = info.width;
-                photos[idx].height    = info.height;
-                photos[idx].sizeBytes = info.sizeBytes;
-            }
-            if (thumbnail) {
-                photos[idx].thumbnail = thumbnail;
-            }
-            patchThumbnail(idx);
-
-            // Refresh editor if this is the selected photo
-            if (idx === selectedIndex) {
-                const titleEl = document.querySelector('.editor-title');
-                if (titleEl) titleEl.textContent = `Редактирование: ${photos[idx].name}`;
-                const footerInfo = document.querySelector('.footer-info');
-                if (footerInfo) footerInfo.textContent = `${formatRes(photos[idx].width, photos[idx].height)}  ·  ${formatSize(photos[idx].sizeBytes)}`;
-                await loadEditorPreview(photos[idx], idx);
-            }
-        })
-    );
-
+    await Promise.all(newPaths.map(async (filePath, offset) => {
+        const idx = startIndex + offset;
+        const [info, thumbnail] = await Promise.all([
+            window.api.getInfo(filePath),
+            window.api.getThumbnail(filePath)
+        ]);
+        if (info) {
+            photos[idx].width     = info.width;
+            photos[idx].height    = info.height;
+            photos[idx].sizeBytes = info.sizeBytes;
+        }
+        if (thumbnail) photos[idx].thumbnail = thumbnail;
+        patchThumbnail(idx);
+        if (idx === selectedIndex) {
+            const footerInfo = document.querySelector('.footer-info');
+            if (footerInfo) footerInfo.textContent = `${formatRes(photos[idx].width, photos[idx].height)}  ·  ${formatSize(photos[idx].sizeBytes)}`;
+            await loadEditorPreview(photos[idx]);
+        }
+    }));
     updateCounts();
 }
 
-// ── Browser file-input handler ─────────────────────────
 async function handleFileInput(files) {
     if (!files || files.length === 0) return;
-
-    const existing = new Set(photos.map(p => p.name + p.sizeBytes));
-    const newFiles = Array.from(files).filter(f => !existing.has(f.name + f.size));
+    const existing  = new Set(photos.map(p => p.name + p.sizeBytes));
+    const newFiles  = Array.from(files).filter(f => !existing.has(f.name + f.size));
     if (newFiles.length === 0) return;
 
     const startIndex = photos.length;
-
-    newFiles.forEach(file => {
-        photos.push({
-            name: file.name,
-            filePath: null,
-            width: 0, height: 0,
-            sizeBytes: file.size,
-            thumbnail: null, preview: null,
-            objectUrl: URL.createObjectURL(file),
-            _file: file
-        });
-    });
+    newFiles.forEach(file => photos.push({
+        name: file.name, filePath: null,
+        width: 0, height: 0, sizeBytes: file.size,
+        thumbnail: null, preview: null,
+        objectUrl: URL.createObjectURL(file), _file: file
+    }));
 
     rebuildGallery();
-
     if (selectedIndex === -1) selectPhoto(startIndex);
 
-    // Generate thumbnails via canvas / Image
-    await Promise.all(
-        newFiles.map(async (file, offset) => {
-            const idx = startIndex + offset;
-            const photo = photos[idx];
-
-            const dataUrl = await readFileThumbnail(file);
-            if (dataUrl) {
-                const { w, h } = await getImageDimensions(photo.objectUrl);
-                photo.thumbnail = dataUrl;
-                photo.width     = w;
-                photo.height    = h;
-                photo.preview   = photo.objectUrl; // use full objectUrl as preview
-            }
-            patchThumbnail(idx);
-
-            if (idx === selectedIndex) {
-                const footerInfo = document.querySelector('.footer-info');
-                if (footerInfo) footerInfo.textContent = `${formatRes(photo.width, photo.height)}  ·  ${formatSize(photo.sizeBytes)}`;
-                await loadEditorPreview(photo, idx);
-            }
-        })
-    );
-
+    await Promise.all(newFiles.map(async (file, offset) => {
+        const idx   = startIndex + offset;
+        const photo = photos[idx];
+        const dataUrl = await readFileThumbnail(file);
+        if (dataUrl) {
+            const { w, h } = await getImageDimensions(photo.objectUrl);
+            photo.thumbnail = dataUrl;
+            photo.width     = w;
+            photo.height    = h;
+            photo.preview   = photo.objectUrl;
+        }
+        patchThumbnail(idx);
+        if (idx === selectedIndex) {
+            const footerInfo = document.querySelector('.footer-info');
+            if (footerInfo) footerInfo.textContent = `${formatRes(photo.width, photo.height)}  ·  ${formatSize(photo.sizeBytes)}`;
+            await loadEditorPreview(photo);
+        }
+    }));
     updateCounts();
 }
 
@@ -330,8 +550,7 @@ function readFileThumbnail(file) {
             const ratio  = Math.max(160 / img.width, 120 / img.height);
             canvas.width  = Math.round(img.width  * ratio);
             canvas.height = Math.round(img.height * ratio);
-            const ctx = canvas.getContext('2d');
-            ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+            canvas.getContext('2d').drawImage(img, 0, 0, canvas.width, canvas.height);
             URL.revokeObjectURL(url);
             resolve(canvas.toDataURL('image/jpeg', 0.75));
         };
@@ -352,42 +571,26 @@ function getImageDimensions(src) {
 // ── Counts ─────────────────────────────────────────────
 function updateCounts() {
     const count = photos.length;
-
-    const galleryTitle = document.querySelector('.gallery-count');
-    if (galleryTitle) galleryTitle.textContent = `(${count})`;
-
+    const galleryCount = document.querySelector('.gallery-count');
+    if (galleryCount) galleryCount.textContent = `(${count})`;
     const allBadge = document.querySelector('[data-nav="all"] .gallery-nav-badge');
     if (allBadge) allBadge.textContent = count;
-
     const applyBtn = document.querySelector('.inspector-footer .btn-primary');
-    if (applyBtn) {
-        const label = applyBtn.querySelector('.apply-count') || applyBtn;
-        if (applyBtn.querySelector('.apply-count')) {
-            applyBtn.querySelector('.apply-count').textContent = count;
-        } else {
-            applyBtn.innerHTML = applyBtn.innerHTML.replace(/\(\d+\)/, `(${count})`);
-        }
-    }
+    if (applyBtn) applyBtn.innerHTML = applyBtn.innerHTML.replace(/\(\d+\)/, `(${count})`);
 }
 
-// ── Drag & drop onto gallery ───────────────────────────
+// ── Drag & drop ────────────────────────────────────────
 function initDragDrop() {
     const gallery = document.querySelector('.app-gallery');
     if (!gallery) return;
-
-    gallery.addEventListener('dragover', e => {
-        e.preventDefault();
-        gallery.classList.add('drag-over');
-    });
+    gallery.addEventListener('dragover', e => { e.preventDefault(); gallery.classList.add('drag-over'); });
     gallery.addEventListener('dragleave', () => gallery.classList.remove('drag-over'));
     gallery.addEventListener('drop', async e => {
         e.preventDefault();
         gallery.classList.remove('drag-over');
         const files = [...e.dataTransfer.files].filter(f => f.type.startsWith('image/'));
         if (!files.length) return;
-
         if (isElectron) {
-            // In Electron, dataTransfer.files have a .path property
             const paths = files.map(f => f.path).filter(Boolean);
             if (paths.length) await addPhotosByPath(paths);
         } else {
@@ -396,7 +599,7 @@ function initDragDrop() {
     });
 }
 
-// ── Tool sidebar ───────────────────────────────────────
+// ── UI init helpers ────────────────────────────────────
 function initToolCards() {
     document.querySelectorAll('.tool-card').forEach(card => {
         card.addEventListener('click', () => {
@@ -406,7 +609,6 @@ function initToolCards() {
     });
 }
 
-// ── Gallery nav ────────────────────────────────────────
 function initGalleryNav() {
     document.querySelectorAll('.gallery-nav-item').forEach(item => {
         item.addEventListener('click', () => {
@@ -416,7 +618,6 @@ function initGalleryNav() {
     });
 }
 
-// ── Preset buttons ─────────────────────────────────────
 function initPresets() {
     document.querySelectorAll('.preset-btn').forEach(btn => {
         btn.addEventListener('click', () => {
@@ -426,25 +627,19 @@ function initPresets() {
     });
 }
 
-// ── Inspector tabs ─────────────────────────────────────
 function initInspectorTabs() {
     const tabs   = document.querySelectorAll('.inspector-tab');
     const panels = document.querySelectorAll('.inspector-panel');
-
     tabs.forEach(tab => {
         tab.addEventListener('click', () => {
             tabs.forEach(t => t.classList.remove('active'));
             tab.classList.add('active');
-
             const target = tab.dataset.tab;
-            panels.forEach(p => {
-                p.style.display = p.dataset.panel === target ? '' : 'none';
-            });
+            panels.forEach(p => { p.style.display = p.dataset.panel === target ? '' : 'none'; });
         });
     });
 }
 
-// ── Sub-tabs ───────────────────────────────────────────
 function initSubTabs() {
     document.querySelectorAll('.sub-tabs').forEach(group => {
         group.querySelectorAll('.sub-tab').forEach(tab => {
@@ -456,55 +651,65 @@ function initSubTabs() {
     });
 }
 
-// ── Toggles ────────────────────────────────────────────
 function initToggles() {
-    document.querySelectorAll('.toggle').forEach(toggle => {
-        toggle.addEventListener('click', () => toggle.classList.toggle('on'));
-    });
+    document.querySelectorAll('.toggle').forEach(t => t.addEventListener('click', () => t.classList.toggle('on')));
 }
 
-// ── Position grid ──────────────────────────────────────
 function initPositionGrid() {
     document.querySelectorAll('.pos-cell').forEach(cell => {
         cell.addEventListener('click', () => {
-            cell.closest('.position-grid')
-                .querySelectorAll('.pos-cell')
-                .forEach(c => c.classList.remove('active'));
+            cell.closest('.position-grid').querySelectorAll('.pos-cell').forEach(c => c.classList.remove('active'));
             cell.classList.add('active');
         });
     });
 }
 
-// ── Zoom slider ────────────────────────────────────────
 function initZoom() {
     const slider = document.getElementById('zoom-slider');
     const label  = document.getElementById('zoom-label');
-    if (!slider || !label) return;
-    slider.addEventListener('input', () => { label.textContent = slider.value + '%'; });
+    if (slider && label) slider.addEventListener('input', () => { label.textContent = slider.value + '%'; });
 }
 
-// ── Opacity slider ─────────────────────────────────────
 function initOpacity() {
     const slider = document.getElementById('opacity-slider');
     const label  = document.getElementById('opacity-value');
-    if (!slider || !label) return;
-    slider.addEventListener('input', () => { label.textContent = slider.value + '%'; });
+    if (slider && label) slider.addEventListener('input', () => { label.textContent = slider.value + '%'; });
 }
 
-// ── Wire up all "Add photo" buttons ───────────────────
 function initAddPhotoButtons() {
     document.querySelectorAll('[data-action="add-photos"]').forEach(btn => {
         btn.addEventListener('click', openPhotos);
     });
-
-    // Browser file input
     const input = document.getElementById('file-input');
     if (input) {
         input.addEventListener('change', async () => {
             await handleFileInput(input.files);
-            input.value = ''; // reset so same files can be re-added
+            input.value = '';
         });
     }
+}
+
+function initDeleteButton() {
+    const btn = document.getElementById('btn-delete-checked');
+    if (!btn) return;
+    btn.addEventListener('click', () => {
+        if (checkedIndices.size > 0) deleteChecked();
+    });
+}
+
+function initSelectAllCheckbox() {
+    const cb = document.getElementById('gallery-select-all');
+    if (!cb) return;
+    cb.addEventListener('change', () => {
+        if (cb.checked) checkAll();
+        else clearChecks();
+    });
+}
+
+function initClearSelectionBtn() {
+    const btn = document.getElementById('btn-clear-selection');
+    if (!btn) return;
+    btn.addEventListener('click', clearChecks);
 }
 
 // ── Init ───────────────────────────────────────────────
@@ -512,9 +717,14 @@ document.addEventListener('DOMContentLoaded', () => {
     renderEmptyState();
     renderEditorEmpty();
     updateCounts();
+    updateSelectionUI();
 
     initAddPhotoButtons();
+    initDeleteButton();
+    initSelectAllCheckbox();
+    initClearSelectionBtn();
     initDragDrop();
+    initKeyboard();
     initToolCards();
     initGalleryNav();
     initPresets();
