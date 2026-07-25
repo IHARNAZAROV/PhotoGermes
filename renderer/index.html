@@ -763,23 +763,41 @@
           </div><!-- /.resize-wh-row -->
 
           <!-- Checkboxes -->
-          <div class="ri-check-row">
+          <label class="ri-checkbox">
             <input type="checkbox" id="resize-keep-ratio" checked />
-            <label for="resize-keep-ratio">Сохранить пропорции</label>
-          </div>
-          <div class="ri-check-row">
+            <span class="ri-checkbox-box">
+              <svg width="10" height="10" viewBox="0 0 10 10" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <polyline points="1.5,5 4,7.5 8.5,2"/>
+              </svg>
+            </span>
+            <span class="ri-checkbox-label">Сохранить пропорции</span>
+          </label>
+          <label class="ri-checkbox">
             <input type="checkbox" id="resize-no-enlarge" />
-            <label for="resize-no-enlarge">Не увеличивать, если меньше оригинала</label>
-          </div>
+            <span class="ri-checkbox-box">
+              <svg width="10" height="10" viewBox="0 0 10 10" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <polyline points="1.5,5 4,7.5 8.5,2"/>
+              </svg>
+            </span>
+            <span class="ri-checkbox-label">Не увеличивать, если меньше оригинала</span>
+          </label>
 
           <!-- Resample method -->
           <div class="ri-field-label" style="margin-top:16px;">Метод ресэмплинга</div>
-          <select class="ri-select" id="resize-resample">
-            <option>Бикубический (рекомендуется)</option>
-            <option>Билинейный</option>
-            <option>Ближайший сосед</option>
-            <option>Ланцош</option>
-          </select>
+          <div class="ri-select-wrap" id="resize-resample-wrap">
+            <button class="ri-select-btn" id="resize-resample-btn" type="button">
+              <span id="resize-resample-label">Бикубический (рекомендуется)</span>
+              <svg width="10" height="10" viewBox="0 0 10 10" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                <polyline points="1,3 5,7 9,3"/>
+              </svg>
+            </button>
+            <div class="ri-select-dropdown" id="resize-resample-dropdown">
+              <div class="ri-select-option active" data-value="Бикубический (рекомендуется)">Бикубический (рекомендуется)</div>
+              <div class="ri-select-option" data-value="Билинейный">Билинейный</div>
+              <div class="ri-select-option" data-value="Ближайший сосед">Ближайший сосед</div>
+              <div class="ri-select-option" data-value="Ланцош">Ланцош</div>
+            </div>
+          </div>
 
           <!-- Quality -->
           <div class="ri-quality-header">

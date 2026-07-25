@@ -167,15 +167,50 @@
     syncLink();
 })();
 
+/* ── Custom resample dropdown ────────────────────────── */
+(function initResampleDropdown() {
+    const wrap    = document.getElementById('resize-resample-wrap');
+    const btn     = document.getElementById('resize-resample-btn');
+    const labelEl = document.getElementById('resize-resample-label');
+    const dropdown= document.getElementById('resize-resample-dropdown');
+    if (!wrap || !btn || !dropdown) return;
+
+    function open()  { btn.classList.add('open'); dropdown.classList.add('open'); }
+    function close() { btn.classList.remove('open'); dropdown.classList.remove('open'); }
+    function toggle(){ btn.classList.contains('open') ? close() : open(); }
+
+    btn.addEventListener('click', e => { e.stopPropagation(); toggle(); });
+
+    dropdown.querySelectorAll('.ri-select-option').forEach(opt => {
+        opt.addEventListener('click', () => {
+            dropdown.querySelectorAll('.ri-select-option').forEach(o => o.classList.remove('active'));
+            opt.classList.add('active');
+            if (labelEl) labelEl.textContent = opt.dataset.value;
+            close();
+            updateResizeResult();
+        });
+    });
+
+    // Close on outside click
+    document.addEventListener('click', e => {
+        if (!wrap.contains(e.target)) close();
+    });
+})();
+
 /* ── Quality slider ──────────────────────────────────── */
 (function initResizeQuality() {
     const slider = document.getElementById('resize-quality');
     const label  = document.getElementById('resize-quality-val');
     if (!slider || !label) return;
-    slider.addEventListener('input', () => {
+
+    function updateFill() {
+        const pct = ((slider.value - slider.min) / (slider.max - slider.min)) * 100;
+        slider.style.setProperty('--slider-pct', pct + '%');
         label.textContent = slider.value + '%';
-        updateResizeResult();
-    });
+    }
+
+    slider.addEventListener('input', () => { updateFill(); updateResizeResult(); });
+    updateFill(); // init
 })();
 
 /* ── Result calculation ─────────────────────────────── */
@@ -189,11 +224,13 @@ function updateResizeResult() {
     const rSize    = document.getElementById('resize-result-size');
     const rFile    = document.getElementById('resize-result-filesize');
     const rEconomy = document.getElementById('resize-result-economy');
+    const lblAfter = document.getElementById('resize-label-after');
 
     if (!photo || !photo.width || !photo.height) {
         if (rSize)    rSize.textContent    = '— × —';
         if (rFile)    rFile.textContent    = '—';
         if (rEconomy) rEconomy.textContent = '—';
+        if (lblAfter) lblAfter.textContent = '';
         return;
     }
 
@@ -208,7 +245,7 @@ function updateResizeResult() {
         newH = Math.max(1, Number(inpH?.value) || photo.height);
     }
 
-    // Approximate new file size: pixels * quality * bytes-per-pixel
+    // Approximate new file size
     const origPixels = photo.width * photo.height;
     const newPixels  = newW * newH;
     const ratio      = (newPixels / origPixels) * quality;
@@ -216,18 +253,23 @@ function updateResizeResult() {
     const saved      = photo.sizeBytes - newSize;
     const savedPct   = photo.sizeBytes > 0 ? Math.round(saved / photo.sizeBytes * 100) : 0;
 
-    if (rSize)    rSize.textContent    = `${newW} × ${newH} px`;
-    if (rFile)    rFile.textContent    = '≈ ' + formatResizeSize(newSize);
+    if (rSize)    rSize.textContent = `${newW} × ${newH} px`;
+    if (rFile)    rFile.textContent = '≈ ' + formatResizeSize(newSize);
     if (rEconomy) {
         if (saved > 0) {
-            rEconomy.textContent = `≈ ${formatResizeSize(saved)} (${savedPct}%)`;
-            rEconomy.style.color = 'var(--color-primary)';
+            rEconomy.textContent      = `≈ ${formatResizeSize(saved)} (${savedPct}%)`;
+            rEconomy.style.color      = 'var(--color-primary)';
             rEconomy.style.fontWeight = '600';
         } else {
-            rEconomy.textContent = '−';
-            rEconomy.style.color = 'var(--color-muted)';
+            rEconomy.textContent      = '−';
+            rEconomy.style.color      = 'var(--color-muted)';
             rEconomy.style.fontWeight = '400';
         }
+    }
+
+    // Update the "После изменения" badge in the split view
+    if (lblAfter) {
+        lblAfter.textContent = `${newW} × ${newH} рх • ${formatResizeSize(newSize)}`;
     }
 }
 
