@@ -1,0 +1,30 @@
+{
+  "name": "photogermes",
+  "version": "1.0.0",
+  "description": "",
+  "main": "main.js",
+  "scripts": {
+      "start": "electron ."
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/IHARNAZAROV/PhotoGermes.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "bugs": {
+    "url": "https://github.com/IHARNAZAROV/PhotoGermes/issues"
+  },
+  "homepage": "https://github.com/IHARNAZAROV/PhotoGermes#readme",
+  "devDependencies": {
+    "electron": "^43.2.0"
+  },
+  "dependencies": {
+    "electron-store": "^11.0.2",
+    "exif-parser": "^0.1.12",
+    "exif-reader": "^2.0.3",
+    "sharp": "^0.35.3"
+  }
+}
