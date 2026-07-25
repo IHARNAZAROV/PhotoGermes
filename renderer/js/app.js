@@ -15,6 +15,19 @@ let lastCheckedIndex = -1;   // anchor for shift-range selection
 let editorRotation = 0;     // 0 | 90 | 180 | 270
 let editorFlipH    = false;
 
+// ── Undo / Redo — per-photo stacks ─────────────────────
+// Each photo object carries ._undoStack and ._redoStack.
+// History is isolated to the photo it belongs to, so switching
+// photos never bleeds undo/redo state between images.
+function photoUndoStack(photo) {
+    if (!photo._undoStack) photo._undoStack = [];
+    return photo._undoStack;
+}
+function photoRedoStack(photo) {
+    if (!photo._redoStack) photo._redoStack = [];
+    return photo._redoStack;
+}
+
 // ── Detect environment ─────────────────────────────────
 const isElectron = typeof window.api !== 'undefined';
 
@@ -271,6 +284,9 @@ function updateSelectionUI() {
         else                  deleteLbl.textContent = 'Удалить';
     }
 
+    // Apply button label
+    updateApplyBtn();
+
     // Footer selected text
     const footerSel = document.querySelector('.footer-selected');
     if (footerSel) {
@@ -386,6 +402,18 @@ function initKeyboard() {
             }
         }
 
+        // Ctrl+Z → undo
+        if ((e.ctrlKey || e.metaKey) && e.key === 'z' && !e.shiftKey) {
+            e.preventDefault();
+            doUndo();
+        }
+
+        // Ctrl+Y / Ctrl+Shift+Z → redo
+        if ((e.ctrlKey || e.metaKey) && (e.key === 'y' || (e.key === 'z' && e.shiftKey))) {
+            e.preventDefault();
+            doRedo();
+        }
+
         // Ctrl+A → select all
         if ((e.ctrlKey || e.metaKey) && e.key === 'a') {
             if (photos.length > 0) {
@@ -429,6 +457,12 @@ async function selectPhoto(index) {
     if (footerFile) footerFile.textContent = photo.name;
     if (footerInfo) footerInfo.textContent = `${formatRes(photo.width, photo.height)}  ·  ${formatSize(photo.sizeBytes)}`;
     updateSelectionUI();
+
+    // Restore this photo's own transform state (each photo remembers its own)
+    editorRotation = photo._rotation ?? 0;
+    editorFlipH    = photo._flipH    ?? false;
+    applyEditorTransform();
+    updateUndoRedoBtns();
 
     const wInput = document.getElementById('frame-width');
     const hInput = document.getElementById('frame-height');
@@ -593,8 +627,25 @@ function updateCounts() {
     if (galleryCount) galleryCount.textContent = `(${count})`;
     const allBadge = document.querySelector('[data-nav="all"] .gallery-nav-badge');
     if (allBadge) allBadge.textContent = count;
-    const applyBtn = document.querySelector('.inspector-footer .btn-primary');
-    if (applyBtn) applyBtn.innerHTML = applyBtn.innerHTML.replace(/\(\d+\)/, `(${count})`);
+}
+
+// ── Apply button label / icon ───────────────────────────
+const ICON_SINGLE = `<rect x="2" y="2" width="12" height="12" rx="2"/><polyline points="5,8 7,10.5 11,6"/>`;
+const ICON_MULTI  = `<rect x="1" y="1" width="6" height="6" rx="1"/><rect x="9" y="1" width="6" height="6" rx="1"/><rect x="1" y="9" width="6" height="6" rx="1"/><rect x="9" y="9" width="6" height="6" rx="1"/>`;
+
+function updateApplyBtn() {
+    const lbl  = document.getElementById('apply-btn-label');
+    const icon = document.getElementById('apply-btn-icon');
+    if (!lbl || !icon) return;
+
+    const n = checkedIndices.size;
+    if (n >= 2) {
+        lbl.textContent  = `Применить ко всем`;
+        icon.innerHTML   = ICON_MULTI;
+    } else {
+        lbl.textContent  = 'Применить';
+        icon.innerHTML   = ICON_SINGLE;
+    }
 }
 
 // ── Drag & drop ────────────────────────────────────────
@@ -792,8 +843,9 @@ async function applyCropCurrent() {
         return;
     }
 
+    pushUndo();
     const ok = await applyCropToPhotoCanvas(photo, norm);
-    if (!ok) { showToast('Не удалось применить обрезку'); return; }
+    if (!ok) { photoUndoStack(photo).pop(); updateUndoRedoBtns(); showToast('Не удалось применить обрезку'); return; }
 
     patchThumbnail(selectedIndex);
     await loadEditorPreview(photo);
@@ -803,22 +855,35 @@ async function applyCropCurrent() {
     showToast('Обрезка применена');
 }
 
-/** Apply current crop proportions to every photo in the list. */
-async function applyToAll() {
-    if (photos.length === 0) { showToast('Нет фотографий'); return; }
-    if (selectedIndex < 0)   { showToast('Откройте фото, чтобы задать обрезку'); return; }
+/**
+ * Main "Применить" click handler.
+ * — If ≥2 photos are checked → apply to those checked photos.
+ * — Otherwise → apply to the currently open photo only.
+ */
+async function applyMain() {
+    if (checkedIndices.size >= 2) {
+        await applyToChecked();
+    } else {
+        await applyCropCurrent();
+    }
+}
 
-    const photo = photos[selectedIndex];
-    const norm  = window.cropGetNormalized?.(photo.width, photo.height);
+/** Apply the current crop frame to every checked photo. */
+async function applyToChecked() {
+    if (selectedIndex < 0) { showToast('Откройте фото, чтобы задать обрезку'); return; }
+
+    const refPhoto = photos[selectedIndex];
+    const norm     = window.cropGetNormalized?.(refPhoto.width, refPhoto.height);
     if (!norm || (norm.x2 - norm.x) < 0.01 || (norm.y2 - norm.y) < 0.01) {
         showToast('Рамка обрезки слишком маленькая');
         return;
     }
 
     const btn = document.getElementById('btn-apply-all');
-    if (btn) { btn.disabled = true; }
+    if (btn) btn.disabled = true;
 
-    await Promise.all(photos.map(p => applyCropToPhotoCanvas(p, norm)));
+    const targets = [...checkedIndices].map(i => photos[i]).filter(Boolean);
+    await Promise.all(targets.map(p => applyCropToPhotoCanvas(p, norm)));
 
     rebuildGallery();
     if (selectedIndex >= 0) {
@@ -830,7 +895,7 @@ async function applyToAll() {
     }
     updateCounts();
     if (btn) btn.disabled = false;
-    showToast(`Обрезка применена ко всем ${photos.length} фото`);
+    showToast(`Обрезка применена к ${targets.length} фото`);
 }
 
 function initCropButtons() {
@@ -838,7 +903,150 @@ function initCropButtons() {
     if (applyOne) applyOne.addEventListener('click', applyCropCurrent);
 
     const applyAll = document.getElementById('btn-apply-all');
-    if (applyAll) applyAll.addEventListener('click', applyToAll);
+    if (applyAll) applyAll.addEventListener('click', applyMain);
+}
+
+// ── Undo / Redo core (per-photo) ───────────────────────
+/**
+ * Snapshot the current state of `photo` plus the current editor transforms.
+ * The snapshot belongs entirely to that photo and is restored against it.
+ */
+function snapshotPhoto(photo) {
+    return {
+        rotation:  editorRotation,
+        flipH:     editorFlipH,
+        preview:   photo.preview,
+        width:     photo.width,
+        height:    photo.height,
+        sizeBytes: photo.sizeBytes,
+        thumbnail: photo.thumbnail,
+    };
+}
+
+/** Push a snapshot for the currently selected photo onto its undo stack. */
+function pushUndo() {
+    if (selectedIndex < 0) return;
+    const photo = photos[selectedIndex];
+    if (!photo) return;
+    photoUndoStack(photo).push(snapshotPhoto(photo));
+    // Any new action clears the redo branch for this photo
+    photo._redoStack = [];
+    updateUndoRedoBtns();
+}
+
+async function doUndo() {
+    if (selectedIndex < 0) return;
+    const photo = photos[selectedIndex];
+    if (!photo) return;
+    const uStack = photoUndoStack(photo);
+    if (!uStack.length) return;
+    // Save current state for redo
+    photoRedoStack(photo).push(snapshotPhoto(photo));
+    const prev = uStack.pop();
+    await restorePhotoSnapshot(photo, prev);
+    updateUndoRedoBtns();
+}
+
+async function doRedo() {
+    if (selectedIndex < 0) return;
+    const photo = photos[selectedIndex];
+    if (!photo) return;
+    const rStack = photoRedoStack(photo);
+    if (!rStack.length) return;
+    // Save current state for undo
+    photoUndoStack(photo).push(snapshotPhoto(photo));
+    const next = rStack.pop();
+    await restorePhotoSnapshot(photo, next);
+    updateUndoRedoBtns();
+}
+
+/** Apply a snapshot to a specific photo (must already be selected). */
+async function restorePhotoSnapshot(photo, snap) {
+    editorRotation = snap.rotation;
+    editorFlipH    = snap.flipH;
+    photo.preview   = snap.preview;
+    photo.width     = snap.width;
+    photo.height    = snap.height;
+    photo.sizeBytes = snap.sizeBytes;
+    photo.thumbnail = snap.thumbnail;
+
+    patchThumbnail(selectedIndex);
+    await loadEditorPreview(photo);
+    applyEditorTransform();
+
+    const footerInfo = document.querySelector('.footer-info');
+    if (footerInfo)
+        footerInfo.textContent =
+            `${formatRes(photo.width, photo.height)}\u00a0·\u00a0${formatSize(photo.sizeBytes)}`;
+}
+
+/** Reflect the currently-selected photo's history in the toolbar buttons. */
+function updateUndoRedoBtns() {
+    const photo   = selectedIndex >= 0 ? photos[selectedIndex] : null;
+    const canUndo = photo ? photoUndoStack(photo).length > 0 : false;
+    const canRedo = photo ? photoRedoStack(photo).length > 0 : false;
+    const undoBtn = document.querySelector('[data-action="undo"]');
+    const redoBtn = document.querySelector('[data-action="redo"]');
+    if (undoBtn) undoBtn.disabled = !canUndo;
+    if (redoBtn) redoBtn.disabled = !canRedo;
+}
+
+function initUndoRedo() {
+    const undoBtn = document.querySelector('[data-action="undo"]');
+    const redoBtn = document.querySelector('[data-action="redo"]');
+    if (undoBtn) undoBtn.addEventListener('click', doUndo);
+    if (redoBtn) redoBtn.addEventListener('click', doRedo);
+}
+
+// ── JS Tooltip system (position:fixed so no overflow:hidden clipping) ──
+function initTooltips() {
+    const tip = document.createElement('div');
+    tip.id = 'app-tooltip';
+    document.body.appendChild(tip);
+
+    let current = null;
+
+    function show(el) {
+        const text = el.dataset.tooltip;
+        if (!text) return;
+        current = el;
+        tip.textContent = text;
+        tip.style.display = 'block';
+        positionTip(el);
+    }
+
+    function hide() {
+        tip.style.display = 'none';
+        current = null;
+    }
+
+    function positionTip(el) {
+        const rect = el.getBoundingClientRect();
+        // Measure after making visible
+        const tw = tip.offsetWidth;
+        const th = tip.offsetHeight;
+        let top  = rect.top - th - 6;
+        let left = rect.left + rect.width / 2 - tw / 2;
+
+        // If it would go above the viewport, show below instead
+        if (top < 4) top = rect.bottom + 6;
+        // Clamp horizontally within viewport
+        if (left < 4) left = 4;
+        if (left + tw > window.innerWidth - 4) left = window.innerWidth - 4 - tw;
+
+        tip.style.top  = top  + 'px';
+        tip.style.left = left + 'px';
+    }
+
+    document.addEventListener('mouseover', e => {
+        const el = e.target.closest('[data-tooltip]');
+        if (el) show(el); else hide();
+    });
+    document.addEventListener('mouseout', e => {
+        if (e.target.closest('[data-tooltip]')) hide();
+    });
+    document.addEventListener('click', hide);
+    document.addEventListener('scroll', hide, true);
 }
 
 // ── Editor transform ────────────────────────────────────
@@ -855,20 +1063,30 @@ function applyEditorTransform() {
         placeholder.dataset.rotation = editorRotation;
         placeholder.classList.toggle('flip-h', editorFlipH);
     }
+
+    // Persist transform back to the photo object so switching photos
+    // and returning later restores the correct orientation.
+    if (selectedIndex >= 0 && photos[selectedIndex]) {
+        photos[selectedIndex]._rotation = editorRotation;
+        photos[selectedIndex]._flipH    = editorFlipH;
+    }
 }
 
 function rotateEditor(dir) {
     // dir: +1 = clockwise 90°, -1 = counter-clockwise 90°
+    pushUndo();
     editorRotation = ((editorRotation + dir * 90) % 360 + 360) % 360;
     applyEditorTransform();
 }
 
 function flipEditorH() {
+    pushUndo();
     editorFlipH = !editorFlipH;
     applyEditorTransform();
 }
 
 function resetEditorTransform() {
+    pushUndo();
     editorRotation = 0;
     editorFlipH    = false;
     applyEditorTransform();
@@ -921,4 +1139,7 @@ document.addEventListener('DOMContentLoaded', () => {
     initOpacity();
     initEditorTransformButtons();
     initCropButtons();
+    initUndoRedo();
+    initTooltips();
+    updateUndoRedoBtns();
 });

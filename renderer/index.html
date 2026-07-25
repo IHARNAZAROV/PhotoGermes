@@ -69,18 +69,18 @@
     <div class="header-sep"></div>
 
     <!-- Undo / Redo -->
-    <button class="btn btn-ghost" data-tooltip="Отменить (Ctrl+Z)">
+    <button class="btn btn-ghost" data-action="undo" data-tooltip="Отменить (Ctrl+Z)" disabled>
       <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-        <path d="M3 7a5 5 0 109 3"/>
-        <polyline points="3,4 3,8 7,8"/>
+        <path d="M2 8a6 6 0 1 1 1.2 3.6"/>
+        <polyline points="2,3.5 2,8 6.5,8"/>
       </svg>
       Отменить
     </button>
 
-    <button class="btn btn-ghost" data-tooltip="Повторить (Ctrl+Y)" disabled>
+    <button class="btn btn-ghost" data-action="redo" data-tooltip="Повторить (Ctrl+Y)" disabled>
       <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-        <path d="M13 7a5 5 0 10-9 3"/>
-        <polyline points="13,4 13,8 9,8"/>
+        <path d="M14 8a6 6 0 1 0-1.2 3.6"/>
+        <polyline points="14,3.5 14,8 9.5,8"/>
       </svg>
       Повторить
     </button>
@@ -351,27 +351,29 @@
         <div class="editor-actions">
           <button class="btn-icon" data-tooltip="Повернуть влево">
             <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
-              <path d="M3 7a5 5 0 109 3"/>
-              <polyline points="3,4 3,7 6,7"/>
+              <path d="M3.5 10A5 5 0 1 0 5 5"/>
+              <polyline points="1,2.5 4.5,5.5 7,2.5"/>
             </svg>
           </button>
           <button class="btn-icon" data-tooltip="Повернуть вправо">
             <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
-              <path d="M13 7a5 5 0 10-9 3"/>
-              <polyline points="13,4 13,7 10,7"/>
+              <path d="M12.5 10A5 5 0 1 1 11 5"/>
+              <polyline points="15,2.5 11.5,5.5 9,2.5"/>
             </svg>
           </button>
           <button class="btn-icon" data-tooltip="Отразить горизонтально">
-            <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round">
-              <line x1="8" y1="2" x2="8" y2="14"/>
-              <polyline points="2,5 5,8 2,11"/>
-              <polyline points="14,5 11,8 14,11"/>
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+              <line x1="8" y1="2" x2="8" y2="14" stroke-dasharray="2.5 1.5"/>
+              <polyline points="1,6 4.5,8 1,10"/>
+              <polyline points="15,6 11.5,8 15,10"/>
             </svg>
           </button>
           <button class="btn-icon" data-tooltip="Сбросить">
             <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
-              <path d="M2 8a6 6 0 1010.4-4.1"/>
-              <polyline points="10,1 13,4.5 9.5,6"/>
+              <path d="M2.5 8a5.5 5.5 0 1 0 1-3.3"/>
+              <polyline points="2.5,2 2.5,5.5 6,5.5"/>
+              <line x1="8" y1="6" x2="8" y2="10"/>
+              <line x1="6" y1="8" x2="10" y2="8"/>
             </svg>
           </button>
         </div>
@@ -472,27 +474,27 @@
           <div class="preset-sep"></div>
 
           <!-- Rotate / flip / reset actions -->
-          <button class="preset-action" data-tooltip="Повернуть">
+          <button class="preset-action" data-tooltip="Повернуть вправо">
             <svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
-              <path d="M4 10a6 6 0 1011-3.1"/>
-              <polyline points="11,4 14,7 11,9.5"/>
+              <path d="M15.5 12A6 6 0 1 1 14 6.5"/>
+              <polyline points="19,3.5 14.5,7 11.5,3"/>
             </svg>
             <span class="preset-action-label">Повернуть</span>
           </button>
 
-          <button class="preset-action" data-tooltip="Отразить">
-            <svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round">
-              <line x1="10" y1="3" x2="10" y2="17"/>
-              <polyline points="3,7 6,10 3,13"/>
-              <polyline points="17,7 14,10 17,13"/>
+          <button class="preset-action" data-tooltip="Отразить горизонтально">
+            <svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+              <line x1="10" y1="2" x2="10" y2="18" stroke-dasharray="3 2"/>
+              <polyline points="2,7 6,10 2,13"/>
+              <polyline points="18,7 14,10 18,13"/>
             </svg>
             <span class="preset-action-label">Отразить</span>
           </button>
 
           <button class="preset-action" data-tooltip="Сбросить кадр">
             <svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
-              <path d="M3 10a7 7 0 1013-3.6"/>
-              <polyline points="13,3 16,6.5 12,8"/>
+              <path d="M3 10a7 7 0 1 0 1.2-4"/>
+              <polyline points="3,3 3,7 7,7"/>
             </svg>
             <span class="preset-action-label">Сбросить</span>
           </button>
@@ -689,13 +691,12 @@
       <!-- Inspector footer buttons -->
       <div class="inspector-footer">
         <button id="btn-apply-all" class="btn btn-primary btn-lg btn-full">
-          <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <rect x="1" y="1" width="6" height="6" rx="1"/>
-            <rect x="9" y="1" width="6" height="6" rx="1"/>
-            <rect x="1" y="9" width="6" height="6" rx="1"/>
-            <rect x="9" y="9" width="6" height="6" rx="1"/>
+          <!-- icon swapped by JS: single-check (default) or grid (multi) -->
+          <svg id="apply-btn-icon" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="2" y="2" width="12" height="12" rx="2"/>
+            <polyline points="5,8 7,10.5 11,6"/>
           </svg>
-          Применить ко всем (0)
+          <span id="apply-btn-label">Применить</span>
         </button>
         <button class="btn btn-outline btn-lg btn-full">
           <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">

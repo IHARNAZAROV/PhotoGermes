@@ -59,20 +59,21 @@
   line-height: 1.6;
 }
 
-/* Tooltip (simple CSS) */
-[data-tooltip] { position: relative; }
-[data-tooltip]:hover::after {
-  content: attr(data-tooltip);
-  position: absolute;
-  bottom: calc(100% + 6px);
-  left: 50%;
-  transform: translateX(-50%);
-  white-space: nowrap;
+/* Tooltip — rendered via JS into a fixed-position div (see app.js initTooltips)
+   so it never gets clipped by overflow:hidden containers */
+#app-tooltip {
+  position: fixed;
+  z-index: 9999;
   background: #1a1f27;
   color: #fff;
-  font-size: var(--text-xs);
-  padding: 4px 8px;
+  font-size: 11px;
+  font-family: var(--font-family);
+  font-weight: 500;
+  padding: 4px 9px;
   border-radius: var(--radius-sm);
   pointer-events: none;
-  z-index: 100;
+  white-space: nowrap;
+  display: none;
+  box-shadow: 0 2px 8px rgba(0,0,0,.25);
+  letter-spacing: .01em;
 }
