@@ -298,35 +298,40 @@
 .gallery-list {
   flex: 1;
   overflow-y: auto;
-  padding: 8px;
+  padding: 10px;
 }
 
 .gallery-item {
   display: flex;
   align-items: center;
-  gap: 10px;
-  padding: 10px;
-  border-radius: var(--radius-md);
+  gap: 12px;
+  padding: 8px 10px;
+  border-radius: var(--radius-lg);
   cursor: pointer;
-  transition: background var(--transition);
+  transition: background var(--transition), box-shadow var(--transition);
   border: 1.5px solid transparent;
   margin-bottom: 4px;
 }
-.gallery-item:hover { background: var(--color-panel); }
+.gallery-item:hover {
+  background: var(--color-panel);
+  box-shadow: var(--shadow-sm);
+}
 .gallery-item.selected {
   background: var(--color-panel);
   border-color: var(--color-primary);
+  box-shadow: 0 0 0 3px var(--color-primary-muted);
 }
 
 .gallery-thumb {
-  width: 52px;
-  height: 40px;
-  border-radius: var(--radius-sm);
+  width: 62px;
+  height: 50px;
+  border-radius: var(--radius-md);
   object-fit: cover;
   flex-shrink: 0;
   background: var(--color-border);
   overflow: hidden;
   position: relative;
+  box-shadow: var(--shadow-xs);
 }
 
 .gallery-thumb-img {
@@ -422,7 +427,7 @@
     radial-gradient(ellipse 52% 42% at 62%  8%, rgba(68, 196, 142, 0.30) 0%, transparent 62%),
     radial-gradient(ellipse 70% 55% at 45% 70%, rgba(22,  98,  76, 0.45) 0%, transparent 65%),
     linear-gradient(152deg, #060e0b 0%, #0d2e22 32%, #16624c 64%, #1d8060 100%);
-  border-radius: var(--radius-md);
+  border-radius: var(--radius-xl);
   position: relative;
   box-shadow: var(--shadow-md);
   overflow: hidden;
@@ -1166,7 +1171,7 @@
 .gallery-item.checked .gallery-thumb {
   outline: 2px solid var(--color-primary);
   outline-offset: -2px;
-  border-radius: var(--radius-sm);
+  border-radius: var(--radius-md);
 }
 
 /* ─────────────────────────────────────
@@ -1280,10 +1285,9 @@
 .gallery-thumb-real {
   width: 100%;
   height: 100%;
-  /* contain — показываем всё изображение целиком, как уменьшенная копия */
-  object-fit: contain;
+  object-fit: cover;
   display: block;
-  border-radius: var(--radius-sm);
+  border-radius: var(--radius-md);
 }
 
 /* Loading spinner inside thumbnail */
@@ -1341,7 +1345,7 @@
   width: 100%;
   height: 100%;
   object-fit: contain;
-  border-radius: var(--radius-md);
+  border-radius: var(--radius-xl);
   z-index: 0;
   transform-origin: center center;
   transition: transform .25s ease;
@@ -1388,7 +1392,7 @@
   flex: 1;
   display: flex;
   position: relative;
-  border-radius: var(--radius-md);
+  border-radius: var(--radius-xl);
   overflow: hidden;
   /* Same mesh gradient as crop placeholder */
   background:

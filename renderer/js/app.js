@@ -763,9 +763,17 @@ function switchToTool(toolName) {
     if (cropInspector)    cropInspector.style.display    = showCrop  ? 'contents' : 'none';
     if (resizeInspector)  resizeInspector.style.display  = isResize  ? 'flex'     : 'none';
 
-    // Load the current photo into the resize split-view when switching to it
-    if (isResize && selectedIndex >= 0 && photos[selectedIndex]) {
-        window.resizeLoadPhoto?.(photos[selectedIndex]);
+    // Photos are stored in the shared global `photos[]` array and are always
+    // available across all tools. When switching, reload the current photo
+    // into whichever view is now active so it shows up immediately.
+    const photo = selectedIndex >= 0 ? photos[selectedIndex] : null;
+    if (photo) {
+        if (isResize) {
+            window.resizeLoadPhoto?.(photo);
+        } else {
+            // Crop, watermark, batch, export — all use the same canvas area
+            loadEditorPreview(photo);
+        }
     }
 }
 
