@@ -745,8 +745,6 @@ function initToolCards() {
         card.addEventListener('click', () => {
             document.querySelectorAll('.tool-card').forEach(c => c.classList.remove('active'));
             card.classList.add('active');
-            const toolName = card.querySelector('.tool-title')?.textContent?.trim();
-            if (toolName) pushHistory('tool', 'Инструмент: ' + toolName);
         });
     });
 }
@@ -804,12 +802,6 @@ function initPositionGrid() {
             cell.classList.add('active');
         });
     });
-}
-
-function initZoom() {
-    const slider = document.getElementById('zoom-slider');
-    const label  = document.getElementById('zoom-label');
-    if (slider && label) slider.addEventListener('input', () => { label.textContent = slider.value + '%'; });
 }
 
 function initOpacity() {
@@ -1388,7 +1380,6 @@ document.addEventListener('DOMContentLoaded', () => {
     initSubTabs();
     initToggles();
     initPositionGrid();
-    initZoom();
     initOpacity();
     initEditorTransformButtons();
     initCropButtons();

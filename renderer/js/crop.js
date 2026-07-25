@@ -326,12 +326,20 @@ function initCrop() {
     document.addEventListener('mousemove', onMouseMove);
     document.addEventListener('mouseup',   onMouseUp);
 
-    // Preset buttons → aspect ratio + sync select
+    // Preset buttons → aspect ratio + sync select + sync sibling buttons
     document.querySelectorAll('.preset-btn').forEach(btn => {
         btn.addEventListener('click', () => {
             const value = btn.querySelector('.preset-label')?.textContent?.trim();
-            if (value && value in RATIO_MAP) {
-                setSelectValue(value);
+            if (!value || !(value in RATIO_MAP)) return;
+
+            syncPresetBtns(value);
+            setSelectValue(value);
+
+            if (value === 'Свободно') {
+                // Явный сброс кадра к начальному положению —
+                // иначе пользователь не видит реакции на нажатие
+                resetCrop();
+            } else {
                 applyAspectPreset(RATIO_MAP[value] ?? null);
             }
         });
