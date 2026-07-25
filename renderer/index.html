@@ -19,7 +19,7 @@
   <header class="app-header">
 
     <!-- Add photo -->
-    <button class="btn btn-outline" data-tooltip="Добавить фото">
+    <button class="btn btn-outline" data-action="add-photos" data-tooltip="Добавить фото">
       <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
         <path d="M2 12.5L5.5 9 8 11.5 10.5 8.5 14 12.5"/>
         <rect x="1" y="1" width="14" height="14" rx="2"/>
@@ -204,7 +204,7 @@
         <div class="sidebar-section-label">Галерея</div>
       </div>
       <nav class="gallery-nav">
-        <div class="gallery-nav-item active">
+        <div class="gallery-nav-item active" data-nav="all">
           <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
             <rect x="1" y="1" width="6" height="6" rx="1"/>
             <rect x="9" y="1" width="6" height="6" rx="1"/>
@@ -212,7 +212,7 @@
             <rect x="9" y="9" width="6" height="6" rx="1"/>
           </svg>
           Все фото
-          <span class="gallery-nav-badge">24</span>
+          <span class="gallery-nav-badge">0</span>
         </div>
         <div class="gallery-nav-item">
           <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
@@ -267,7 +267,7 @@
       <div class="gallery-header">
         <div>
           <span class="gallery-title">Фотографии</span>
-          <span class="gallery-count">(24)</span>
+          <span class="gallery-count">(0)</span>
         </div>
         <div class="gallery-header-actions">
           <button class="btn-icon" data-tooltip="Список">
@@ -292,7 +292,7 @@
       <div class="gallery-list"></div>
 
       <div class="gallery-footer">
-        <button class="btn btn-outline" style="flex:1; justify-content:center;">
+        <button class="btn btn-outline" data-action="add-photos" style="flex:1; justify-content:center;">
           <svg width="15" height="15" viewBox="0 0 15 15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
             <line x1="7.5" y1="2" x2="7.5" y2="13"/>
             <line x1="2" y1="7.5" x2="13" y2="7.5"/>
@@ -318,7 +318,7 @@
     <section class="app-editor">
 
       <div class="editor-header">
-        <div class="editor-title">Редактирование: IMG_2024_1024.jpg</div>
+        <div class="editor-title">Редактирование</div>
         <div class="editor-actions">
           <button class="btn-icon" data-tooltip="Повернуть влево">
             <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
@@ -352,7 +352,9 @@
       <div class="editor-canvas-area">
         <div class="editor-canvas-wrap">
           <!-- The "photo" placeholder -->
-          <div class="editor-image-placeholder">
+          <div class="editor-image-placeholder" id="editor-placeholder">
+            <!-- Real photo (shown when a photo is selected) -->
+            <img id="editor-img" class="editor-real-img" src="" alt="" style="display:none;" />
             <!-- Crop overlay -->
             <div class="crop-overlay">
               <div class="crop-frame">
@@ -473,7 +475,7 @@
           <span class="frame-param-label">Размер кадра</span>
 
           <div class="frame-input">
-            <input type="text" value="5472" aria-label="Ширина" />
+            <input type="text" id="frame-width" value="—" aria-label="Ширина" />
             <span class="unit">px</span>
           </div>
 
@@ -485,7 +487,7 @@
           </button>
 
           <div class="frame-input">
-            <input type="text" value="3648" aria-label="Высота" />
+            <input type="text" id="frame-height" value="—" aria-label="Высота" />
             <span class="unit">px</span>
           </div>
 
@@ -675,12 +677,15 @@
   <!-- ═══════════════════════════════════════════════════
        FOOTER
   ════════════════════════════════════════════════════ -->
+  <!-- Hidden file input for browser fallback -->
+  <input type="file" id="file-input" accept="image/*,.heic,.heif,.avif" multiple style="display:none;" />
+
   <footer class="app-footer">
-    <span>Выбрано: 1 фото</span>
+    <span class="footer-selected">Ничего не выбрано</span>
     <span class="footer-sep">·</span>
-    <span class="footer-file">IMG_2024_1024.jpg</span>
+    <span class="footer-file">—</span>
     <span class="footer-sep">·</span>
-    <span class="footer-info">5472 × 3648 &nbsp; 8.2 МБ</span>
+    <span class="footer-info"></span>
 
     <div class="footer-spacer"></div>
 

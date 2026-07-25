@@ -864,6 +864,134 @@
 }
 
 /* ─────────────────────────────────────
+   Gallery empty state
+───────────────────────────────────── */
+.gallery-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 48px 24px;
+  text-align: center;
+  height: 100%;
+  min-height: 280px;
+  gap: 10px;
+}
+
+.gallery-empty-icon {
+  width: 72px;
+  height: 72px;
+  border-radius: 50%;
+  background: var(--color-bg);
+  border: 2px dashed var(--color-border2);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--color-faint);
+  margin-bottom: 4px;
+}
+
+.gallery-empty-title {
+  font-size: var(--text-md);
+  font-weight: 600;
+  color: var(--color-text);
+}
+
+.gallery-empty-hint {
+  font-size: var(--text-sm);
+  color: var(--color-muted);
+  line-height: 1.6;
+}
+
+/* ─────────────────────────────────────
+   Gallery thumbnails — real images
+───────────────────────────────────── */
+.gallery-thumb-real {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+  border-radius: var(--radius-sm);
+}
+
+/* Loading spinner inside thumbnail */
+.gallery-thumb-spinner {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--color-bg);
+}
+
+.gallery-thumb-spinner::after {
+  content: '';
+  width: 18px;
+  height: 18px;
+  border: 2px solid var(--color-border2);
+  border-top-color: var(--color-primary);
+  border-radius: 50%;
+  animation: spin .7s linear infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+/* ─────────────────────────────────────
+   Drag-over highlight on gallery
+───────────────────────────────────── */
+.app-gallery.drag-over {
+  outline: 2px dashed var(--color-primary);
+  outline-offset: -3px;
+  background: var(--color-primary-muted);
+}
+
+.app-gallery.drag-over .gallery-empty-icon {
+  border-color: var(--color-primary);
+  color: var(--color-primary);
+  background: var(--color-primary-muted);
+}
+
+/* ─────────────────────────────────────
+   Editor — real photo display
+───────────────────────────────────── */
+
+/* Hide the CSS gradient background when a real photo is loaded */
+.editor-image-placeholder.has-photo::before,
+.editor-image-placeholder.has-photo::after {
+  display: none;
+}
+
+.editor-real-img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  border-radius: var(--radius-md);
+  z-index: 0;
+}
+
+/* Make crop overlay sit above the real image */
+.editor-image-placeholder.has-photo .crop-overlay {
+  z-index: 1;
+}
+
+/* Loading state — show spinner overlay */
+.editor-image-placeholder.loading::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: rgba(255,255,255,.6);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--radius-md);
+  z-index: 5;
+}
+
+/* ─────────────────────────────────────
    Scrollbar styling
 ───────────────────────────────────── */
 ::-webkit-scrollbar       { width: 6px; height: 6px; }

@@ -1,45 +1,79 @@
 /* ========================================================
-   app.js — UI interactions (no business logic)
+   app.js — photo loading + UI interactions
    ======================================================== */
-
 'use strict';
 
-// ── Gallery mock data ──────────────────────────────────
-const MOCK_PHOTOS = [
-  { name: 'IMG_2024_1024.jpg', res: '5472 × 3648', size: '8.2 МБ', emoji: '🏔' },
-  { name: 'IMG_2024_1025.jpg', res: '5472 × 3648', size: '7.1 МБ', emoji: '🌊' },
-  { name: 'IMG_2024_1026.jpg', res: '5472 × 3648', size: '6.8 МБ', emoji: '🌲' },
-  { name: 'IMG_2024_1027.jpg', res: '5472 × 3648', size: '9.3 МБ', emoji: '🌄' },
-  { name: 'IMG_2024_1028.jpg', res: '5472 × 3648', size: '7.6 МБ', emoji: '🌃' },
-  { name: 'IMG_2024_1029.jpg', res: '5472 × 3648', size: '8.9 МБ', emoji: '🏕' },
-  { name: 'IMG_2024_1030.jpg', res: '4032 × 3024', size: '5.4 МБ', emoji: '🌺' },
-  { name: 'IMG_2024_1031.jpg', res: '4032 × 3024', size: '6.1 МБ', emoji: '🐦' },
-  { name: 'IMG_2024_1032.jpg', res: '5472 × 3648', size: '8.7 МБ', emoji: '🌅' },
-  { name: 'IMG_2024_1033.jpg', res: '3840 × 2160', size: '4.9 МБ', emoji: '🌌' },
-  { name: 'IMG_2024_1034.jpg', res: '5472 × 3648', size: '7.8 МБ', emoji: '🦅' },
-  { name: 'IMG_2024_1035.jpg', res: '5472 × 3648', size: '8.5 МБ', emoji: '🌾' },
-];
+// ── State ──────────────────────────────────────────────
+/** @type {Array<{name:string, filePath:string|null, width:number, height:number, sizeBytes:number, thumbnail:string|null, preview:string|null, objectUrl:string|null}>} */
+let photos = [];
+let selectedIndex = -1;
 
-let selectedPhotoIndex = 0;
+// ── Detect environment ─────────────────────────────────
+const isElectron = typeof window.api !== 'undefined';
 
-// ── Build gallery items ────────────────────────────────
-function buildGallery() {
-  const list = document.querySelector('.gallery-list');
-  if (!list) return;
+// ── Helpers ────────────────────────────────────────────
+function formatSize(bytes) {
+    if (bytes >= 1024 * 1024) return (bytes / (1024 * 1024)).toFixed(1) + ' МБ';
+    if (bytes >= 1024)        return (bytes / 1024).toFixed(0) + ' КБ';
+    return bytes + ' Б';
+}
 
-  list.innerHTML = '';
+function formatRes(w, h) {
+    return (w && h) ? `${w} × ${h}` : '— × —';
+}
 
-  MOCK_PHOTOS.forEach((photo, i) => {
-    const item = document.createElement('div');
-    item.className = 'gallery-item' + (i === selectedPhotoIndex ? ' selected' : '');
-    item.dataset.index = i;
-    item.innerHTML = `
-      <div class="gallery-thumb">
-        <div class="gallery-thumb-img">${photo.emoji}</div>
+// ── Empty state ────────────────────────────────────────
+function renderEmptyState() {
+    const list = document.querySelector('.gallery-list');
+    list.innerHTML = `
+      <div class="gallery-empty">
+        <div class="gallery-empty-icon">
+          <svg width="40" height="40" viewBox="0 0 40 40" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="4" y="8" width="32" height="26" rx="3"/>
+            <path d="M4 28l8-8 6 6 5-5 9 8"/>
+            <circle cx="14" cy="17" r="3"/>
+            <line x1="22" y1="2" x2="22" y2="8"/>
+            <line x1="18" y1="5" x2="26" y2="5"/>
+          </svg>
+        </div>
+        <p class="gallery-empty-title">Нет фотографий</p>
+        <p class="gallery-empty-hint">Нажмите «Добавить фото»<br>или перетащите файлы сюда</p>
       </div>
+    `;
+}
+
+function renderEditorEmpty() {
+    const placeholder = document.getElementById('editor-placeholder');
+    const img = document.getElementById('editor-img');
+    if (img) { img.src = ''; img.style.display = 'none'; }
+    if (placeholder) placeholder.classList.remove('has-photo');
+
+    const title = document.querySelector('.editor-title');
+    if (title) title.textContent = 'Редактирование';
+
+    const footerFile = document.querySelector('.footer-file');
+    const footerInfo = document.querySelector('.footer-info');
+    const footerSel  = document.querySelector('.footer-selected');
+    if (footerFile) footerFile.textContent = '—';
+    if (footerInfo) footerInfo.textContent = '';
+    if (footerSel)  footerSel.textContent  = 'Ничего не выбрано';
+}
+
+// ── Gallery rendering ──────────────────────────────────
+function renderGalleryItem(photo, index) {
+    const item = document.createElement('div');
+    item.className = 'gallery-item' + (index === selectedIndex ? ' selected' : '');
+    item.dataset.index = index;
+
+    const thumbContent = photo.thumbnail
+        ? `<img src="${photo.thumbnail}" alt="${photo.name}" class="gallery-thumb-real" />`
+        : `<div class="gallery-thumb-spinner"></div>`;
+
+    item.innerHTML = `
+      <div class="gallery-thumb">${thumbContent}</div>
       <div class="gallery-item-info">
         <div class="gallery-item-name">${photo.name}</div>
-        <div class="gallery-item-meta">${photo.res} &nbsp;·&nbsp; ${photo.size}</div>
+        <div class="gallery-item-meta">${formatRes(photo.width, photo.height)} &nbsp;·&nbsp; ${formatSize(photo.sizeBytes)}</div>
       </div>
       <button class="btn-icon gallery-item-menu" data-tooltip="Меню">
         <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2">
@@ -50,150 +84,444 @@ function buildGallery() {
       </button>
     `;
 
-    item.addEventListener('click', () => selectPhoto(i));
-    list.appendChild(item);
-  });
+    item.addEventListener('click', (e) => {
+        if (e.target.closest('.gallery-item-menu')) return;
+        selectPhoto(index);
+    });
 
-  updateEditorTitle();
+    return item;
 }
 
-function selectPhoto(index) {
-  selectedPhotoIndex = index;
+function rebuildGallery() {
+    const list = document.querySelector('.gallery-list');
+    if (!list) return;
 
-  document.querySelectorAll('.gallery-item').forEach((el, i) => {
-    el.classList.toggle('selected', i === index);
-  });
+    if (photos.length === 0) {
+        renderEmptyState();
+        renderEditorEmpty();
+        updateCounts();
+        return;
+    }
 
-  updateEditorTitle();
-  updateFooter();
+    list.innerHTML = '';
+    photos.forEach((photo, i) => {
+        list.appendChild(renderGalleryItem(photo, i));
+    });
+
+    updateCounts();
 }
 
-function updateEditorTitle() {
-  const titleEl = document.querySelector('.editor-title');
-  if (titleEl && MOCK_PHOTOS[selectedPhotoIndex]) {
-    titleEl.textContent = `Редактирование: ${MOCK_PHOTOS[selectedPhotoIndex].name}`;
-  }
+/** Update thumbnail for a single item without full rebuild */
+function patchThumbnail(index) {
+    const list = document.querySelector('.gallery-list');
+    if (!list) return;
+    const item = list.querySelector(`[data-index="${index}"]`);
+    if (!item) return;
+    const thumb = item.querySelector('.gallery-thumb');
+    if (!thumb) return;
+    const photo = photos[index];
+    if (photo.thumbnail) {
+        thumb.innerHTML = `<img src="${photo.thumbnail}" alt="${photo.name}" class="gallery-thumb-real" />`;
+    }
+    const meta = item.querySelector('.gallery-item-meta');
+    if (meta) meta.textContent = `${formatRes(photo.width, photo.height)}\u00a0·\u00a0${formatSize(photo.sizeBytes)}`;
 }
 
-function updateFooter() {
-  const fileEl  = document.querySelector('.footer-file');
-  const infoEl  = document.querySelector('.footer-info');
-  if (fileEl)  fileEl.textContent  = MOCK_PHOTOS[selectedPhotoIndex].name;
-  if (infoEl)  infoEl.textContent  = `${MOCK_PHOTOS[selectedPhotoIndex].res}  ·  ${MOCK_PHOTOS[selectedPhotoIndex].size}`;
+// ── Selection ──────────────────────────────────────────
+async function selectPhoto(index) {
+    selectedIndex = index;
+
+    document.querySelectorAll('.gallery-item').forEach((el, i) => {
+        el.classList.toggle('selected', i === index);
+    });
+
+    const photo = photos[index];
+    if (!photo) return;
+
+    // Update editor title
+    const titleEl = document.querySelector('.editor-title');
+    if (titleEl) titleEl.textContent = `Редактирование: ${photo.name}`;
+
+    // Update footer
+    const footerFile = document.querySelector('.footer-file');
+    const footerInfo = document.querySelector('.footer-info');
+    const footerSel  = document.querySelector('.footer-selected');
+    if (footerFile) footerFile.textContent = photo.name;
+    if (footerInfo) footerInfo.textContent = `${formatRes(photo.width, photo.height)}  ·  ${formatSize(photo.sizeBytes)}`;
+    if (footerSel)  footerSel.textContent  = 'Выбрано: 1 фото';
+
+    // Update frame params in toolbar
+    const wInput = document.getElementById('frame-width');
+    const hInput = document.getElementById('frame-height');
+    if (wInput && photo.width)  wInput.value = photo.width;
+    if (hInput && photo.height) hInput.value = photo.height;
+
+    // Load preview into editor
+    await loadEditorPreview(photo, index);
+
+    // Scroll gallery item into view
+    const list = document.querySelector('.gallery-list');
+    const item = list && list.querySelector(`[data-index="${index}"]`);
+    if (item) item.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+}
+
+async function loadEditorPreview(photo, index) {
+    const placeholder = document.getElementById('editor-placeholder');
+    const img = document.getElementById('editor-img');
+    if (!img || !placeholder) return;
+
+    // Show spinner while loading
+    placeholder.classList.add('loading');
+    img.style.display = 'none';
+
+    let src = null;
+
+    if (isElectron && photo.filePath) {
+        // Load from IPC; cache result on the photo object
+        if (!photo.preview) {
+            photo.preview = await window.api.getPreview(photo.filePath);
+        }
+        src = photo.preview;
+    } else if (photo.objectUrl) {
+        src = photo.objectUrl;
+    }
+
+    placeholder.classList.remove('loading');
+
+    if (src) {
+        img.src = src;
+        img.style.display = 'block';
+        placeholder.classList.add('has-photo');
+    } else {
+        img.src = '';
+        img.style.display = 'none';
+        placeholder.classList.remove('has-photo');
+    }
+}
+
+// ── Add photos ─────────────────────────────────────────
+async function openPhotos() {
+    if (isElectron) {
+        const paths = await window.api.openPhotos();
+        if (!paths || paths.length === 0) return;
+        await addPhotosByPath(paths);
+    } else {
+        // Browser fallback — hidden file input
+        document.getElementById('file-input').click();
+    }
+}
+
+async function addPhotosByPath(filePaths) {
+    // Filter already-added
+    const existing = new Set(photos.map(p => p.filePath));
+    const newPaths = filePaths.filter(p => !existing.has(p));
+    if (newPaths.length === 0) return;
+
+    const startIndex = photos.length;
+
+    // Add placeholders immediately so the gallery updates fast
+    newPaths.forEach(filePath => {
+        photos.push({
+            name: filePath.split(/[\\/]/).pop(),
+            filePath,
+            width: 0, height: 0, sizeBytes: 0,
+            thumbnail: null, preview: null, objectUrl: null
+        });
+    });
+
+    rebuildGallery();
+
+    // Auto-select first newly added photo
+    if (selectedIndex === -1) {
+        selectPhoto(startIndex);
+    }
+
+    // Fetch info + thumbnail for each new photo concurrently
+    await Promise.all(
+        newPaths.map(async (filePath, offset) => {
+            const idx = startIndex + offset;
+            const [info, thumbnail] = await Promise.all([
+                window.api.getInfo(filePath),
+                window.api.getThumbnail(filePath)
+            ]);
+            if (info) {
+                photos[idx].width     = info.width;
+                photos[idx].height    = info.height;
+                photos[idx].sizeBytes = info.sizeBytes;
+            }
+            if (thumbnail) {
+                photos[idx].thumbnail = thumbnail;
+            }
+            patchThumbnail(idx);
+
+            // Refresh editor if this is the selected photo
+            if (idx === selectedIndex) {
+                const titleEl = document.querySelector('.editor-title');
+                if (titleEl) titleEl.textContent = `Редактирование: ${photos[idx].name}`;
+                const footerInfo = document.querySelector('.footer-info');
+                if (footerInfo) footerInfo.textContent = `${formatRes(photos[idx].width, photos[idx].height)}  ·  ${formatSize(photos[idx].sizeBytes)}`;
+                await loadEditorPreview(photos[idx], idx);
+            }
+        })
+    );
+
+    updateCounts();
+}
+
+// ── Browser file-input handler ─────────────────────────
+async function handleFileInput(files) {
+    if (!files || files.length === 0) return;
+
+    const existing = new Set(photos.map(p => p.name + p.sizeBytes));
+    const newFiles = Array.from(files).filter(f => !existing.has(f.name + f.size));
+    if (newFiles.length === 0) return;
+
+    const startIndex = photos.length;
+
+    newFiles.forEach(file => {
+        photos.push({
+            name: file.name,
+            filePath: null,
+            width: 0, height: 0,
+            sizeBytes: file.size,
+            thumbnail: null, preview: null,
+            objectUrl: URL.createObjectURL(file),
+            _file: file
+        });
+    });
+
+    rebuildGallery();
+
+    if (selectedIndex === -1) selectPhoto(startIndex);
+
+    // Generate thumbnails via canvas / Image
+    await Promise.all(
+        newFiles.map(async (file, offset) => {
+            const idx = startIndex + offset;
+            const photo = photos[idx];
+
+            const dataUrl = await readFileThumbnail(file);
+            if (dataUrl) {
+                const { w, h } = await getImageDimensions(photo.objectUrl);
+                photo.thumbnail = dataUrl;
+                photo.width     = w;
+                photo.height    = h;
+                photo.preview   = photo.objectUrl; // use full objectUrl as preview
+            }
+            patchThumbnail(idx);
+
+            if (idx === selectedIndex) {
+                const footerInfo = document.querySelector('.footer-info');
+                if (footerInfo) footerInfo.textContent = `${formatRes(photo.width, photo.height)}  ·  ${formatSize(photo.sizeBytes)}`;
+                await loadEditorPreview(photo, idx);
+            }
+        })
+    );
+
+    updateCounts();
+}
+
+function readFileThumbnail(file) {
+    return new Promise(resolve => {
+        const img = new Image();
+        const url = URL.createObjectURL(file);
+        img.onload = () => {
+            const canvas = document.createElement('canvas');
+            const ratio  = Math.max(160 / img.width, 120 / img.height);
+            canvas.width  = Math.round(img.width  * ratio);
+            canvas.height = Math.round(img.height * ratio);
+            const ctx = canvas.getContext('2d');
+            ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+            URL.revokeObjectURL(url);
+            resolve(canvas.toDataURL('image/jpeg', 0.75));
+        };
+        img.onerror = () => { URL.revokeObjectURL(url); resolve(null); };
+        img.src = url;
+    });
+}
+
+function getImageDimensions(src) {
+    return new Promise(resolve => {
+        const img = new Image();
+        img.onload  = () => resolve({ w: img.naturalWidth, h: img.naturalHeight });
+        img.onerror = () => resolve({ w: 0, h: 0 });
+        img.src = src;
+    });
+}
+
+// ── Counts ─────────────────────────────────────────────
+function updateCounts() {
+    const count = photos.length;
+
+    const galleryTitle = document.querySelector('.gallery-count');
+    if (galleryTitle) galleryTitle.textContent = `(${count})`;
+
+    const allBadge = document.querySelector('[data-nav="all"] .gallery-nav-badge');
+    if (allBadge) allBadge.textContent = count;
+
+    const applyBtn = document.querySelector('.inspector-footer .btn-primary');
+    if (applyBtn) {
+        const label = applyBtn.querySelector('.apply-count') || applyBtn;
+        if (applyBtn.querySelector('.apply-count')) {
+            applyBtn.querySelector('.apply-count').textContent = count;
+        } else {
+            applyBtn.innerHTML = applyBtn.innerHTML.replace(/\(\d+\)/, `(${count})`);
+        }
+    }
+}
+
+// ── Drag & drop onto gallery ───────────────────────────
+function initDragDrop() {
+    const gallery = document.querySelector('.app-gallery');
+    if (!gallery) return;
+
+    gallery.addEventListener('dragover', e => {
+        e.preventDefault();
+        gallery.classList.add('drag-over');
+    });
+    gallery.addEventListener('dragleave', () => gallery.classList.remove('drag-over'));
+    gallery.addEventListener('drop', async e => {
+        e.preventDefault();
+        gallery.classList.remove('drag-over');
+        const files = [...e.dataTransfer.files].filter(f => f.type.startsWith('image/'));
+        if (!files.length) return;
+
+        if (isElectron) {
+            // In Electron, dataTransfer.files have a .path property
+            const paths = files.map(f => f.path).filter(Boolean);
+            if (paths.length) await addPhotosByPath(paths);
+        } else {
+            await handleFileInput(files);
+        }
+    });
 }
 
 // ── Tool sidebar ───────────────────────────────────────
 function initToolCards() {
-  document.querySelectorAll('.tool-card').forEach(card => {
-    card.addEventListener('click', () => {
-      document.querySelectorAll('.tool-card').forEach(c => c.classList.remove('active'));
-      card.classList.add('active');
+    document.querySelectorAll('.tool-card').forEach(card => {
+        card.addEventListener('click', () => {
+            document.querySelectorAll('.tool-card').forEach(c => c.classList.remove('active'));
+            card.classList.add('active');
+        });
     });
-  });
 }
 
 // ── Gallery nav ────────────────────────────────────────
 function initGalleryNav() {
-  document.querySelectorAll('.gallery-nav-item').forEach(item => {
-    item.addEventListener('click', () => {
-      document.querySelectorAll('.gallery-nav-item').forEach(i => i.classList.remove('active'));
-      item.classList.add('active');
+    document.querySelectorAll('.gallery-nav-item').forEach(item => {
+        item.addEventListener('click', () => {
+            document.querySelectorAll('.gallery-nav-item').forEach(i => i.classList.remove('active'));
+            item.classList.add('active');
+        });
     });
-  });
 }
 
 // ── Preset buttons ─────────────────────────────────────
 function initPresets() {
-  document.querySelectorAll('.preset-btn').forEach(btn => {
-    btn.addEventListener('click', () => {
-      document.querySelectorAll('.preset-btn').forEach(b => b.classList.remove('active'));
-      btn.classList.add('active');
+    document.querySelectorAll('.preset-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+            document.querySelectorAll('.preset-btn').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+        });
     });
-  });
 }
 
 // ── Inspector tabs ─────────────────────────────────────
 function initInspectorTabs() {
-  const tabs   = document.querySelectorAll('.inspector-tab');
-  const panels = document.querySelectorAll('.inspector-panel');
+    const tabs   = document.querySelectorAll('.inspector-tab');
+    const panels = document.querySelectorAll('.inspector-panel');
 
-  tabs.forEach(tab => {
-    tab.addEventListener('click', () => {
-      tabs.forEach(t => t.classList.remove('active'));
-      tab.classList.add('active');
+    tabs.forEach(tab => {
+        tab.addEventListener('click', () => {
+            tabs.forEach(t => t.classList.remove('active'));
+            tab.classList.add('active');
 
-      const target = tab.dataset.tab;
-      panels.forEach(p => {
-        p.style.display = p.dataset.panel === target ? '' : 'none';
-      });
+            const target = tab.dataset.tab;
+            panels.forEach(p => {
+                p.style.display = p.dataset.panel === target ? '' : 'none';
+            });
+        });
     });
-  });
 }
 
-// ── Sub-tabs (Текст / Изображение) ────────────────────
+// ── Sub-tabs ───────────────────────────────────────────
 function initSubTabs() {
-  document.querySelectorAll('.sub-tabs').forEach(group => {
-    group.querySelectorAll('.sub-tab').forEach(tab => {
-      tab.addEventListener('click', () => {
-        group.querySelectorAll('.sub-tab').forEach(t => t.classList.remove('active'));
-        tab.classList.add('active');
-      });
+    document.querySelectorAll('.sub-tabs').forEach(group => {
+        group.querySelectorAll('.sub-tab').forEach(tab => {
+            tab.addEventListener('click', () => {
+                group.querySelectorAll('.sub-tab').forEach(t => t.classList.remove('active'));
+                tab.classList.add('active');
+            });
+        });
     });
-  });
 }
 
 // ── Toggles ────────────────────────────────────────────
 function initToggles() {
-  document.querySelectorAll('.toggle').forEach(toggle => {
-    toggle.addEventListener('click', () => {
-      toggle.classList.toggle('on');
+    document.querySelectorAll('.toggle').forEach(toggle => {
+        toggle.addEventListener('click', () => toggle.classList.toggle('on'));
     });
-  });
 }
 
 // ── Position grid ──────────────────────────────────────
 function initPositionGrid() {
-  document.querySelectorAll('.pos-cell').forEach(cell => {
-    cell.addEventListener('click', () => {
-      cell.closest('.position-grid')
-          .querySelectorAll('.pos-cell')
-          .forEach(c => c.classList.remove('active'));
-      cell.classList.add('active');
+    document.querySelectorAll('.pos-cell').forEach(cell => {
+        cell.addEventListener('click', () => {
+            cell.closest('.position-grid')
+                .querySelectorAll('.pos-cell')
+                .forEach(c => c.classList.remove('active'));
+            cell.classList.add('active');
+        });
     });
-  });
 }
 
-// ── Zoom slider display ────────────────────────────────
+// ── Zoom slider ────────────────────────────────────────
 function initZoom() {
-  const slider = document.getElementById('zoom-slider');
-  const label  = document.getElementById('zoom-label');
-  if (!slider || !label) return;
-  slider.addEventListener('input', () => {
-    label.textContent = slider.value + '%';
-  });
+    const slider = document.getElementById('zoom-slider');
+    const label  = document.getElementById('zoom-label');
+    if (!slider || !label) return;
+    slider.addEventListener('input', () => { label.textContent = slider.value + '%'; });
 }
 
-// ── Opacity slider display ─────────────────────────────
+// ── Opacity slider ─────────────────────────────────────
 function initOpacity() {
-  const slider = document.getElementById('opacity-slider');
-  const label  = document.getElementById('opacity-value');
-  if (!slider || !label) return;
-  slider.addEventListener('input', () => {
-    label.textContent = slider.value + '%';
-  });
+    const slider = document.getElementById('opacity-slider');
+    const label  = document.getElementById('opacity-value');
+    if (!slider || !label) return;
+    slider.addEventListener('input', () => { label.textContent = slider.value + '%'; });
+}
+
+// ── Wire up all "Add photo" buttons ───────────────────
+function initAddPhotoButtons() {
+    document.querySelectorAll('[data-action="add-photos"]').forEach(btn => {
+        btn.addEventListener('click', openPhotos);
+    });
+
+    // Browser file input
+    const input = document.getElementById('file-input');
+    if (input) {
+        input.addEventListener('change', async () => {
+            await handleFileInput(input.files);
+            input.value = ''; // reset so same files can be re-added
+        });
+    }
 }
 
 // ── Init ───────────────────────────────────────────────
 document.addEventListener('DOMContentLoaded', () => {
-  buildGallery();
-  initToolCards();
-  initGalleryNav();
-  initPresets();
-  initInspectorTabs();
-  initSubTabs();
-  initToggles();
-  initPositionGrid();
-  initZoom();
-  initOpacity();
-  updateFooter();
+    renderEmptyState();
+    renderEditorEmpty();
+    updateCounts();
+
+    initAddPhotoButtons();
+    initDragDrop();
+    initToolCards();
+    initGalleryNav();
+    initPresets();
+    initInspectorTabs();
+    initSubTabs();
+    initToggles();
+    initPositionGrid();
+    initZoom();
+    initOpacity();
 });
