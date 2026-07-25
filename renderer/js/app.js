@@ -1344,6 +1344,30 @@ function initEditorTransformButtons() {
     });
 }
 
+// ── About modal ────────────────────────────────────────
+function initAboutModal() {
+    const modal    = document.getElementById('about-modal');
+    const openBtn  = document.querySelector('[data-action="about"]');
+    const closeBtn = document.getElementById('about-close');
+    const closeFtr = document.getElementById('about-close-btn');
+    if (!modal) return;
+
+    function open()  { modal.classList.add('open'); document.body.style.overflow = 'hidden'; }
+    function close() { modal.classList.remove('open'); document.body.style.overflow = ''; }
+
+    if (openBtn)  openBtn.addEventListener('click', open);
+    if (closeBtn) closeBtn.addEventListener('click', close);
+    if (closeFtr) closeFtr.addEventListener('click', close);
+
+    // Close on backdrop click
+    modal.addEventListener('click', e => { if (e.target === modal) close(); });
+
+    // Close on Escape
+    document.addEventListener('keydown', e => {
+        if (e.key === 'Escape' && modal.classList.contains('open')) close();
+    });
+}
+
 // ── Init ───────────────────────────────────────────────
 document.addEventListener('DOMContentLoaded', () => {
     renderEmptyState();
@@ -1372,4 +1396,5 @@ document.addEventListener('DOMContentLoaded', () => {
     initUndoRedo();
     initTooltips();
     updateUndoRedoBtns();
+    initAboutModal();
 });

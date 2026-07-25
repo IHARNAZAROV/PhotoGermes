@@ -88,7 +88,7 @@
     <div class="header-spacer"></div>
 
     <!-- About -->
-    <button class="btn btn-outline">
+    <button class="btn btn-outline" data-action="about">
       <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
         <circle cx="8" cy="8" r="6"/>
         <line x1="8" y1="7" x2="8" y2="11"/>
@@ -591,6 +591,95 @@
   ════════════════════════════════════════════════════ -->
   <!-- Hidden file input for browser fallback -->
   <input type="file" id="file-input" accept="image/*,.heic,.heif,.avif" multiple style="display:none;" />
+
+  <!-- ═══════════════════════════════════════════════════
+       ABOUT MODAL
+  ════════════════════════════════════════════════════ -->
+  <div class="about-overlay" id="about-modal" role="dialog" aria-modal="true" aria-label="О программе">
+    <div class="about-dialog">
+
+      <!-- Header -->
+      <div class="about-header">
+        <div class="about-logo">
+          <svg width="28" height="28" viewBox="0 0 28 28" fill="none">
+            <rect width="28" height="28" rx="7" fill="rgba(255,255,255,0.15)"/>
+            <path d="M14 6C9.58 6 6 9.58 6 14s3.58 8 8 8 8-3.58 8-8-3.58-8-8-8zm-1.5 11.5L8.5 13.5l1.42-1.42L12.5 14.66l5.58-5.58L19.5 10.5l-7 7z" fill="white"/>
+          </svg>
+        </div>
+        <div class="about-header-text">
+          <div class="about-app-name">Фотоцентр ГермесГарант</div>
+          <div class="about-app-sub">ГЕРМЕСГАРАНТ</div>
+        </div>
+        <button class="about-close" id="about-close" aria-label="Закрыть">
+          <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round">
+            <line x1="2" y1="2" x2="12" y2="12"/>
+            <line x1="12" y1="2" x2="2" y2="12"/>
+          </svg>
+        </button>
+      </div>
+
+      <!-- Body (scrollable) -->
+      <div class="about-body">
+
+        <!-- О программе -->
+        <div class="about-section">
+          <div class="about-section-title">О ПРОГРАММЕ</div>
+          <p class="about-desc">
+            Специализированное программное обеспечение для быстрого редактирования и подготовки фотографий.
+            Приложение позволяет выполнять обрезку, изменение размера и нанесение водяных знаков, обеспечивая
+            профессиональный результат при минимальных затратах времени.
+          </p>
+          <div class="about-meta">
+            <div class="about-meta-row">
+              <span class="about-meta-key">Версия</span>
+              <span class="about-meta-val">1.0.10</span>
+            </div>
+            <div class="about-meta-row">
+              <span class="about-meta-key">Платформа</span>
+              <span class="about-meta-val">Electron · Web</span>
+            </div>
+            <div class="about-meta-row">
+              <span class="about-meta-key">Сайт</span>
+              <span class="about-meta-val">
+                <a href="https://germesgarant.by" target="_blank" class="about-link">germesgarant.by</a>
+              </span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Разработка -->
+        <div class="about-section">
+          <div class="about-section-title">РАЗРАБОТКА</div>
+          <div class="about-dev-card">
+            <div class="about-dev-avatar">IN</div>
+            <div class="about-dev-info">
+              <div class="about-dev-name">INazarov</div>
+              <div class="about-dev-role">Архитектура, разработка, дизайн</div>
+              <div class="about-dev-email">mail@germesgarant.by</div>
+            </div>
+          </div>
+          <div class="about-copy">© 2026 ООО «ГермесГарант». Все права защищены.</div>
+        </div>
+
+        <!-- Лицензионное соглашение -->
+        <div class="about-section">
+          <div class="about-section-title">ЛИЦЕНЗИОННОЕ СОГЛАШЕНИЕ</div>
+          <div class="about-license-box">
+            <p>Настоящее программное обеспечение является собственностью ООО «ГермесГарант» и защищено законодательством Республики Беларусь об авторском праве.</p>
+            <p>Программа предоставляется исключительно для внутреннего использования сотрудниками Правообладателя.</p>
+            <p>Программа предоставляется «как есть» (AS IS), без каких-либо гарантий.</p>
+          </div>
+        </div>
+
+      </div><!-- /.about-body -->
+
+      <!-- Footer -->
+      <div class="about-footer">
+        <button class="btn btn-outline about-close-btn" id="about-close-btn">Закрыть</button>
+      </div>
+
+    </div><!-- /.about-dialog -->
+  </div><!-- /.about-overlay -->
 
   <footer class="app-footer">
     <span class="footer-selected">Ничего не выбрано</span>
