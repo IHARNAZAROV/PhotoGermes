@@ -59,6 +59,55 @@
   line-height: 1.6;
 }
 
+/* ─────────────────────────────────────
+   History entries
+───────────────────────────────────── */
+.history-entry {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 10px 16px;
+  border-bottom: 1px solid var(--color-border);
+  transition: background .15s;
+}
+.history-entry:last-child { border-bottom: none; }
+.history-entry--new { background: var(--color-primary-muted); }
+.history-entry:hover { background: var(--color-bg); }
+
+.history-entry-icon {
+  flex-shrink: 0;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: var(--color-bg);
+  border: 1.5px solid var(--color-border);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--color-primary);
+  margin-top: 1px;
+}
+
+.history-entry-body {
+  flex: 1;
+  min-width: 0;
+}
+
+.history-entry-label {
+  font-size: var(--text-sm);
+  font-weight: 500;
+  color: var(--color-text);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.history-entry-time {
+  font-size: var(--text-xs);
+  color: var(--color-muted);
+  margin-top: 2px;
+}
+
 /* Tooltip — rendered via JS into a fixed-position div (see app.js initTooltips)
    so it never gets clipped by overflow:hidden containers */
 #app-tooltip {

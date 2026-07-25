@@ -87,20 +87,6 @@
 
     <div class="header-spacer"></div>
 
-    <!-- User block -->
-    <div class="header-user">
-      <div class="avatar">ЕМ</div>
-      <div class="user-info">
-        <div class="user-name">Екатерина Москаленко</div>
-        <div class="user-role">Редактор</div>
-      </div>
-      <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
-        <polyline points="3,5 7,9 11,5"/>
-      </svg>
-    </div>
-
-    <div class="header-sep"></div>
-
     <!-- About -->
     <button class="btn btn-outline">
       <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
@@ -559,132 +545,20 @@
 
       <!-- Tabs -->
       <div class="inspector-tabs">
-        <div class="inspector-tab active" data-tab="settings">Настройки</div>
-        <div class="inspector-tab" data-tab="history">История</div>
+        <div class="inspector-tab active" data-tab="history">История</div>
       </div>
 
-      <!-- Settings panel -->
-      <div class="inspector-body inspector-panel" data-panel="settings">
-
-        <!-- ОБРЕЗКА -->
-        <div class="inspector-section">
-          <div class="inspector-section-title">Обрезка</div>
-          <button id="btn-apply-crop" class="btn btn-outline btn-full">Применить обрезку</button>
-        </div>
-
-        <!-- ИЗМЕНЕНИЕ РАЗМЕРА -->
-        <div class="inspector-section">
-          <div class="toggle-row">
-            <span class="toggle-label">Изменение размера</span>
-            <button class="toggle on" aria-label="Изменение размера" role="switch" aria-checked="true"></button>
-          </div>
-
-          <div class="form-row">
-            <div class="form-group">
-              <label class="form-label">Ширина</label>
-              <div class="frame-input" style="width:100%;">
-                <input type="text" value="1920" style="width:100%;" aria-label="Ширина"/>
-                <span class="unit">px</span>
-              </div>
-            </div>
-            <div class="form-group" style="display:flex;align-items:flex-end;">
-              <button class="frame-lock-btn" style="margin-bottom:2px;">
-                <svg width="13" height="13" viewBox="0 0 13 13" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
-                  <rect x="2" y="6" width="9" height="6" rx="1.5"/>
-                  <path d="M4 6V4a2.5 2.5 0 015 0v2"/>
-                </svg>
-              </button>
-            </div>
-            <div class="form-group">
-              <label class="form-label">Высота</label>
-              <div class="frame-input" style="width:100%;">
-                <input type="text" value="1280" style="width:100%;" aria-label="Высота"/>
-                <span class="unit">px</span>
-              </div>
-            </div>
-          </div>
-
-          <div class="form-group">
-            <label class="form-label">Режим изменения</label>
-            <select class="form-select">
-              <option>По ширине</option>
-              <option>По высоте</option>
-              <option>По большей стороне</option>
-              <option>Точный размер</option>
-            </select>
-          </div>
-
-          <div class="check-row">
-            <input type="checkbox" id="keep-ratio" checked />
-            <label for="keep-ratio">Сохранять пропорции</label>
-          </div>
-        </div>
-
-        <!-- ВАТЕРМАРК -->
-        <div class="inspector-section">
-          <div class="toggle-row">
-            <span class="toggle-label">Ватермарк</span>
-            <button class="toggle on" aria-label="Ватермарк" role="switch" aria-checked="true"></button>
-          </div>
-
-          <!-- Text / Image sub-tabs -->
-          <div class="sub-tabs">
-            <button class="sub-tab active">Текст</button>
-            <button class="sub-tab">Изображение</button>
-          </div>
-
-          <div class="form-group">
-            <label class="form-label">Текст</label>
-            <input class="form-input" type="text" value="© Фотоцентр ГермесГарант" />
-          </div>
-
-          <div class="form-row">
-            <div class="form-group">
-              <label class="form-label">Шрифт</label>
-              <select class="form-select">
-                <option>Inter</option>
-                <option>Arial</option>
-                <option>Georgia</option>
-                <option>Times New Roman</option>
-              </select>
-            </div>
-            <div class="form-group" style="max-width: 64px;">
-              <label class="form-label">Размер</label>
-              <input class="form-input" type="text" value="48" />
-            </div>
-          </div>
-
-          <!-- Color -->
-          <div class="color-row">
-            <span class="color-label">Цвет</span>
-            <div class="color-swatch" style="background:#ffffff;" title="Выбрать цвет"></div>
-            <span class="color-label" style="width:auto;">Прозрачность</span>
-            <input id="opacity-slider" class="opacity-slider" type="range" min="0" max="100" value="60" style="flex:1;" />
-            <span class="opacity-value" id="opacity-value">60%</span>
-          </div>
-
-          <!-- Position -->
-          <div class="position-row">
-            <span class="color-label">Положение</span>
-            <div class="position-grid">
-              <div class="pos-cell"></div><div class="pos-cell"></div><div class="pos-cell"></div>
-              <div class="pos-cell"></div><div class="pos-cell"></div><div class="pos-cell"></div>
-              <div class="pos-cell"></div><div class="pos-cell"></div><div class="pos-cell active"></div>
-            </div>
-          </div>
-        </div>
-
-      </div><!-- /.inspector-panel settings -->
-
       <!-- History panel -->
-      <div class="inspector-panel" data-panel="history" style="display:none; flex:1;">
-        <div class="history-placeholder">
-          <svg width="48" height="48" viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
-            <circle cx="24" cy="24" r="19"/>
-            <polyline points="24,14 24,24 30,30"/>
-            <path d="M10 10l4 4M38 10l-4 4"/>
-          </svg>
-          <p>История действий пуста.<br/>Начните редактирование — каждое действие будет сохраняться здесь.</p>
+      <div class="inspector-panel" data-panel="history" style="flex:1; overflow-y:auto;">
+        <div id="history-list">
+          <div class="history-placeholder">
+            <svg width="48" height="48" viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="24" cy="24" r="19"/>
+              <polyline points="24,14 24,24 30,30"/>
+              <path d="M10 10l4 4M38 10l-4 4"/>
+            </svg>
+            <p>История действий пуста.<br/>Начните редактирование — каждое действие будет сохраняться здесь.</p>
+          </div>
         </div>
       </div>
 

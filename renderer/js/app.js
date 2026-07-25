@@ -7,6 +7,66 @@
 /** @type {Array<Photo>} */
 let photos = [];
 
+// ── Action history (last 10 entries) ───────────────────
+/** @type {Array<{type:string, label:string, time:Date}>} */
+let actionHistory = [];
+const HISTORY_MAX = 10;
+
+const HISTORY_ICONS = {
+    photo_load:  `<circle cx="8" cy="8" r="6"/><path d="M3 13l3-3 2 2 2.5-3L14 13"/><circle cx="6" cy="6" r="1.2" fill="currentColor" stroke="none"/>`,
+    tool:        `<rect x="2" y="2" width="12" height="12" rx="2"/><path d="M5 8h6M8 5v6"/>`,
+    crop:        `<path d="M3 6h9v9M6 3v9h9"/><rect x="6" y="6" width="6" height="6" stroke-dasharray="2 1.2"/>`,
+    save:        `<path d="M13 13H3a1 1 0 01-1-1V3l3-1h7l2 2v8a1 1 0 01-1 1z"/><path d="M5 13V8h6v5"/><path d="M5 2v3h5V2"/>`,
+    rotate:      `<path d="M14 8a6 6 0 1 0-1.2 3.6"/><polyline points="14,3.5 14,8 9.5,8"/>`,
+    flip:        `<line x1="8" y1="2" x2="8" y2="14" stroke-dasharray="2.5 1.5"/><polyline points="1,6 4.5,8 1,10"/><polyline points="15,6 11.5,8 15,10"/>`,
+    reset:       `<path d="M2.5 8a5.5 5.5 0 1 0 1-3.3"/><polyline points="2.5,2 2.5,5.5 6,5.5"/>`,
+};
+
+function pushHistory(type, label) {
+    actionHistory.unshift({ type, label, time: new Date() });
+    if (actionHistory.length > HISTORY_MAX) actionHistory.length = HISTORY_MAX;
+    renderHistoryPanel();
+}
+
+function formatHistoryTime(date) {
+    return date.toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+}
+
+function renderHistoryPanel() {
+    const list = document.getElementById('history-list');
+    if (!list) return;
+
+    if (actionHistory.length === 0) {
+        list.innerHTML = `
+          <div class="history-placeholder">
+            <svg width="48" height="48" viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="24" cy="24" r="19"/>
+              <polyline points="24,14 24,24 30,30"/>
+              <path d="M10 10l4 4M38 10l-4 4"/>
+            </svg>
+            <p>История действий пуста.<br/>Начните редактирование — каждое действие будет сохраняться здесь.</p>
+          </div>`;
+        return;
+    }
+
+    list.innerHTML = actionHistory.map((entry, i) => {
+        const icon = HISTORY_ICONS[entry.type] || HISTORY_ICONS.tool;
+        const isFirst = i === 0;
+        return `
+          <div class="history-entry${isFirst ? ' history-entry--new' : ''}">
+            <div class="history-entry-icon">
+              <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                ${icon}
+              </svg>
+            </div>
+            <div class="history-entry-body">
+              <div class="history-entry-label">${entry.label}</div>
+              <div class="history-entry-time">${formatHistoryTime(entry.time)}</div>
+            </div>
+          </div>`;
+    }).join('');
+}
+
 let selectedIndex    = -1;   // photo open in editor
 let checkedIndices   = new Set(); // photos checked for deletion
 let lastCheckedIndex = -1;   // anchor for shift-range selection
@@ -540,6 +600,8 @@ async function addPhotosByPath(filePaths) {
     rebuildGallery();
     if (selectedIndex === -1) selectPhoto(startIndex);
 
+    newPaths.forEach(fp => pushHistory('photo_load', 'Загрузка фото: ' + fp.split(/[\\/]/).pop()));
+
     await Promise.all(newPaths.map(async (filePath, offset) => {
         const idx = startIndex + offset;
         const [info, thumbnail] = await Promise.all([
@@ -578,6 +640,8 @@ async function handleFileInput(files) {
 
     rebuildGallery();
     if (selectedIndex === -1) selectPhoto(startIndex);
+
+    newFiles.forEach(f => pushHistory('photo_load', 'Загрузка фото: ' + f.name));
 
     await Promise.all(newFiles.map(async (file, offset) => {
         const idx   = startIndex + offset;
@@ -681,6 +745,8 @@ function initToolCards() {
         card.addEventListener('click', () => {
             document.querySelectorAll('.tool-card').forEach(c => c.classList.remove('active'));
             card.classList.add('active');
+            const toolName = card.querySelector('.tool-title')?.textContent?.trim();
+            if (toolName) pushHistory('tool', 'Инструмент: ' + toolName);
         });
     });
 }
@@ -859,6 +925,7 @@ async function applyCropCurrent() {
     const footerInfo = document.querySelector('.footer-info');
     if (footerInfo) footerInfo.textContent =
         `${formatRes(photo.width, photo.height)}\u00a0·\u00a0${formatSize(photo.sizeBytes)}`;
+    pushHistory('crop', 'Обрезка применена: ' + photo.name);
     showToast('Обрезка применена');
 }
 
@@ -902,6 +969,7 @@ async function applyToChecked() {
     }
     updateCounts();
     if (btn) btn.disabled = false;
+    pushHistory('crop', `Обрезка применена к ${targets.length} фото`);
     showToast(`Обрезка применена к ${targets.length} фото`);
 }
 
@@ -992,6 +1060,7 @@ async function doSave() {
 
             const result = await window.api.savePhoto(photo.filePath, dataUrl);
             if (result?.ok) {
+                pushHistory('save', 'Сохранено: ' + photo.name);
                 showToast('Файл сохранён');
             } else if (result?.readonly) {
                 // File is write-protected or locked — fall back to Save As
@@ -1005,6 +1074,7 @@ async function doSave() {
             const dataUrl = await getPhotoDataUrl(photo);
             if (!dataUrl) { showToast('Нет данных для сохранения'); return; }
             triggerDownload(dataUrlToBlob(dataUrl), photo.name);
+            pushHistory('save', 'Сохранено: ' + photo.name);
             showToast('Файл сохранён');
         }
     } catch (err) {
@@ -1039,6 +1109,7 @@ async function doSaveAs() {
             photo.filePath = result.filePath;
             photo.name     = result.name;
             rebuildGallery();
+            pushHistory('save', 'Сохранено как: ' + result.name);
             showToast('Сохранено: ' + result.name);
             return;
         }
@@ -1232,12 +1303,14 @@ function rotateEditor(dir) {
     pushUndo();
     editorRotation = ((editorRotation + dir * 90) % 360 + 360) % 360;
     applyEditorTransform();
+    pushHistory('rotate', dir > 0 ? 'Поворот вправо на 90°' : 'Поворот влево на 90°');
 }
 
 function flipEditorH() {
     pushUndo();
     editorFlipH = !editorFlipH;
     applyEditorTransform();
+    pushHistory('flip', 'Отражение по горизонтали');
 }
 
 function resetEditorTransform() {
@@ -1245,6 +1318,7 @@ function resetEditorTransform() {
     editorRotation = 0;
     editorFlipH    = false;
     applyEditorTransform();
+    pushHistory('reset', 'Сброс трансформации');
 }
 
 function initEditorTransformButtons() {
