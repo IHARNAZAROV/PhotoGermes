@@ -54,10 +54,9 @@ function renderEditorEmpty() {
     if (title) title.textContent = 'Редактирование';
     const footerFile = document.querySelector('.footer-file');
     const footerInfo = document.querySelector('.footer-info');
-    const footerSel  = document.querySelector('.footer-selected');
     if (footerFile) footerFile.textContent = '—';
     if (footerInfo) footerInfo.textContent = '';
-    if (footerSel)  footerSel.textContent  = 'Ничего не выбрано';
+    updateSelectionUI();
 }
 
 // ── Gallery item render ────────────────────────────────
@@ -122,13 +121,17 @@ function renderGalleryItem(photo, index) {
     });
 
     // ── Checkbox click (direct toggle) ────────────────
+    // e.preventDefault() is required unconditionally: clicking a <label> that
+    // wraps a <checkbox> fires the handler once on the label, then the browser
+    // natively activates the input and dispatches a second click that bubbles
+    // back up to this same label listener — calling toggleCheck twice and
+    // reverting every change. preventDefault() suppresses that native activation.
     const checkLabel = item.querySelector('.gallery-item-check');
     checkLabel.addEventListener('click', e => {
         e.stopPropagation();
+        e.preventDefault();
         if (e.shiftKey && lastCheckedIndex !== -1) {
             checkRange(lastCheckedIndex, index);
-            // prevent default so the native checkbox doesn't double-toggle
-            e.preventDefault();
         } else {
             toggleCheck(index);
         }
@@ -230,6 +233,8 @@ function syncItemCheckedClass(index) {
 function updateSelectionUI() {
     const count   = checkedIndices.size;
     const total   = photos.length;
+    // Button is active when checkboxes are ticked OR a photo is open in the editor
+    const canDelete = count > 0 || selectedIndex >= 0;
 
     // Select-all checkbox
     const selectAllCb = document.getElementById('gallery-select-all');
@@ -238,7 +243,7 @@ function updateSelectionUI() {
         selectAllCb.indeterminate = count > 0 && count < total;
     }
 
-    // Selection bar (header area below title)
+    // Selection bar — visible only when checkboxes are ticked
     const selBar   = document.getElementById('gallery-sel-bar');
     const selCount = document.getElementById('gallery-sel-count');
     if (selBar) selBar.classList.toggle('visible', count > 0);
@@ -249,14 +254,17 @@ function updateSelectionUI() {
     }
 
     // Delete button
-    const deleteBtn  = document.getElementById('btn-delete-checked');
-    const deleteLbl  = document.getElementById('delete-btn-label');
+    const deleteBtn = document.getElementById('btn-delete-checked');
+    const deleteLbl = document.getElementById('delete-btn-label');
     if (deleteBtn) {
-        deleteBtn.disabled = count === 0;
+        deleteBtn.disabled = !canDelete;
+        // Red highlight only when explicit checkboxes are ticked
         deleteBtn.classList.toggle('has-selection', count > 0);
     }
     if (deleteLbl) {
-        deleteLbl.textContent = count > 0 ? `Удалить (${count})` : 'Удалить';
+        if (count > 1)        deleteLbl.textContent = `Удалить (${count})`;
+        else if (count === 1) deleteLbl.textContent = 'Удалить (1)';
+        else                  deleteLbl.textContent = 'Удалить';
     }
 
     // Footer selected text
@@ -276,7 +284,11 @@ function updateSelectionUI() {
 
 // ── Delete ─────────────────────────────────────────────
 function deleteChecked() {
-    if (checkedIndices.size === 0) return;
+    // If no checkboxes ticked but a photo is open → delete just that one
+    if (checkedIndices.size === 0) {
+        if (selectedIndex < 0) return;
+        checkedIndices.add(selectedIndex);
+    }
 
     const deletedCount = checkedIndices.size;
 
@@ -412,7 +424,7 @@ async function selectPhoto(index) {
     if (titleEl)    titleEl.textContent    = `Редактирование: ${photo.name}`;
     if (footerFile) footerFile.textContent = photo.name;
     if (footerInfo) footerInfo.textContent = `${formatRes(photo.width, photo.height)}  ·  ${formatSize(photo.sizeBytes)}`;
-    if (footerSel && checkedIndices.size === 0) footerSel.textContent = 'Выбрано: 1 фото';
+    updateSelectionUI();
 
     const wInput = document.getElementById('frame-width');
     const hInput = document.getElementById('frame-height');
