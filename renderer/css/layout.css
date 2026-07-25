@@ -51,6 +51,8 @@ html, body {
   grid-template-columns: var(--sidebar-w) var(--gallery-w) 1fr var(--inspector-w);
   grid-template-rows: 1fr;
   overflow: hidden;
+  padding: 10px;
+  gap: 8px;
 }
 
 /* ── Left Sidebar ── */
@@ -58,7 +60,8 @@ html, body {
   display: flex;
   flex-direction: column;
   background: var(--color-panel);
-  border-right: 1px solid var(--color-border);
+  border-radius: var(--radius-xl);
+  box-shadow: var(--shadow-sm);
   overflow-y: auto;
   overflow-x: hidden;
 }
@@ -67,8 +70,9 @@ html, body {
 .app-gallery {
   display: flex;
   flex-direction: column;
-  background: var(--color-bg);
-  border-right: 1px solid var(--color-border);
+  background: var(--color-panel);
+  border-radius: var(--radius-xl);
+  box-shadow: var(--shadow-sm);
   overflow: hidden;
 }
 
@@ -76,7 +80,9 @@ html, body {
 .app-editor {
   display: flex;
   flex-direction: column;
-  background: var(--color-bg);
+  background: var(--color-panel);
+  border-radius: var(--radius-xl);
+  box-shadow: var(--shadow-sm);
   overflow: hidden;
 }
 
@@ -85,7 +91,8 @@ html, body {
   display: flex;
   flex-direction: column;
   background: var(--color-panel);
-  border-left: 1px solid var(--color-border);
+  border-radius: var(--radius-xl);
+  box-shadow: var(--shadow-sm);
   overflow: hidden;
 }
 
