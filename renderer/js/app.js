@@ -7,9 +7,13 @@
 /** @type {Array<Photo>} */
 let photos = [];
 
-let selectedIndex   = -1;   // photo open in editor
-let checkedIndices  = new Set(); // photos checked for deletion
-let lastCheckedIndex = -1;  // anchor for shift-range selection
+let selectedIndex    = -1;   // photo open in editor
+let checkedIndices   = new Set(); // photos checked for deletion
+let lastCheckedIndex = -1;   // anchor for shift-range selection
+
+// ── Editor transform state ──────────────────────────────
+let editorRotation = 0;     // 0 | 90 | 180 | 270
+let editorFlipH    = false;
 
 // ── Detect environment ─────────────────────────────────
 const isElectron = typeof window.api !== 'undefined';
@@ -724,6 +728,62 @@ function initClearSelectionBtn() {
     btn.addEventListener('click', clearChecks);
 }
 
+// ── Editor transform ────────────────────────────────────
+function applyEditorTransform() {
+    const img = document.getElementById('editor-img');
+    if (!img) return;
+    // Combine rotation and horizontal flip into one transform
+    const t = `rotate(${editorRotation}deg) scaleX(${editorFlipH ? -1 : 1})`;
+    img.style.transform = t;
+
+    // Visual hint on the placeholder background too (CSS class)
+    const placeholder = document.getElementById('editor-placeholder');
+    if (placeholder) {
+        placeholder.dataset.rotation = editorRotation;
+        placeholder.classList.toggle('flip-h', editorFlipH);
+    }
+}
+
+function rotateEditor(dir) {
+    // dir: +1 = clockwise 90°, -1 = counter-clockwise 90°
+    editorRotation = ((editorRotation + dir * 90) % 360 + 360) % 360;
+    applyEditorTransform();
+}
+
+function flipEditorH() {
+    editorFlipH = !editorFlipH;
+    applyEditorTransform();
+}
+
+function resetEditorTransform() {
+    editorRotation = 0;
+    editorFlipH    = false;
+    applyEditorTransform();
+}
+
+function initEditorTransformButtons() {
+    // Header icon buttons
+    const map = {
+        'Повернуть влево':         () => rotateEditor(-1),
+        'Повернуть вправо':        () => rotateEditor(1),
+        'Отразить горизонтально':  () => flipEditorH(),
+        'Сбросить':                () => resetEditorTransform(),
+    };
+    Object.entries(map).forEach(([tooltip, handler]) => {
+        document.querySelectorAll(`[data-tooltip="${tooltip}"]`)
+            .forEach(btn => btn.addEventListener('click', handler));
+    });
+
+    // Bottom toolbar preset-action buttons
+    document.querySelectorAll('.preset-action').forEach(btn => {
+        const label = btn.querySelector('.preset-action-label')?.textContent?.trim();
+        if (label === 'Повернуть') btn.addEventListener('click', () => rotateEditor(1));
+        if (label === 'Отразить')  btn.addEventListener('click', () => flipEditorH());
+        // 'Сбросить' in crop.js handles crop reset; we also reset transform
+        if (label === 'Сбросить')  btn.addEventListener('click', () => resetEditorTransform());
+    });
+}
+
 // ── Init ───────────────────────────────────────────────
 document.addEventListener('DOMContentLoaded', () => {
     renderEmptyState();
@@ -746,4 +806,5 @@ document.addEventListener('DOMContentLoaded', () => {
     initPositionGrid();
     initZoom();
     initOpacity();
+    initEditorTransformButtons();
 });
