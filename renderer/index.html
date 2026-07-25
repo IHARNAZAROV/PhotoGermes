@@ -359,6 +359,9 @@
     ───────────────────────────────────────────── -->
     <section class="app-editor">
 
+      <!-- ══ CROP VIEW (default) ══════════════════ -->
+      <div id="crop-editor-view" style="display:contents;">
+
       <div class="editor-header">
         <div class="editor-title">Редактирование</div>
         <div class="editor-actions">
@@ -562,6 +565,105 @@
 
       </div><!-- /.editor-toolbar -->
 
+      </div><!-- /#crop-editor-view -->
+
+      <!-- ══ RESIZE VIEW ══════════════════════════ -->
+      <div id="resize-editor-view" style="display:none; flex:1; flex-direction:column; overflow:hidden;">
+
+        <div class="editor-header">
+          <div>
+            <div class="editor-title">Изменение размера</div>
+            <div class="resize-editor-subtitle">Увеличение и уменьшение фотографий</div>
+          </div>
+          <div class="editor-actions">
+            <button class="btn-icon" data-tooltip="Инструмент перемещения">
+              <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M8 2v12M2 8h12"/><path d="M5 5L8 2l3 3M5 11l3 3 3-3M2 5l3 3-3 3M11 5l3 3-3 3"/>
+              </svg>
+            </button>
+            <button class="btn-icon resize-zoom-btn" id="resize-zoom-toggle" data-tooltip="Масштаб">
+              <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="6" cy="6" r="4"/><line x1="10" y1="10" x2="13" y2="13"/><line x1="4" y1="6" x2="8" y2="6"/><line x1="6" y1="4" x2="6" y2="8"/></svg>
+              <span style="font-size:12px; margin-left:2px;">100%</span>
+              <svg width="9" height="9" viewBox="0 0 9 9" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><polyline points="1,3 4.5,6.5 8,3"/></svg>
+            </button>
+            <button class="btn-icon" data-tooltip="Сетка">
+              <svg width="15" height="15" viewBox="0 0 15 15" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                <rect x="1" y="1" width="5" height="5" rx="1"/><rect x="9" y="1" width="5" height="5" rx="1"/>
+                <rect x="1" y="9" width="5" height="5" rx="1"/><rect x="9" y="9" width="5" height="5" rx="1"/>
+              </svg>
+            </button>
+            <button class="btn-icon" data-tooltip="Сравнение">
+              <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><rect x="1" y="3" width="6" height="10" rx="1"/><rect x="9" y="3" width="6" height="10" rx="1"/></svg>
+            </button>
+          </div>
+        </div>
+
+        <!-- Split preview area -->
+        <div class="resize-split-area">
+          <div class="resize-split-container" id="resize-split-container">
+
+            <!-- Left: Original -->
+            <div class="resize-split-side" id="resize-split-left">
+              <img class="resize-split-img" id="resize-img-orig" src="" alt="" style="display:none;" />
+              <!-- Label overlaid on top-left -->
+              <div class="resize-split-badge resize-split-badge--orig">
+                <span>Оригинал</span>
+                <span id="resize-label-orig" class="resize-split-badge-meta"></span>
+              </div>
+            </div>
+
+            <!-- Divider -->
+            <div class="resize-split-divider" id="resize-divider">
+              <div class="resize-divider-handle">
+                <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <polyline points="5,6 2,8 5,10"/>
+                  <polyline points="11,6 14,8 11,10"/>
+                </svg>
+              </div>
+            </div>
+
+            <!-- Right: After -->
+            <div class="resize-split-side resize-split-side--right" id="resize-split-right">
+              <img class="resize-split-img" id="resize-img-after" src="" alt="" style="display:none;" />
+              <div class="resize-split-badge resize-split-badge--after">
+                <span>После изменения</span>
+                <span id="resize-label-after" class="resize-split-badge-meta"></span>
+              </div>
+            </div>
+
+            <!-- Empty state (no photo loaded) -->
+            <div class="resize-split-placeholder" id="resize-placeholder">
+              <div class="resize-placeholder-inner">
+                <svg width="56" height="56" viewBox="0 0 56 56" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="color:rgba(255,255,255,.4)">
+                  <rect x="6" y="14" width="44" height="32" rx="4"/>
+                  <circle cx="20" cy="26" r="5"/>
+                  <path d="M6 35l12-10 8 8 8-9 16 14"/>
+                </svg>
+                <p style="color:rgba(255,255,255,.5); margin:10px 0 0; font-size:13px; text-align:center;">Добавьте фото для предварительного просмотра</p>
+                <button class="btn btn-outline" data-action="add-photos" style="margin-top:14px; border-color:rgba(255,255,255,.3); color:#fff; background:rgba(255,255,255,.1);">
+                  <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="7" y1="1" x2="7" y2="13"/><line x1="1" y1="7" x2="13" y2="7"/></svg>
+                  Добавить фото
+                </button>
+              </div>
+            </div>
+
+          </div><!-- /#resize-split-container -->
+
+          <!-- Bottom corner buttons -->
+          <div class="resize-bottom-bar">
+            <button class="resize-corner-btn" data-tooltip="1:1">1:1</button>
+            <button class="resize-corner-btn" data-tooltip="На весь экран">
+              <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                <polyline points="1,5 1,1 5,1"/><polyline points="9,1 13,1 13,5"/>
+                <polyline points="13,9 13,13 9,13"/><polyline points="5,13 1,13 1,9"/>
+              </svg>
+            </button>
+          </div>
+
+        </div><!-- /.resize-split-area -->
+
+      </div><!-- /#resize-editor-view -->
+
     </section><!-- /.app-editor -->
 
 
@@ -570,43 +672,167 @@
     ───────────────────────────────────────────── -->
     <aside class="app-inspector">
 
-      <!-- Tabs -->
-      <div class="inspector-tabs">
-        <div class="inspector-tab active" data-tab="history">История</div>
-      </div>
+      <!-- ══ CROP INSPECTOR (default) ══════════════ -->
+      <div id="crop-inspector-view" style="display:contents;">
 
-      <!-- History panel -->
-      <div class="inspector-panel" data-panel="history" style="flex:1; overflow-y:auto;">
-        <div id="history-list">
-          <div class="history-placeholder">
-            <svg width="48" height="48" viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
-              <circle cx="24" cy="24" r="19"/>
-              <polyline points="24,14 24,24 30,30"/>
-              <path d="M10 10l4 4M38 10l-4 4"/>
-            </svg>
-            <p>История действий пуста.<br/>Начните редактирование — каждое действие будет сохраняться здесь.</p>
+        <!-- Tabs -->
+        <div class="inspector-tabs">
+          <div class="inspector-tab active" data-tab="history">История</div>
+        </div>
+
+        <!-- History panel -->
+        <div class="inspector-panel" data-panel="history" style="flex:1; overflow-y:auto;">
+          <div id="history-list">
+            <div class="history-placeholder">
+              <svg width="48" height="48" viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="24" cy="24" r="19"/>
+                <polyline points="24,14 24,24 30,30"/>
+                <path d="M10 10l4 4M38 10l-4 4"/>
+              </svg>
+              <p>История действий пуста.<br/>Начните редактирование — каждое действие будет сохраняться здесь.</p>
+            </div>
           </div>
         </div>
-      </div>
 
-      <!-- Inspector footer buttons -->
-      <div class="inspector-footer">
-        <button id="btn-apply-all" class="btn btn-primary btn-lg btn-full">
-          <!-- icon swapped by JS: single-check (default) or grid (multi) -->
-          <svg id="apply-btn-icon" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <rect x="2" y="2" width="12" height="12" rx="2"/>
-            <polyline points="5,8 7,10.5 11,6"/>
-          </svg>
-          <span id="apply-btn-label">Применить</span>
-        </button>
-        <button class="btn btn-outline btn-lg btn-full">
-          <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <path d="M8 2v9M4 8l4 4 4-4"/>
-            <path d="M2 13h12"/>
-          </svg>
-          Экспортировать
-        </button>
-      </div>
+        <!-- Inspector footer buttons -->
+        <div class="inspector-footer">
+          <button id="btn-apply-all" class="btn btn-primary btn-lg btn-full">
+            <svg id="apply-btn-icon" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <rect x="2" y="2" width="12" height="12" rx="2"/>
+              <polyline points="5,8 7,10.5 11,6"/>
+            </svg>
+            <span id="apply-btn-label">Применить</span>
+          </button>
+          <button class="btn btn-outline btn-lg btn-full">
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M8 2v9M4 8l4 4 4-4"/>
+              <path d="M2 13h12"/>
+            </svg>
+            Экспортировать
+          </button>
+        </div>
+
+      </div><!-- /#crop-inspector-view -->
+
+      <!-- ══ RESIZE INSPECTOR ════════════════════════ -->
+      <div id="resize-inspector-view" style="display:none; flex:1; flex-direction:column; overflow:hidden;">
+
+        <div class="resize-inspector-header">
+          <span class="resize-inspector-title">Параметры изменения размера</span>
+        </div>
+
+        <div class="resize-inspector-body">
+
+          <!-- Mode -->
+          <div class="ri-field-label">Режим</div>
+          <div class="resize-mode-group">
+            <button class="resize-mode-btn active" id="resize-mode-pct">
+              <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="4" cy="4" r="2"/><circle cx="10" cy="10" r="2"/><line x1="11" y1="3" x2="3" y2="11"/></svg>
+              Проценты
+            </button>
+            <button class="resize-mode-btn" id="resize-mode-px">
+              <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="2" width="10" height="10" rx="1"/></svg>
+              Пиксели
+            </button>
+          </div>
+
+          <!-- Width / Height -->
+          <div class="resize-wh-row">
+            <div class="resize-wh-group">
+              <div class="ri-field-label">Ширина</div>
+              <div class="resize-dim-input">
+                <input type="number" id="resize-width" value="70" min="1" />
+                <span class="resize-dim-unit" id="resize-unit-w">%</span>
+              </div>
+            </div>
+
+            <button class="resize-link-btn active" id="resize-link-btn" data-tooltip="Сохранить пропорции">
+              <svg width="13" height="13" viewBox="0 0 13 13" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+                <rect x="2" y="6" width="9" height="6" rx="1.5"/>
+                <path d="M4 6V4a2.5 2.5 0 015 0v2"/>
+              </svg>
+            </button>
+
+            <div class="resize-wh-group">
+              <div class="ri-field-label">Высота</div>
+              <div class="resize-dim-input">
+                <input type="number" id="resize-height" value="70" min="1" />
+                <span class="resize-dim-unit" id="resize-unit-h">%</span>
+              </div>
+            </div>
+          </div><!-- /.resize-wh-row -->
+
+          <!-- Checkboxes -->
+          <div class="ri-check-row">
+            <input type="checkbox" id="resize-keep-ratio" checked />
+            <label for="resize-keep-ratio">Сохранить пропорции</label>
+          </div>
+          <div class="ri-check-row">
+            <input type="checkbox" id="resize-no-enlarge" />
+            <label for="resize-no-enlarge">Не увеличивать, если меньше оригинала</label>
+          </div>
+
+          <!-- Resample method -->
+          <div class="ri-field-label" style="margin-top:16px;">Метод ресэмплинга</div>
+          <select class="ri-select" id="resize-resample">
+            <option>Бикубический (рекомендуется)</option>
+            <option>Билинейный</option>
+            <option>Ближайший сосед</option>
+            <option>Ланцош</option>
+          </select>
+
+          <!-- Quality -->
+          <div class="ri-quality-header">
+            <span class="ri-field-label">Качество</span>
+            <span id="resize-quality-val" class="ri-quality-pct">90%</span>
+          </div>
+          <input type="range" class="ri-quality-slider" id="resize-quality" min="1" max="100" value="90" />
+          <div class="ri-quality-hints">
+            <span>Ниже размер</span>
+            <span>Выше качество</span>
+          </div>
+
+          <!-- Result preview box -->
+          <div class="ri-result-box">
+            <div class="ri-result-title">
+              <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><circle cx="7" cy="7" r="5.5"/><line x1="7" y1="6" x2="7" y2="10"/><circle cx="7" cy="4.5" r=".4" fill="currentColor" stroke="none"/></svg>
+              Предварительный результат
+            </div>
+            <div class="ri-result-row">
+              <span>Новый размер:</span>
+              <span id="resize-result-size">— × —</span>
+            </div>
+            <div class="ri-result-row">
+              <span>Размер файла:</span>
+              <span id="resize-result-filesize">—</span>
+            </div>
+            <div class="ri-result-row">
+              <span>Экономия:</span>
+              <span id="resize-result-economy">—</span>
+            </div>
+          </div>
+
+        </div><!-- /.resize-inspector-body -->
+
+        <!-- Footer -->
+        <div class="inspector-footer">
+          <button id="btn-apply-resize" class="btn btn-primary btn-lg btn-full">
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <rect x="2" y="2" width="12" height="12" rx="2"/>
+              <polyline points="5,8 7,10.5 11,6"/>
+            </svg>
+            Применить
+          </button>
+          <button class="btn btn-outline btn-lg btn-full">
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M8 2v9M4 8l4 4 4-4"/>
+              <path d="M2 13h12"/>
+            </svg>
+            Экспортировать
+          </button>
+        </div>
+
+      </div><!-- /#resize-inspector-view -->
 
     </aside><!-- /.app-inspector -->
 
@@ -734,5 +960,6 @@
 <script src="js/app.js"></script>
 <script src="js/crop.js"></script>
 <script src="js/zoom.js"></script>
+<script src="js/resize.js"></script>
 </body>
 </html>

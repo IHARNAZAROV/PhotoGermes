@@ -538,6 +538,11 @@ async function selectPhoto(index) {
 
     await loadEditorPreview(photo);
 
+    // If resize tab is active, refresh the split-view preview
+    if (activeTool === 'resize') {
+        window.resizeLoadPhoto?.(photo);
+    }
+
     const list = document.querySelector('.gallery-list');
     const item = list && list.querySelector(`[data-index="${index}"]`);
     if (item) item.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
@@ -740,11 +745,40 @@ function initDragDrop() {
 }
 
 // ── UI init helpers ────────────────────────────────────
+function switchToTool(toolName) {
+    const cropEditorView   = document.getElementById('crop-editor-view');
+    const resizeEditorView = document.getElementById('resize-editor-view');
+    const cropInspector    = document.getElementById('crop-inspector-view');
+    const resizeInspector  = document.getElementById('resize-inspector-view');
+
+    const isResize = toolName === 'resize';
+    // All tools except resize fall back to showing the crop/default editor view
+    const showCrop = !isResize;
+
+    if (cropEditorView)   cropEditorView.style.display   = showCrop  ? 'contents' : 'none';
+    if (resizeEditorView) resizeEditorView.style.display  = isResize  ? 'flex'     : 'none';
+    if (cropInspector)    cropInspector.style.display    = showCrop  ? 'contents' : 'none';
+    if (resizeInspector)  resizeInspector.style.display  = isResize  ? 'flex'     : 'none';
+
+    // Load the current photo into the resize split-view when switching to it
+    if (isResize && selectedIndex >= 0 && photos[selectedIndex]) {
+        window.resizeLoadPhoto?.(photos[selectedIndex]);
+    }
+}
+
+let activeTool = 'crop';
+
 function initToolCards() {
-    document.querySelectorAll('.tool-card').forEach(card => {
+    const toolCards = document.querySelectorAll('.tool-card');
+    const toolNames = ['crop', 'resize', 'watermark', 'batch', 'export'];
+
+    toolCards.forEach((card, idx) => {
         card.addEventListener('click', () => {
-            document.querySelectorAll('.tool-card').forEach(c => c.classList.remove('active'));
+            toolCards.forEach(c => c.classList.remove('active'));
             card.classList.add('active');
+
+            activeTool = toolNames[idx] ?? 'crop';
+            switchToTool(activeTool);
         });
     });
 }
@@ -1359,6 +1393,11 @@ function initAboutModal() {
         if (e.key === 'Escape' && modal.classList.contains('open')) close();
     });
 }
+
+// ── Expose current photo for resize.js ─────────────────
+window.__resizeGetPhoto = function() {
+    return selectedIndex >= 0 ? photos[selectedIndex] : null;
+};
 
 // ── Init ───────────────────────────────────────────────
 document.addEventListener('DOMContentLoaded', () => {

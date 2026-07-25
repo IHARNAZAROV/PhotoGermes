@@ -1315,6 +1315,435 @@
   z-index: 5;
 }
 
+/* ═══════════════════════════════════════
+   Resize tab — split preview
+═══════════════════════════════════════ */
+
+.resize-editor-subtitle {
+  font-size: var(--text-sm);
+  color: var(--color-muted);
+  margin-top: 1px;
+}
+
+.resize-split-area {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  padding: 10px;
+  position: relative;
+}
+
+.resize-split-container {
+  flex: 1;
+  display: flex;
+  position: relative;
+  border-radius: var(--radius-md);
+  overflow: hidden;
+  /* Same mesh gradient as crop placeholder */
+  background:
+    radial-gradient(ellipse 85% 65% at 12% 22%, rgba(30,145,104,.80) 0%, transparent 58%),
+    radial-gradient(ellipse 60% 70% at 88% 82%, rgba(8,44,33,.90) 0%, transparent 54%),
+    radial-gradient(ellipse 52% 42% at 62%  8%, rgba(68,196,142,.30) 0%, transparent 62%),
+    radial-gradient(ellipse 70% 55% at 45% 70%, rgba(22,98,76,.45) 0%, transparent 65%),
+    linear-gradient(152deg, #060e0b 0%, #0d2e22 32%, #16624c 64%, #1d8060 100%);
+  box-shadow: var(--shadow-md);
+  min-height: 0;
+}
+
+/* ── Each half ──────────────────────────────────────── */
+.resize-split-side {
+  position: relative;
+  flex-shrink: 0;
+  width: 50%;
+  height: 100%;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.resize-split-side--right {
+  flex: 1;
+  width: auto;
+}
+
+.resize-split-img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+/* ── Label badges ───────────────────────────────────── */
+.resize-split-badge {
+  position: absolute;
+  top: 12px;
+  left: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  background: rgba(30,30,30,.72);
+  backdrop-filter: blur(6px);
+  border-radius: var(--radius-sm);
+  padding: 7px 11px;
+  pointer-events: none;
+  z-index: 4;
+}
+
+.resize-split-badge--after {
+  left: auto;
+  right: 12px;
+  background: rgba(22,98,76,.85);
+}
+
+.resize-split-badge span:first-child {
+  font-size: var(--text-sm);
+  font-weight: 600;
+  color: #fff;
+  line-height: 1.2;
+}
+
+.resize-split-badge-meta {
+  font-size: var(--text-xs);
+  color: rgba(255,255,255,.7);
+}
+
+/* ── Divider ────────────────────────────────────────── */
+.resize-split-divider {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  /* JS sets left via the left panel width */
+  width: 2px;
+  background: rgba(255,255,255,.6);
+  z-index: 10;
+  cursor: col-resize;
+  transform: translateX(-1px);
+}
+
+/* Position the divider at the right edge of the left panel */
+#resize-split-left {
+  /* JS reads and sets this via offsetWidth + style.width */
+}
+
+/* The divider floats absolutely — its left is updated by JS via
+   a ResizeObserver or inline; simpler: attach it after left panel */
+.resize-split-divider {
+  left: 50%;
+}
+
+.resize-divider-handle {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 2px 8px rgba(0,0,0,.25);
+  color: var(--color-text);
+  user-select: none;
+}
+
+/* ── Empty state ────────────────────────────────────── */
+.resize-split-placeholder {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 3;
+  pointer-events: none;
+}
+.resize-placeholder-inner {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  pointer-events: auto;
+}
+
+/* ── Bottom bar ─────────────────────────────────────── */
+.resize-bottom-bar {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  gap: 6px;
+  padding-top: 8px;
+}
+
+.resize-corner-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  height: 28px;
+  padding: 0 10px;
+  border: 1.5px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  background: var(--color-panel);
+  font-size: var(--text-sm);
+  font-weight: 500;
+  color: var(--color-muted);
+  cursor: pointer;
+  transition: background var(--transition), color var(--transition);
+}
+.resize-corner-btn:hover { background: var(--color-bg); color: var(--color-text); }
+
+/* ── Zoom button ────────────────────────────────────── */
+.resize-zoom-btn {
+  width: auto !important;
+  padding: 0 10px;
+  gap: 4px;
+  font-size: var(--text-sm);
+  font-weight: 500;
+  color: var(--color-text);
+}
+
+/* ═══════════════════════════════════════
+   Resize tab — inspector panel
+═══════════════════════════════════════ */
+
+.resize-inspector-header {
+  padding: 16px 16px 12px;
+  border-bottom: 1px solid var(--color-border);
+  flex-shrink: 0;
+}
+
+.resize-inspector-title {
+  font-size: var(--text-md);
+  font-weight: 600;
+  color: var(--color-text);
+}
+
+.resize-inspector-body {
+  flex: 1;
+  overflow-y: auto;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+
+.ri-field-label {
+  font-size: var(--text-sm);
+  font-weight: 500;
+  color: var(--color-muted);
+  margin-bottom: 6px;
+}
+
+/* Mode toggle */
+.resize-mode-group {
+  display: flex;
+  gap: 0;
+  border: 1.5px solid var(--color-border);
+  border-radius: var(--radius-md);
+  overflow: hidden;
+  margin-bottom: 16px;
+}
+
+.resize-mode-btn {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  height: 38px;
+  border: none;
+  background: transparent;
+  font-family: var(--font-family);
+  font-size: var(--text-sm);
+  font-weight: 500;
+  color: var(--color-muted);
+  cursor: pointer;
+  transition: background var(--transition), color var(--transition);
+}
+.resize-mode-btn:not(.active):hover { background: var(--color-bg); color: var(--color-text); }
+.resize-mode-btn.active {
+  background: var(--color-primary);
+  color: #fff;
+}
+.resize-mode-btn + .resize-mode-btn {
+  border-left: 1.5px solid var(--color-border);
+}
+.resize-mode-btn.active + .resize-mode-btn { border-left-color: transparent; }
+
+/* Width / height row */
+.resize-wh-row {
+  display: flex;
+  align-items: flex-end;
+  gap: 8px;
+  margin-bottom: 14px;
+}
+
+.resize-wh-group {
+  flex: 1;
+  min-width: 0;
+}
+
+.resize-dim-input {
+  display: flex;
+  align-items: center;
+  border: 1.5px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  height: 36px;
+  overflow: hidden;
+  background: var(--color-panel);
+  transition: border-color var(--transition);
+}
+.resize-dim-input:focus-within { border-color: var(--color-primary); }
+
+.resize-dim-input input {
+  flex: 1;
+  border: none;
+  outline: none;
+  font-family: var(--font-family);
+  font-size: var(--text-md);
+  font-weight: 500;
+  color: var(--color-text);
+  background: transparent;
+  padding: 0 8px;
+  min-width: 0;
+  text-align: right;
+}
+
+/* Chrome — hide number arrows */
+.resize-dim-input input::-webkit-outer-spin-button,
+.resize-dim-input input::-webkit-inner-spin-button { -webkit-appearance: none; }
+
+.resize-dim-unit {
+  font-size: var(--text-sm);
+  color: var(--color-muted);
+  padding: 0 8px 0 2px;
+  flex-shrink: 0;
+}
+
+/* Link button */
+.resize-link-btn {
+  width: 32px;
+  height: 36px;
+  border: 1.5px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  background: var(--color-panel);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  color: var(--color-muted);
+  flex-shrink: 0;
+  transition: background var(--transition), color var(--transition), border-color var(--transition);
+  margin-bottom: 0;
+}
+.resize-link-btn.active {
+  border-color: var(--color-primary);
+  background: var(--color-primary-muted);
+  color: var(--color-primary);
+}
+.resize-link-btn:hover:not(.active) { background: var(--color-bg); }
+
+/* Checkboxes */
+.ri-check-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+.ri-check-row input[type="checkbox"] {
+  accent-color: var(--color-primary);
+  width: 15px;
+  height: 15px;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+.ri-check-row label {
+  font-size: var(--text-base);
+  color: var(--color-text);
+  cursor: pointer;
+  line-height: 1.3;
+}
+
+/* Select */
+.ri-select {
+  width: 100%;
+  height: 38px;
+  border: 1.5px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  padding: 0 10px;
+  font-family: var(--font-family);
+  font-size: var(--text-base);
+  color: var(--color-text);
+  background: var(--color-panel);
+  outline: none;
+  cursor: pointer;
+  appearance: auto;
+  margin-bottom: 0;
+}
+.ri-select:focus { border-color: var(--color-primary); }
+
+/* Quality */
+.ri-quality-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 16px;
+  margin-bottom: 6px;
+}
+.ri-quality-pct {
+  font-size: var(--text-md);
+  font-weight: 600;
+  color: var(--color-text);
+}
+.ri-quality-slider {
+  width: 100%;
+  accent-color: var(--color-primary);
+  height: 4px;
+  cursor: pointer;
+  display: block;
+}
+.ri-quality-hints {
+  display: flex;
+  justify-content: space-between;
+  font-size: var(--text-xs);
+  color: var(--color-faint);
+  margin-top: 4px;
+  margin-bottom: 16px;
+}
+
+/* Result box */
+.ri-result-box {
+  background: var(--color-primary-muted);
+  border: 1px solid rgba(22,98,76,.18);
+  border-radius: var(--radius-md);
+  padding: 14px;
+  margin-top: auto;
+}
+.ri-result-title {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: var(--text-sm);
+  font-weight: 600;
+  color: var(--color-primary);
+  margin-bottom: 10px;
+}
+.ri-result-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: var(--text-sm);
+  color: var(--color-muted);
+  margin-bottom: 5px;
+}
+.ri-result-row:last-child { margin-bottom: 0; }
+.ri-result-row span:last-child {
+  font-weight: 500;
+  color: var(--color-text);
+}
+
 /* ─────────────────────────────────────
    Scrollbar styling
 ───────────────────────────────────── */
