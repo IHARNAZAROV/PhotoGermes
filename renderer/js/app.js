@@ -991,8 +991,15 @@ async function doSave() {
             const dataUrl  = hasEdits ? (photo.preview ?? await getPhotoDataUrl(photo)) : null;
 
             const result = await window.api.savePhoto(photo.filePath, dataUrl);
-            if (result?.ok) showToast('Файл сохранён');
-            else            showToast('Ошибка: ' + (result?.error ?? 'не удалось сохранить'));
+            if (result?.ok) {
+                showToast('Файл сохранён');
+            } else if (result?.readonly) {
+                // File is write-protected or locked — fall back to Save As
+                showToast('Файл защищён от записи — выберите путь для сохранения');
+                await doSaveAs();
+            } else {
+                showToast('Ошибка: ' + (result?.error ?? 'не удалось сохранить'));
+            }
         } else {
             // Browser: download with the same filename
             const dataUrl = await getPhotoDataUrl(photo);

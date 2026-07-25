@@ -60,13 +60,26 @@ function registerHandlers() {
 
     // Overwrite an existing file.
     // dataUrl: edited state as base64 data-URL, or null if no edits (original already on disk).
+    // Returns { ok, readonly } — readonly=true means the file can't be overwritten (trigger Save As).
     ipcMain.handle("photos:save", async (_e, filePath, dataUrl) => {
         try {
-            if (dataUrl) {
-                const base64 = dataUrl.replace(/^data:image\/\w+;base64,/, "");
-                fs.writeFileSync(filePath, Buffer.from(base64, "base64"));
+            if (!dataUrl) return { ok: true }; // no edits, nothing to write
+
+            // Check write access before attempting — avoids a confusing OS error message
+            try { fs.accessSync(filePath, fs.constants.W_OK); }
+            catch { return { ok: false, readonly: true }; }
+
+            // Write to a temp file first, then replace the original atomically
+            const tmpPath = filePath + ".~saving";
+            const base64  = dataUrl.replace(/^data:image\/\w+;base64,/, "");
+            fs.writeFileSync(tmpPath, Buffer.from(base64, "base64"));
+            try {
+                fs.renameSync(tmpPath, filePath);
+            } catch {
+                // renameSync can fail across drives — fall back to copy + delete
+                fs.copyFileSync(tmpPath, filePath);
+                fs.unlinkSync(tmpPath);
             }
-            // null dataUrl → nothing to write, original file is already saved
             return { ok: true };
         } catch (e) {
             return { ok: false, error: e.message };
