@@ -726,7 +726,7 @@
 }
 
 /* ─────────────────────────────────────
-   Inspector Crop Panel
+   Inspector Crop Panel  (icp-*)
 ───────────────────────────────────── */
 .inspector-crop-panel {
   flex: 1;
@@ -735,47 +735,114 @@
   flex-direction: column;
 }
 
-.inspector-crop-label {
+/* Logical block (section) */
+.icp-block {
+  padding: 14px 16px;
+}
+
+/* Section label — small uppercase */
+.icp-block-label {
   font-size: var(--text-xs);
   font-weight: 700;
   letter-spacing: .09em;
   text-transform: uppercase;
   color: var(--color-faint);
-  padding: 14px 16px 6px;
+  margin-bottom: 10px;
+}
+
+/* Horizontal rule between blocks */
+.icp-divider {
+  height: 1px;
+  background: var(--color-border);
+  margin: 0;
   flex-shrink: 0;
 }
 
-/* Presets inside inspector — wrap to fill width */
-.inspector-crop-panel .editor-presets {
+/* ── Block 1: preset buttons grid ── */
+.icp-presets {
+  display: flex;
   flex-wrap: wrap;
-  border-bottom: 1px solid var(--color-border);
-  padding: 8px 12px;
   gap: 4px;
 }
 
-/* Frame params inside inspector — vertical layout */
-.frame-params--inspector {
+/* ── Block 2: transform actions row ── */
+.icp-actions {
   display: flex;
-  flex-direction: column;
-  gap: 10px;
-  padding: 12px 16px;
+  gap: 4px;
 }
 
-.frame-params-row {
+/* ── Block 3: size inputs ── */
+.icp-size-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.icp-dim-group {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex: 1;
+}
+
+.icp-dim-label {
+  font-size: var(--text-sm);
+  font-weight: 600;
+  color: var(--color-muted);
+  white-space: nowrap;
+  width: 14px;
+  text-align: center;
+  flex-shrink: 0;
+}
+
+.icp-dim-group .frame-input {
+  flex: 1;
+}
+
+.icp-dim-group .frame-input input {
+  width: 100%;
+}
+
+/* Aspect ratio row */
+.icp-aspect-row {
   display: flex;
   align-items: center;
   gap: 10px;
-  flex-wrap: wrap;
 }
 
-.frame-hint--block {
+.icp-aspect-label {
+  font-size: var(--text-sm);
+  color: var(--color-muted);
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.icp-select-wrap {
+  flex: 1;
+}
+
+.icp-select-wrap .frame-select-btn {
+  width: 100%;
+}
+
+/* Dropdown opens downward inside the inspector */
+.icp-select-wrap .frame-select-dropdown {
+  bottom: auto;
+  top: calc(100% + 5px);
+}
+
+/* Hint at the bottom */
+.icp-hint {
+  padding: 0 16px 16px;
   font-size: var(--text-sm);
   color: var(--color-muted);
   font-style: italic;
   line-height: 1.5;
-  margin: 0;
+  margin-top: auto;
 }
-.frame-hint--block kbd {
+
+.icp-hint kbd {
   background: var(--color-bg);
   border: 1px solid var(--color-border);
   border-radius: 3px;
@@ -783,6 +850,11 @@
   font-size: 11px;
   font-style: normal;
 }
+
+/* Legacy aliases kept for compatibility */
+.frame-params-row { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+.frame-hint--block { font-size: var(--text-sm); color: var(--color-muted); font-style: italic; line-height: 1.5; margin: 0; }
+.frame-hint--block kbd { background: var(--color-bg); border: 1px solid var(--color-border); border-radius: 3px; padding: 1px 4px; font-size: 11px; font-style: normal; }
 
 /* ─────────────────────────────────────
    Inspector / Right Sidebar
