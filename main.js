@@ -58,19 +58,24 @@ function registerHandlers() {
         } catch { return null; }
     });
 
-    // Overwrite an existing file with the given data-URL
+    // Overwrite an existing file.
+    // dataUrl: edited state as base64 data-URL, or null if no edits (original already on disk).
     ipcMain.handle("photos:save", async (_e, filePath, dataUrl) => {
         try {
-            const base64 = dataUrl.replace(/^data:image\/\w+;base64,/, "");
-            fs.writeFileSync(filePath, Buffer.from(base64, "base64"));
+            if (dataUrl) {
+                const base64 = dataUrl.replace(/^data:image\/\w+;base64,/, "");
+                fs.writeFileSync(filePath, Buffer.from(base64, "base64"));
+            }
+            // null dataUrl → nothing to write, original file is already saved
             return { ok: true };
         } catch (e) {
             return { ok: false, error: e.message };
         }
     });
 
-    // Show native Save-As dialog, then write the data-URL to the chosen path
-    ipcMain.handle("photos:save-as", async (_e, suggestedName, dataUrl) => {
+    // Show native Save-As dialog, then write to the chosen path.
+    // dataUrl: edited state, or null when no edits (originalPath is copied instead).
+    ipcMain.handle("photos:save-as", async (_e, suggestedName, dataUrl, originalPath) => {
         try {
             const result = await dialog.showSaveDialog({
                 title: "Сохранить как",
@@ -83,11 +88,18 @@ function registerHandlers() {
                 ]
             });
             if (result.canceled || !result.filePath) return null;
-            const base64 = dataUrl.replace(/^data:image\/\w+;base64,/, "");
-            fs.writeFileSync(result.filePath, Buffer.from(base64, "base64"));
+
+            if (dataUrl) {
+                const base64 = dataUrl.replace(/^data:image\/\w+;base64,/, "");
+                fs.writeFileSync(result.filePath, Buffer.from(base64, "base64"));
+            } else if (originalPath && fs.existsSync(originalPath)) {
+                // No edits — copy original at full quality
+                fs.copyFileSync(originalPath, result.filePath);
+            }
+
             return { filePath: result.filePath, name: path.basename(result.filePath) };
         } catch (e) {
-            return null;
+            return { ok: false, error: e.message };
         }
     });
 }

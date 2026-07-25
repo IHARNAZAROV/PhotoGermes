@@ -977,18 +977,32 @@ function reencodeAs(dataUrl, mimeType) {
  */
 async function doSave() {
     if (selectedIndex < 0) { showToast('Откройте фото для сохранения'); return; }
-    const photo  = photos[selectedIndex];
-    const dataUrl = await getPhotoDataUrl(photo);
-    if (!dataUrl) { showToast('Нет данных для сохранения'); return; }
+    const photo = photos[selectedIndex];
 
-    if (isElectron && photo.filePath) {
-        const result = await window.api.savePhoto(photo.filePath, dataUrl);
-        if (result?.ok) showToast('Файл сохранён');
-        else            showToast('Ошибка сохранения: ' + (result?.error ?? ''));
-    } else {
-        // Browser: download with the same filename
-        triggerDownload(dataUrlToBlob(dataUrl), photo.name);
-        showToast('Файл сохранён');
+    try {
+        if (isElectron && photo.filePath) {
+            if (typeof window.api?.savePhoto !== 'function') {
+                showToast('Перезапустите приложение — требуется обновление');
+                return;
+            }
+            // Pass edited dataUrl only if the photo was actually modified;
+            // otherwise pass null so the IPC handler leaves the original file intact.
+            const hasEdits = photoUndoStack(photo).length > 0;
+            const dataUrl  = hasEdits ? (photo.preview ?? await getPhotoDataUrl(photo)) : null;
+
+            const result = await window.api.savePhoto(photo.filePath, dataUrl);
+            if (result?.ok) showToast('Файл сохранён');
+            else            showToast('Ошибка: ' + (result?.error ?? 'не удалось сохранить'));
+        } else {
+            // Browser: download with the same filename
+            const dataUrl = await getPhotoDataUrl(photo);
+            if (!dataUrl) { showToast('Нет данных для сохранения'); return; }
+            triggerDownload(dataUrlToBlob(dataUrl), photo.name);
+            showToast('Файл сохранён');
+        }
+    } catch (err) {
+        showToast('Ошибка сохранения: ' + err.message);
+        console.error('[save]', err);
     }
 }
 
@@ -998,53 +1012,38 @@ async function doSave() {
  */
 async function doSaveAs() {
     if (selectedIndex < 0) { showToast('Откройте фото для сохранения'); return; }
-    const photo   = photos[selectedIndex];
-    const dataUrl = await getPhotoDataUrl(photo);
-    if (!dataUrl) { showToast('Нет данных для сохранения'); return; }
+    const photo = photos[selectedIndex];
 
-    if (isElectron) {
-        const result = await window.api.savePhotoAs(photo.name, dataUrl);
-        if (result) {
+    try {
+        if (isElectron) {
+            if (typeof window.api?.savePhotoAs !== 'function') {
+                showToast('Перезапустите приложение — требуется обновление');
+                return;
+            }
+            // If edits exist, send the edited preview; otherwise send null so
+            // the main process copies the original file at full resolution.
+            const hasEdits = photoUndoStack(photo).length > 0;
+            const dataUrl  = hasEdits ? (photo.preview ?? await getPhotoDataUrl(photo)) : null;
+
+            const result = await window.api.savePhotoAs(photo.name, dataUrl, photo.filePath);
+            if (!result) return; // user cancelled dialog
+            if (result.ok === false) { showToast('Ошибка: ' + result.error); return; }
+
             photo.filePath = result.filePath;
             photo.name     = result.name;
             rebuildGallery();
             showToast('Сохранено: ' + result.name);
+            return;
         }
-        return;
-    }
 
-    // ── Browser ──────────────────────────────────────────
-    if (window.showSaveFilePicker) {
-        try {
-            const handle = await window.showSaveFilePicker({
-                suggestedName: photo.name,
-                types: [
-                    { description: 'JPEG', accept: { 'image/jpeg': ['.jpg', '.jpeg'] } },
-                    { description: 'PNG',  accept: { 'image/png':  ['.png']          } },
-                    { description: 'WebP', accept: { 'image/webp': ['.webp']         } },
-                ]
-            });
-            const newExt = handle.name.split('.').pop().toLowerCase();
-            let saveUrl  = dataUrl;
-            if (newExt === 'png'  && !dataUrl.startsWith('data:image/png'))
-                saveUrl = await reencodeAs(dataUrl, 'image/png');
-            else if (newExt === 'webp' && !dataUrl.startsWith('data:image/webp'))
-                saveUrl = await reencodeAs(dataUrl, 'image/webp');
+        // ── Browser ──────────────────────────────────────────
+        const dataUrl = await getPhotoDataUrl(photo);
+        if (!dataUrl) { showToast('Нет данных для сохранения'); return; }
+        await browserSaveAs(photo, dataUrl);
 
-            const writable = await handle.createWritable();
-            await writable.write(dataUrlToBlob(saveUrl));
-            await writable.close();
-
-            photo.name = handle.name;
-            rebuildGallery();
-            showToast('Сохранено: ' + handle.name);
-        } catch (e) {
-            if (e.name !== 'AbortError') showToast('Ошибка сохранения');
-        }
-    } else {
-        // Fallback for browsers without showSaveFilePicker (Firefox, Safari)
-        triggerDownload(dataUrlToBlob(dataUrl), photo.name);
-        showToast('Файл скачан');
+    } catch (err) {
+        showToast('Ошибка сохранения: ' + err.message);
+        console.error('[save-as]', err);
     }
 }
 
