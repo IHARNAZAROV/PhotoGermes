@@ -402,7 +402,7 @@
   opacity: .25;
 }
 
-/* Crop overlay */
+/* Crop overlay — transparent to mouse; only the frame itself captures events */
 .crop-overlay {
   position: absolute;
   inset: 0;
@@ -418,6 +418,9 @@
   border: 2px solid rgba(255,255,255,.95);
   border-radius: 2px;
   box-shadow: 0 0 0 9999px rgba(0,0,0,.4);
+  cursor: move;
+  pointer-events: auto;
+  user-select: none;
 }
 
 /* Rule of thirds grid */
