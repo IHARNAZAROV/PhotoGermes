@@ -728,6 +728,117 @@ function initClearSelectionBtn() {
     btn.addEventListener('click', clearChecks);
 }
 
+// ── Crop apply ─────────────────────────────────────────
+
+/**
+ * Crop a photo in-place using Canvas.
+ * @param {object} photo  - photo object from the photos[] array
+ * @param {{ x, y, x2, y2 }} norm - fractions [0-1] of source image
+ * @returns {Promise<boolean>}
+ */
+function applyCropToPhotoCanvas(photo, norm) {
+    return new Promise(resolve => {
+        const src = photo.preview || photo.objectUrl;
+        if (!src || !photo.width || !photo.height) { resolve(false); return; }
+
+        const img = new Image();
+        img.onload = () => {
+            const srcX = Math.round(norm.x  * img.naturalWidth);
+            const srcY = Math.round(norm.y  * img.naturalHeight);
+            const srcW = Math.round(norm.x2 * img.naturalWidth)  - srcX;
+            const srcH = Math.round(norm.y2 * img.naturalHeight) - srcY;
+
+            if (srcW < 1 || srcH < 1) { resolve(false); return; }
+
+            // Full-res cropped canvas
+            const canvas    = document.createElement('canvas');
+            canvas.width    = srcW;
+            canvas.height   = srcH;
+            canvas.getContext('2d').drawImage(img, srcX, srcY, srcW, srcH, 0, 0, srcW, srcH);
+
+            photo.preview   = canvas.toDataURL('image/jpeg', 0.92);
+            photo.width     = srcW;
+            photo.height    = srcH;
+            // Approximate byte size from base64 length
+            photo.sizeBytes = Math.round((photo.preview.length - 22) * 0.75);
+
+            // Thumbnail
+            const tc    = document.createElement('canvas');
+            const ratio = Math.max(160 / srcW, 120 / srcH);
+            tc.width    = Math.round(srcW * ratio);
+            tc.height   = Math.round(srcH * ratio);
+            tc.getContext('2d').drawImage(canvas, 0, 0, tc.width, tc.height);
+            photo.thumbnail = tc.toDataURL('image/jpeg', 0.75);
+
+            resolve(true);
+        };
+        img.onerror = () => resolve(false);
+        img.src = src;
+    });
+}
+
+/** Apply current crop frame to the photo currently open in the editor. */
+async function applyCropCurrent() {
+    if (selectedIndex < 0) {
+        showToast('Откройте фото для обрезки');
+        return;
+    }
+    const photo = photos[selectedIndex];
+    const norm  = window.cropGetNormalized?.(photo.width, photo.height);
+    if (!norm || (norm.x2 - norm.x) < 0.01 || (norm.y2 - norm.y) < 0.01) {
+        showToast('Рамка обрезки слишком маленькая');
+        return;
+    }
+
+    const ok = await applyCropToPhotoCanvas(photo, norm);
+    if (!ok) { showToast('Не удалось применить обрезку'); return; }
+
+    patchThumbnail(selectedIndex);
+    await loadEditorPreview(photo);
+    const footerInfo = document.querySelector('.footer-info');
+    if (footerInfo) footerInfo.textContent =
+        `${formatRes(photo.width, photo.height)}\u00a0·\u00a0${formatSize(photo.sizeBytes)}`;
+    showToast('Обрезка применена');
+}
+
+/** Apply current crop proportions to every photo in the list. */
+async function applyToAll() {
+    if (photos.length === 0) { showToast('Нет фотографий'); return; }
+    if (selectedIndex < 0)   { showToast('Откройте фото, чтобы задать обрезку'); return; }
+
+    const photo = photos[selectedIndex];
+    const norm  = window.cropGetNormalized?.(photo.width, photo.height);
+    if (!norm || (norm.x2 - norm.x) < 0.01 || (norm.y2 - norm.y) < 0.01) {
+        showToast('Рамка обрезки слишком маленькая');
+        return;
+    }
+
+    const btn = document.getElementById('btn-apply-all');
+    if (btn) { btn.disabled = true; }
+
+    await Promise.all(photos.map(p => applyCropToPhotoCanvas(p, norm)));
+
+    rebuildGallery();
+    if (selectedIndex >= 0) {
+        await loadEditorPreview(photos[selectedIndex]);
+        const footerInfo = document.querySelector('.footer-info');
+        const p = photos[selectedIndex];
+        if (footerInfo) footerInfo.textContent =
+            `${formatRes(p.width, p.height)}\u00a0·\u00a0${formatSize(p.sizeBytes)}`;
+    }
+    updateCounts();
+    if (btn) btn.disabled = false;
+    showToast(`Обрезка применена ко всем ${photos.length} фото`);
+}
+
+function initCropButtons() {
+    const applyOne = document.getElementById('btn-apply-crop');
+    if (applyOne) applyOne.addEventListener('click', applyCropCurrent);
+
+    const applyAll = document.getElementById('btn-apply-all');
+    if (applyAll) applyAll.addEventListener('click', applyToAll);
+}
+
 // ── Editor transform ────────────────────────────────────
 function applyEditorTransform() {
     const img = document.getElementById('editor-img');
@@ -807,4 +918,5 @@ document.addEventListener('DOMContentLoaded', () => {
     initZoom();
     initOpacity();
     initEditorTransformButtons();
+    initCropButtons();
 });

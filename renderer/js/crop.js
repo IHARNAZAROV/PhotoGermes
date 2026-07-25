@@ -354,3 +354,41 @@ function initCrop() {
 }
 
 document.addEventListener('DOMContentLoaded', initCrop);
+
+// ── Public API for app.js ─────────────────────────────
+/**
+ * Convert the current crop frame (% of container) into normalized image
+ * fractions [0-1], accounting for object-fit:contain letterboxing.
+ *
+ * @param {number} photoW - natural width of the displayed photo (px)
+ * @param {number} photoH - natural height of the displayed photo (px)
+ * @returns {{ x, y, x2, y2 } | null}  fractions of source image, or null on error
+ */
+window.cropGetNormalized = function(photoW, photoH) {
+    const c = getContainer();
+    if (!c || !photoW || !photoH) return null;
+
+    const cW = c.offsetWidth;
+    const cH = c.offsetHeight;
+
+    // How object-fit:contain scales the image inside the container
+    const scale     = Math.min(cW / photoW, cH / photoH);
+    const renderedW = photoW * scale;
+    const renderedH = photoH * scale;
+    const offX      = (cW - renderedW) / 2;   // horizontal letterbox
+    const offY      = (cH - renderedH) / 2;   // vertical letterbox
+
+    // Crop frame corners in container pixels
+    const left   = crop.x             / 100 * cW;
+    const top    = crop.y             / 100 * cH;
+    const right  = (crop.x + crop.w)  / 100 * cW;
+    const bottom = (crop.y + crop.h)  / 100 * cH;
+
+    // Map to fractions of the rendered (and therefore source) image
+    return {
+        x:  Math.max(0, Math.min(1, (left   - offX) / renderedW)),
+        y:  Math.max(0, Math.min(1, (top    - offY) / renderedH)),
+        x2: Math.max(0, Math.min(1, (right  - offX) / renderedW)),
+        y2: Math.max(0, Math.min(1, (bottom - offY) / renderedH)),
+    };
+};
