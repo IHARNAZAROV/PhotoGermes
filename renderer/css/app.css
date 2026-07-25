@@ -1,0 +1,78 @@
+/* ========================================================
+   app.css — overrides, animations, utility classes
+   ======================================================== */
+
+/* Google Fonts — Inter */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+
+/* Focus ring reset — keyboard-only */
+:focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 2px;
+}
+
+/* Prevent text selection during drag */
+.no-select { user-select: none; }
+
+/* Utility */
+.mt-4  { margin-top: 4px; }
+.mt-8  { margin-top: 8px; }
+.mt-12 { margin-top: 12px; }
+.flex  { display: flex; }
+.flex-col { flex-direction: column; }
+.items-center { align-items: center; }
+.gap-8 { gap: 8px; }
+.text-muted { color: var(--color-muted); font-size: var(--text-sm); }
+
+/* Animate selected item glow */
+@keyframes selectedPulse {
+  0%   { box-shadow: 0 0 0 0 rgba(22,98,76,.25); }
+  70%  { box-shadow: 0 0 0 5px rgba(22,98,76,0); }
+  100% { box-shadow: 0 0 0 0 rgba(22,98,76,0); }
+}
+
+.gallery-item.selected {
+  animation: selectedPulse .5s ease forwards;
+}
+
+/* Crop frame subtle animation */
+@keyframes cropBorderDash {
+  to { stroke-dashoffset: -20; }
+}
+
+/* History tab placeholder */
+.history-placeholder {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 40px 20px;
+  color: var(--color-faint);
+  text-align: center;
+  gap: 10px;
+}
+.history-placeholder svg {
+  opacity: .35;
+}
+.history-placeholder p {
+  font-size: var(--text-sm);
+  line-height: 1.6;
+}
+
+/* Tooltip (simple CSS) */
+[data-tooltip] { position: relative; }
+[data-tooltip]:hover::after {
+  content: attr(data-tooltip);
+  position: absolute;
+  bottom: calc(100% + 6px);
+  left: 50%;
+  transform: translateX(-50%);
+  white-space: nowrap;
+  background: #1a1f27;
+  color: #fff;
+  font-size: var(--text-xs);
+  padding: 4px 8px;
+  border-radius: var(--radius-sm);
+  pointer-events: none;
+  z-index: 100;
+}

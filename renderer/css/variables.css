@@ -1,0 +1,60 @@
+/* ========================================================
+   CSS Custom Properties — Фотоцентр ГермесГарант
+   ======================================================== */
+
+:root {
+  /* Brand colours */
+  --color-primary:       #16624c;
+  --color-primary-hover: #0f523f;
+  --color-primary-light: #e8f2ee;
+  --color-primary-muted: rgba(22, 98, 76, 0.12);
+
+  /* Surfaces */
+  --color-bg:     #f6f8f9;
+  --color-panel:  #ffffff;
+  --color-panel2: #f0f2f4;
+
+  /* Borders */
+  --color-border: #e7ebef;
+  --color-border2: #d4d9de;
+
+  /* Text */
+  --color-text:  #20242c;
+  --color-muted: #6f7782;
+  --color-faint: #a8aeb6;
+
+  /* Semantic */
+  --color-danger:  #d94040;
+  --color-warning: #e0832a;
+  --color-success: #16624c;
+
+  /* Radius */
+  --radius-sm:  6px;
+  --radius-md:  10px;
+  --radius-lg:  12px;
+  --radius-xl:  16px;
+
+  /* Shadows */
+  --shadow-xs: 0 1px 2px rgba(0,0,0,.05);
+  --shadow-sm: 0 1px 4px rgba(0,0,0,.08);
+  --shadow-md: 0 4px 12px rgba(0,0,0,.10);
+
+  /* Typography */
+  --font-family: 'Inter', system-ui, -apple-system, sans-serif;
+  --text-xs:   11px;
+  --text-sm:   12px;
+  --text-base: 13px;
+  --text-md:   14px;
+  --text-lg:   16px;
+  --text-xl:   20px;
+
+  /* Layout dimensions */
+  --header-h:    68px;
+  --footer-h:    36px;
+  --sidebar-w:   256px;
+  --gallery-w:   308px;
+  --inspector-w: 312px;
+
+  /* Transitions */
+  --transition: 150ms ease;
+}

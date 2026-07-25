@@ -1,0 +1,32 @@
+modules = ["nodejs-20", "web"]
+
+[nix]
+channel = "stable-25_05"
+
+[agent]
+expertMode = true
+
+[workflows]
+runButton = "Project"
+
+[[workflows.workflow]]
+name = "Project"
+mode = "parallel"
+author = "agent"
+
+[[workflows.workflow.tasks]]
+task = "workflow.run"
+args = "Preview UI"
+
+[[workflows.workflow]]
+name = "Preview UI"
+author = "agent"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "npx --yes serve renderer -p 5000 -s"
+waitForPort = 5000
+
+[[ports]]
+localPort = 5000
+externalPort = 80
