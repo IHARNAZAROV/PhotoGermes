@@ -591,19 +591,73 @@
 }
 .frame-lock-btn:hover { background: var(--color-bg); }
 
-.frame-select {
+/* ── Custom aspect-ratio select ─────────────────────── */
+.frame-select-wrap { position: relative; }
+
+.frame-select-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
   height: 32px;
+  padding: 0 10px;
+  min-width: 96px;
   border: 1.5px solid var(--color-border);
   border-radius: var(--radius-sm);
-  padding: 0 8px;
+  background: var(--color-panel);
   font-family: var(--font-family);
   font-size: var(--text-base);
   color: var(--color-text);
-  background: var(--color-panel);
   cursor: pointer;
-  outline: none;
+  white-space: nowrap;
+  transition: border-color var(--transition), box-shadow var(--transition);
 }
-.frame-select:focus { border-color: var(--color-primary); }
+.frame-select-btn:hover { border-color: var(--color-border2); }
+.frame-select-btn.open {
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 3px var(--color-primary-muted);
+}
+.frame-select-btn svg {
+  margin-left: auto;
+  flex-shrink: 0;
+  color: var(--color-muted);
+  transition: transform .15s ease;
+}
+.frame-select-btn.open svg { transform: rotate(180deg); }
+
+.frame-select-dropdown {
+  display: none;
+  position: absolute;
+  bottom: calc(100% + 5px);
+  left: 0;
+  min-width: 100%;
+  background: var(--color-panel);
+  border: 1.5px solid var(--color-border);
+  border-radius: var(--radius-md);
+  box-shadow: 0 8px 24px rgba(0,0,0,.12), 0 2px 6px rgba(0,0,0,.08);
+  overflow: hidden;
+  z-index: 200;
+}
+.frame-select-dropdown.open { display: block; }
+
+.frame-select-option {
+  padding: 8px 14px;
+  font-size: var(--text-base);
+  color: var(--color-text);
+  cursor: pointer;
+  transition: background var(--transition);
+}
+.frame-select-option:hover { background: var(--color-bg); }
+.frame-select-option.active {
+  background: var(--color-primary-muted);
+  color: var(--color-primary);
+  font-weight: 600;
+}
+
+/* Lock button active state */
+.frame-lock-btn.locked {
+  color: var(--color-primary);
+  background: var(--color-primary-muted);
+}
 
 .frame-hint {
   font-size: var(--text-sm);
