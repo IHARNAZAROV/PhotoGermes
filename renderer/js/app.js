@@ -376,7 +376,7 @@ function initKeyboard() {
 
         // Delete / Backspace → delete checked (or selected if none checked)
         if (e.key === 'Delete' || e.key === 'Backspace') {
-            if (checkedIndices.size > 0) {
+            if (checkedIndices.size > 0 || selectedIndex >= 0) {
                 e.preventDefault();
                 deleteChecked();
             }
@@ -705,7 +705,7 @@ function initDeleteButton() {
     const btn = document.getElementById('btn-delete-checked');
     if (!btn) return;
     btn.addEventListener('click', () => {
-        if (checkedIndices.size > 0) deleteChecked();
+        if (checkedIndices.size > 0 || selectedIndex >= 0) deleteChecked();
     });
 }
 

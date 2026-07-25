@@ -287,6 +287,7 @@
   flex-shrink: 0;
   background: var(--color-border);
   overflow: hidden;
+  position: relative;
 }
 
 .gallery-thumb-img {
