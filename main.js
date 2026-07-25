@@ -86,6 +86,25 @@ function registerHandlers() {
         }
     });
 
+    // Resize a photo with Sharp and return the result as a base64 data-URL.
+    // kernel: one of sharp.kernel keys ('lanczos3' | 'cubic' | 'nearest' | …)
+    ipcMain.handle("photos:resize", async (_e, { filePath, newWidth, newHeight, kernel, quality }) => {
+        if (!sharp) return { ok: false, error: 'sharp не установлен' };
+        try {
+            const sharpKernel = sharp.kernel[kernel] ?? sharp.kernel.lanczos3;
+            const buf = await sharp(filePath)
+                .resize(newWidth, newHeight, {
+                    fit: 'fill',
+                    kernel: sharpKernel,
+                })
+                .jpeg({ quality: Math.max(1, Math.min(100, quality)) })
+                .toBuffer();
+            return { ok: true, dataUrl: "data:image/jpeg;base64," + buf.toString("base64") };
+        } catch (e) {
+            return { ok: false, error: e.message };
+        }
+    });
+
     // Show native Save-As dialog, then write to the chosen path.
     // dataUrl: edited state, or null when no edits (originalPath is copied instead).
     ipcMain.handle("photos:save-as", async (_e, suggestedName, dataUrl, originalPath) => {

@@ -16,6 +16,7 @@ const HISTORY_ICONS = {
     photo_load:  `<circle cx="8" cy="8" r="6"/><path d="M3 13l3-3 2 2 2.5-3L14 13"/><circle cx="6" cy="6" r="1.2" fill="currentColor" stroke="none"/>`,
     tool:        `<rect x="2" y="2" width="12" height="12" rx="2"/><path d="M5 8h6M8 5v6"/>`,
     crop:        `<path d="M3 6h9v9M6 3v9h9"/><rect x="6" y="6" width="6" height="6" stroke-dasharray="2 1.2"/>`,
+    resize:      `<rect x="1" y="4" width="9" height="9" rx="1"/><rect x="6" y="1" width="9" height="9" rx="1" stroke-dasharray="2 1.2"/>`,
     save:        `<path d="M13 13H3a1 1 0 01-1-1V3l3-1h7l2 2v8a1 1 0 01-1 1z"/><path d="M5 13V8h6v5"/><path d="M5 2v3h5V2"/>`,
     rotate:      `<path d="M14 8a6 6 0 1 0-1.2 3.6"/><polyline points="14,3.5 14,8 9.5,8"/>`,
     flip:        `<line x1="8" y1="2" x2="8" y2="14" stroke-dasharray="2.5 1.5"/><polyline points="1,6 4.5,8 1,10"/><polyline points="15,6 11.5,8 15,10"/>`,
@@ -1018,6 +1019,134 @@ function initCropButtons() {
     if (applyAll) applyAll.addEventListener('click', applyMain);
 }
 
+// ── Resize apply ────────────────────────────────────────
+
+/**
+ * Resize a photo in-place using the Canvas API (browser fallback).
+ * Sets imageSmoothingEnabled=false for 'nearest', high quality otherwise.
+ */
+function applyResizeCanvas(photo, newWidth, newHeight, mode, quality) {
+    return new Promise(resolve => {
+        const src = photo.preview || photo.objectUrl;
+        if (!src) { resolve(false); return; }
+
+        const img = new Image();
+        img.onload = () => {
+            const canvas = document.createElement('canvas');
+            canvas.width  = newWidth;
+            canvas.height = newHeight;
+            const ctx = canvas.getContext('2d');
+
+            if (mode === 'nearest') {
+                ctx.imageSmoothingEnabled = false;
+            } else {
+                ctx.imageSmoothingEnabled = true;
+                ctx.imageSmoothingQuality = 'high';
+            }
+            ctx.drawImage(img, 0, 0, newWidth, newHeight);
+
+            photo.preview   = canvas.toDataURL('image/jpeg', quality / 100);
+            photo.width     = newWidth;
+            photo.height    = newHeight;
+            photo.sizeBytes = Math.round((photo.preview.length - 22) * 0.75);
+
+            // Regenerate thumbnail
+            const tc    = document.createElement('canvas');
+            const ratio = Math.max(160 / newWidth, 120 / newHeight);
+            tc.width    = Math.round(newWidth  * ratio);
+            tc.height   = Math.round(newHeight * ratio);
+            tc.getContext('2d').drawImage(canvas, 0, 0, tc.width, tc.height);
+            photo.thumbnail = tc.toDataURL('image/jpeg', 0.75);
+
+            resolve(true);
+        };
+        img.onerror = () => resolve(false);
+        img.src = src;
+    });
+}
+
+/** Apply resize to the currently open photo. */
+async function applyResize() {
+    if (selectedIndex < 0) { showToast('Откройте фото для изменения размера'); return; }
+
+    const params = window.__resizeGetParams?.();
+    if (!params) { showToast('Не удалось получить параметры изменения размера'); return; }
+
+    const { newWidth, newHeight, kernel, quality, mode } = params;
+    const photo = photos[selectedIndex];
+
+    if (newWidth < 1 || newHeight < 1) { showToast('Укажите корректный размер'); return; }
+    if (newWidth === photo.width && newHeight === photo.height) {
+        showToast('Размер не изменился');
+        return;
+    }
+
+    const btn = document.getElementById('btn-apply-resize');
+    if (btn) btn.disabled = true;
+
+    pushUndo();
+    let ok = false;
+
+    if (isElectron && photo.filePath && typeof window.api?.resizePhoto === 'function') {
+        // Electron: Sharp-based resize with the selected kernel
+        const result = await window.api.resizePhoto({
+            filePath: photo.filePath,
+            newWidth, newHeight, kernel, quality
+        });
+        if (result?.ok) {
+            photo.preview   = result.dataUrl;
+            photo.width     = newWidth;
+            photo.height    = newHeight;
+            photo.sizeBytes = Math.round((result.dataUrl.length - 22) * 0.75);
+
+            // Regenerate thumbnail from resized data
+            await new Promise(resolve => {
+                const img = new Image();
+                img.onload = () => {
+                    const tc    = document.createElement('canvas');
+                    const ratio = Math.max(160 / newWidth, 120 / newHeight);
+                    tc.width    = Math.round(newWidth  * ratio);
+                    tc.height   = Math.round(newHeight * ratio);
+                    tc.getContext('2d').drawImage(img, 0, 0, tc.width, tc.height);
+                    photo.thumbnail = tc.toDataURL('image/jpeg', 0.75);
+                    resolve();
+                };
+                img.onerror = resolve;
+                img.src = result.dataUrl;
+            });
+            ok = true;
+        }
+    } else {
+        // Browser fallback: Canvas-based resize
+        ok = await applyResizeCanvas(photo, newWidth, newHeight, mode, quality);
+    }
+
+    if (btn) btn.disabled = false;
+
+    if (!ok) {
+        photoUndoStack(photo).pop();
+        updateUndoRedoBtns();
+        showToast('Не удалось применить изменение размера');
+        return;
+    }
+
+    patchThumbnail(selectedIndex);
+    await loadEditorPreview(photo);
+    window.resizeLoadPhoto?.(photo);
+
+    const footerInfo = document.querySelector('.footer-info');
+    if (footerInfo) footerInfo.textContent =
+        `${formatRes(photo.width, photo.height)}\u00a0·\u00a0${formatSize(photo.sizeBytes)}`;
+
+    pushHistory('resize', `Размер изменён: ${newWidth} × ${newHeight} px`);
+    showToast(`Размер изменён: ${newWidth} × ${newHeight} px`);
+}
+
+function initResizeButtons() {
+    const btn = document.getElementById('btn-apply-resize');
+    if (btn) btn.addEventListener('click', applyResize);
+}
+
 // ── Save / Save As ──────────────────────────────────────
 
 /** Convert a data-URL to a Blob. */
@@ -1433,6 +1562,7 @@ document.addEventListener('DOMContentLoaded', () => {
     initOpacity();
     initEditorTransformButtons();
     initCropButtons();
+    initResizeButtons();
     initSaveButtons();
     initUndoRedo();
     initTooltips();

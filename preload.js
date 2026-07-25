@@ -18,4 +18,7 @@ contextBridge.exposeInMainWorld("api", {
 
     /** Show native Save-As dialog. dataUrl=null → copy original file at full quality. */
     savePhotoAs:   (name, dataUrl, originalPath)    => ipcRenderer.invoke("photos:save-as", name, dataUrl, originalPath),
+
+    /** Resize photo using Sharp. Returns Promise<{ok, dataUrl}|{ok, error}>. */
+    resizePhoto:   (params)                         => ipcRenderer.invoke("photos:resize", params),
 });

@@ -3,6 +3,44 @@
    ======================================================== */
 'use strict';
 
+/* ── Resample configuration ──────────────────────────── */
+
+// Maps UI data-value keys → Sharp kernel strings.
+// To add a new algorithm, extend only this object.
+const RESAMPLE_MAP = {
+    auto:     null,        // kernel resolved dynamically in getResizeKernel
+    lanczos3: 'lanczos3', // Максимальное качество
+    cubic:    'cubic',    // Стандартный
+    nearest:  'nearest',  // Пиксельная графика
+};
+
+// Currently selected resample mode (data-value of the active option)
+let currentResampleMode = 'auto';
+
+/**
+ * Returns the Sharp kernel string for the given mode and scale direction.
+ * All selection logic is encapsulated here — callers never need if-chains.
+ *
+ * @param {string} mode       'auto' | 'lanczos3' | 'cubic' | 'nearest'
+ * @param {number} oldWidth
+ * @param {number} oldHeight
+ * @param {number} newWidth
+ * @param {number} newHeight
+ * @returns {string} Sharp kernel name
+ */
+function getResizeKernel(mode, oldWidth, oldHeight, newWidth, newHeight) {
+    if (mode === 'auto') {
+        // Downscaling → lanczos3 (sharp quality, avoids aliasing)
+        // Upscaling   → cubic   (smooth enlargement without over-sharpening)
+        const isDownscale = (newWidth * newHeight) <= (oldWidth * oldHeight);
+        return isDownscale ? 'lanczos3' : 'cubic';
+    }
+    return RESAMPLE_MAP[mode] ?? 'lanczos3';
+}
+
+// Expose for app.js and future modules
+window.__getResizeKernel = getResizeKernel;
+
 /* ── Split-view drag ─────────────────────────────────── */
 (function initSplitDrag() {
     const container = document.getElementById('resize-split-container');
@@ -169,10 +207,10 @@
 
 /* ── Custom resample dropdown ────────────────────────── */
 (function initResampleDropdown() {
-    const wrap    = document.getElementById('resize-resample-wrap');
-    const btn     = document.getElementById('resize-resample-btn');
-    const labelEl = document.getElementById('resize-resample-label');
-    const dropdown= document.getElementById('resize-resample-dropdown');
+    const wrap     = document.getElementById('resize-resample-wrap');
+    const btn      = document.getElementById('resize-resample-btn');
+    const labelEl  = document.getElementById('resize-resample-label');
+    const dropdown = document.getElementById('resize-resample-dropdown');
     if (!wrap || !btn || !dropdown) return;
 
     function open()  { btn.classList.add('open'); dropdown.classList.add('open'); }
@@ -185,7 +223,9 @@
         opt.addEventListener('click', () => {
             dropdown.querySelectorAll('.ri-select-option').forEach(o => o.classList.remove('active'));
             opt.classList.add('active');
-            if (labelEl) labelEl.textContent = opt.dataset.value;
+            // data-value is the short mode key; textContent is the Russian label
+            currentResampleMode = opt.dataset.value;
+            if (labelEl) labelEl.textContent = opt.textContent.trim();
             close();
             updateResizeResult();
         });
@@ -280,6 +320,48 @@ function formatResizeSize(bytes) {
 }
 
 window.__updateResizeResult = updateResizeResult;
+
+/* ── Expose current resize parameters for app.js ────── */
+/**
+ * Returns the computed target dimensions + resample settings
+ * based on the current state of the inspector inputs.
+ * Returns null if no photo is loaded or inputs are invalid.
+ *
+ * @returns {{ newWidth, newHeight, kernel, quality, mode } | null}
+ */
+window.__resizeGetParams = function () {
+    const photo   = window.__resizeGetPhoto?.();
+    const inpW    = document.getElementById('resize-width');
+    const inpH    = document.getElementById('resize-height');
+    const mode    = window.__resizeMode?.() ?? 'pct';
+    const quality = Number(document.getElementById('resize-quality')?.value ?? 90);
+    const noEnlarge = document.getElementById('resize-no-enlarge')?.checked ?? false;
+
+    if (!photo || !photo.width || !photo.height) return null;
+
+    let newWidth, newHeight;
+    if (mode === 'pct') {
+        const pctW = Math.max(1, Math.min(10000, Number(inpW?.value) || 70));
+        const pctH = Math.max(1, Math.min(10000, Number(inpH?.value) || 70));
+        newWidth  = Math.round(photo.width  * pctW / 100);
+        newHeight = Math.round(photo.height * pctH / 100);
+    } else {
+        newWidth  = Math.max(1, Number(inpW?.value)  || photo.width);
+        newHeight = Math.max(1, Number(inpH?.value) || photo.height);
+    }
+
+    // Respect "не увеличивать" checkbox
+    if (noEnlarge) {
+        newWidth  = Math.min(newWidth,  photo.width);
+        newHeight = Math.min(newHeight, photo.height);
+    }
+
+    const kernel = getResizeKernel(
+        currentResampleMode, photo.width, photo.height, newWidth, newHeight
+    );
+
+    return { newWidth, newHeight, kernel, quality, mode: currentResampleMode };
+};
 
 /* ── Called from app.js when a photo is selected and
       resize tab is active — loads the image into both
