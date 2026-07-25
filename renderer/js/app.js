@@ -624,6 +624,7 @@ async function addPhotosByPath(filePaths) {
             const footerInfo = document.querySelector('.footer-info');
             if (footerInfo) footerInfo.textContent = `${formatRes(photos[idx].width, photos[idx].height)}  ·  ${formatSize(photos[idx].sizeBytes)}`;
             await loadEditorPreview(photos[idx]);
+            if (activeTool === 'resize') window.resizeLoadPhoto?.(photos[idx]);
         }
     }));
     updateCounts();
@@ -664,6 +665,8 @@ async function handleFileInput(files) {
             const footerInfo = document.querySelector('.footer-info');
             if (footerInfo) footerInfo.textContent = `${formatRes(photo.width, photo.height)}  ·  ${formatSize(photo.sizeBytes)}`;
             await loadEditorPreview(photo);
+            // Now that real dimensions are known, refresh resize split-view
+            if (activeTool === 'resize') window.resizeLoadPhoto?.(photo);
         }
     }));
     updateCounts();
