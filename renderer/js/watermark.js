@@ -155,6 +155,10 @@ function initWmTextControls() {
         updateWmOverlay();
     });
 
+    ['wm-text-offset-x', 'wm-text-offset-y'].forEach(id => {
+        document.getElementById(id)?.addEventListener('input', updateWmOverlay);
+    });
+
     // По диагонали: diagonal toggle — lock angle to 45°, update overlay
     document.getElementById('wm-diagonal')?.addEventListener('change', e => {
         if (e.target.checked) {
@@ -310,6 +314,10 @@ function initWmImageControls() {
     document.getElementById('wm-img-tile')?.addEventListener('change', () => {
         resetLabelFromDrag();
         updateWmOverlay();
+    });
+
+    ['wm-img-offset-x', 'wm-img-offset-y'].forEach(id => {
+        document.getElementById(id)?.addEventListener('input', updateWmOverlay);
     });
 }
 
@@ -538,10 +546,13 @@ const POS_MAP = {
 
 function applyFlexPosition(overlay, pos) {
     const [jc, ai] = POS_MAP[pos] || ['center','center'];
+    const isText = document.getElementById('wm-tab-text')?.classList.contains('active');
+    const ox = Math.max(0, +(document.getElementById(isText ? 'wm-text-offset-x' : 'wm-img-offset-x')?.value || 18));
+    const oy = Math.max(0, +(document.getElementById(isText ? 'wm-text-offset-y' : 'wm-img-offset-y')?.value || 18));
     overlay.style.display        = 'flex';
     overlay.style.justifyContent = jc;
     overlay.style.alignItems     = ai;
-    overlay.style.padding        = '18px';
+    overlay.style.padding        = `${oy}px ${ox}px`;
 }
 
 // ── Draggable watermark on canvas ─────────────────────
@@ -600,17 +611,153 @@ function initWmDrag() {
     });
 }
 
-// ── Apply button feedback ──────────────────────────────
+// ── Apply watermark to image data ──────────────────────
+function getWmSettings() {
+    const isText = document.getElementById('wm-tab-text')?.classList.contains('active');
+    const overlay = document.getElementById('wm-overlay');
+    const label = document.getElementById('wm-label');
+    const activeGrid = document.getElementById(isText ? 'wm-text-position-grid' : 'wm-img-position-grid')
+        ?.querySelector('.wm-pos-cell.active');
+    const dragged = label?.style.position === 'absolute' && label.style.left && label.style.top;
+    return {
+        mode: isText ? 'text' : 'image',
+        position: activeGrid?.dataset.pos || (isText ? 'cc' : 'br'),
+        dragged: dragged ? {
+            x: parseFloat(label.style.left) / Math.max(1, overlay.clientWidth),
+            y: parseFloat(label.style.top) / Math.max(1, overlay.clientHeight),
+        } : null,
+        text: document.getElementById('wm-text-input')?.value || '© Ватермарк',
+        family: getWmFontFamily(),
+        fontSize: +(document.getElementById('wm-font-size')?.value || 24),
+        bold: document.getElementById('wm-bold')?.classList.contains('active'),
+        italic: document.getElementById('wm-italic')?.classList.contains('active'),
+        color: document.getElementById('wm-text-color')?.value || '#ffffff',
+        textOpacity: (document.getElementById('wm-text-opacity')?.value ?? 70) / 100,
+        textTile: document.getElementById('wm-tile')?.checked,
+        diagonal: document.getElementById('wm-diagonal')?.checked,
+        textAngle: +(document.getElementById('wm-text-angle')?.value || 0),
+        imageSrc: document.getElementById('wm-upload-thumb')?.src || '',
+        imageOpacity: (document.getElementById('wm-img-opacity')?.value ?? 80) / 100,
+        imageWidth: +(document.getElementById('wm-img-width')?.value || 200),
+        imageHeight: +(document.getElementById('wm-img-height')?.value || 200),
+        imageTile: document.getElementById('wm-img-tile')?.checked,
+        imageAngle: +(document.getElementById('wm-img-angle')?.value || 0),
+        offsetX: Math.max(0, +(document.getElementById(isText ? 'wm-text-offset-x' : 'wm-img-offset-x')?.value || 18)),
+        offsetY: Math.max(0, +(document.getElementById(isText ? 'wm-text-offset-y' : 'wm-img-offset-y')?.value || 18)),
+    };
+}
+
+function loadWmImage(src) {
+    return new Promise((resolve, reject) => {
+        const img = new Image();
+        img.onload = () => resolve(img);
+        img.onerror = reject;
+        img.src = src;
+    });
+}
+
+function calcWmPoint(pos, cw, ch, ww, wh, ox, oy) {
+    const x = pos.endsWith('l') ? ox : pos.endsWith('r') ? cw - ww - ox : (cw - ww) / 2;
+    const y = pos.startsWith('t') ? oy : pos.startsWith('b') ? ch - wh - oy : (ch - wh) / 2;
+    return [x, y];
+}
+
+function drawRotated(ctx, x, y, w, h, angle, draw) {
+    ctx.save();
+    ctx.translate(x + w / 2, y + h / 2);
+    ctx.rotate(angle * Math.PI / 180);
+    draw(-w / 2, -h / 2);
+    ctx.restore();
+}
+
+async function applyWatermarkToPhotoCanvas(photo, settings, cachedLogo) {
+    const src = photo.preview || photo.objectUrl;
+    if (!src) return false;
+    const base = await loadWmImage(src).catch(() => null);
+    if (!base) return false;
+
+    const canvas = document.createElement('canvas');
+    canvas.width = base.naturalWidth;
+    canvas.height = base.naturalHeight;
+    const ctx = canvas.getContext('2d');
+    ctx.drawImage(base, 0, 0);
+
+    if (settings.mode === 'text') {
+        const angle = settings.diagonal ? 45 : settings.textAngle;
+        ctx.font = `${settings.italic ? 'italic ' : ''}${settings.bold ? '700' : '500'} ${settings.fontSize}px ${settings.family}, sans-serif`;
+        ctx.fillStyle = settings.color;
+        ctx.globalAlpha = settings.textOpacity;
+        ctx.textBaseline = 'top';
+        const metrics = ctx.measureText(settings.text);
+        const w = metrics.width, h = settings.fontSize * 1.25;
+        const draw = (x, y) => drawRotated(ctx, x, y, w, h, angle, (dx, dy) => ctx.fillText(settings.text, dx, dy));
+        if (settings.textTile) {
+            for (let r = 0; r < 3; r++) for (let c = 0; c < 4; c++) draw((c + .5) * canvas.width / 4 - w / 2, (r + .5) * canvas.height / 3 - h / 2);
+        } else {
+            const [x, y] = settings.dragged ? [settings.dragged.x * canvas.width, settings.dragged.y * canvas.height] : calcWmPoint(settings.position, canvas.width, canvas.height, w, h, settings.offsetX, settings.offsetY);
+            draw(x, y);
+        }
+    } else {
+        if (!cachedLogo) return false;
+        ctx.globalAlpha = settings.imageOpacity;
+        const w = Math.min(settings.imageWidth, canvas.width);
+        const h = Math.min(settings.imageHeight, canvas.height);
+        const draw = (x, y) => drawRotated(ctx, x, y, w, h, settings.imageAngle, (dx, dy) => ctx.drawImage(cachedLogo, dx, dy, w, h));
+        if (settings.imageTile) {
+            for (let r = 0; r < 3; r++) for (let c = 0; c < 4; c++) draw((c + .5) * canvas.width / 4 - w / 2, (r + .5) * canvas.height / 3 - h / 2);
+        } else {
+            const [x, y] = settings.dragged ? [settings.dragged.x * canvas.width, settings.dragged.y * canvas.height] : calcWmPoint(settings.position, canvas.width, canvas.height, w, h, settings.offsetX, settings.offsetY);
+            draw(x, y);
+        }
+    }
+    ctx.globalAlpha = 1;
+    photo.preview = canvas.toDataURL('image/jpeg', 0.92);
+    photo.width = canvas.width;
+    photo.height = canvas.height;
+    photo.sizeBytes = Math.round((photo.preview.length - 22) * 0.75);
+    const tc = document.createElement('canvas');
+    const ratio = Math.max(160 / canvas.width, 120 / canvas.height);
+    tc.width = Math.round(canvas.width * ratio);
+    tc.height = Math.round(canvas.height * ratio);
+    tc.getContext('2d').drawImage(canvas, 0, 0, tc.width, tc.height);
+    photo.thumbnail = tc.toDataURL('image/jpeg', 0.75);
+    return true;
+}
+
+async function applyWatermark() {
+    if (selectedIndex < 0) { showToast('Откройте фото для ватермарка'); return; }
+    const settings = getWmSettings();
+    let cachedLogo = null;
+    if (settings.mode === 'image') {
+        if (!settings.imageSrc) { showToast('Загрузите изображение ватермарка'); return; }
+        cachedLogo = await loadWmImage(settings.imageSrc).catch(() => null);
+        if (!cachedLogo) { showToast('Не удалось загрузить изображение ватермарка'); return; }
+    }
+    const indexes = checkedIndices.size >= 2 ? [...checkedIndices] : [selectedIndex];
+    const btn = document.getElementById('btn-apply-watermark');
+    if (btn) btn.disabled = true;
+    if (indexes.length === 1 && typeof pushUndo === 'function') pushUndo();
+    let okCount = 0;
+    for (const i of indexes) {
+        const ok = await applyWatermarkToPhotoCanvas(photos[i], settings, cachedLogo);
+        if (ok) { okCount++; patchThumbnail(i); }
+    }
+    if (btn) btn.disabled = false;
+    if (!okCount) { showToast('Не удалось применить ватермарк'); return; }
+    await loadEditorPreview(photos[selectedIndex]);
+    const wmImg = document.getElementById('wm-editor-img');
+    if (wmImg) wmImg.src = photos[selectedIndex].preview || photos[selectedIndex].objectUrl;
+    rebuildGallery();
+    updateCounts();
+    if (typeof updateUndoRedoBtns === 'function') updateUndoRedoBtns();
+    pushHistory('tool', indexes.length > 1 ? `Ватермарк применён к ${okCount} фото` : `Ватермарк применён: ${photos[selectedIndex].name}`);
+    showToast(indexes.length > 1 ? `Ватермарк применён к ${okCount} фото` : 'Ватермарк применён');
+}
+
 function initWmApplyBtn() {
     const btn = document.getElementById('btn-apply-watermark');
     if (!btn) return;
-    btn.addEventListener('click', () => {
-        // UI-only: flash applied state
-        const orig = btn.innerHTML;
-        btn.innerHTML = `<svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="2,8 6,12 14,4"/></svg> Применено`;
-        btn.disabled = true;
-        setTimeout(() => { btn.innerHTML = orig; btn.disabled = false; }, 1800);
-    });
+    btn.addEventListener('click', applyWatermark);
 }
 
 // ── Toggle preview ─────────────────────────────────────
