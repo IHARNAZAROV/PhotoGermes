@@ -915,7 +915,8 @@
 }
 
 .icp-align-angle-input {
-  width: 52px;
+  width: 90px;
+  min-width: 0;
   border: none;
   outline: none;
   background: transparent;
