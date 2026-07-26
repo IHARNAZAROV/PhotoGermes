@@ -114,14 +114,15 @@ window.__getResizeKernel = getResizeKernel;
     }
 })();
 
-/* ── Mode toggle (% / px) ────────────────────────────── */
+/* ── Mode toggle (% / px) — pill indicator ───────────── */
 (function initResizeMode() {
-    const btnPct  = document.getElementById('resize-mode-pct');
-    const btnPx   = document.getElementById('resize-mode-px');
-    const unitW   = document.getElementById('resize-unit-w');
-    const unitH   = document.getElementById('resize-unit-h');
-    const inpW    = document.getElementById('resize-width');
-    const inpH    = document.getElementById('resize-height');
+    const btnPct    = document.getElementById('resize-mode-pct');
+    const btnPx     = document.getElementById('resize-mode-px');
+    const indicator = document.getElementById('ri-pill-indicator');
+    const unitW     = document.getElementById('resize-unit-w');
+    const unitH     = document.getElementById('resize-unit-h');
+    const inpW      = document.getElementById('resize-width');
+    const inpH      = document.getElementById('resize-height');
     if (!btnPct || !btnPx) return;
 
     let mode = 'pct'; // 'pct' | 'px'
@@ -130,6 +131,9 @@ window.__getResizeKernel = getResizeKernel;
         mode = newMode;
         btnPct.classList.toggle('active', mode === 'pct');
         btnPx.classList.toggle('active',  mode === 'px');
+        // Animate pill indicator
+        if (indicator) indicator.classList.toggle('right', mode === 'px');
+
         const unit = mode === 'pct' ? '%' : 'px';
         if (unitW) unitW.textContent = unit;
         if (unitH) unitH.textContent = unit;
@@ -223,9 +227,10 @@ window.__getResizeKernel = getResizeKernel;
         opt.addEventListener('click', () => {
             dropdown.querySelectorAll('.ri-select-option').forEach(o => o.classList.remove('active'));
             opt.classList.add('active');
-            // data-value is the short mode key; textContent is the Russian label
             currentResampleMode = opt.dataset.value;
-            if (labelEl) labelEl.textContent = opt.textContent.trim();
+            // Extract only the main text span (2nd child), not the badge
+            const textSpan = opt.querySelector('span:not(.ri-opt-badge)');
+            if (labelEl) labelEl.textContent = textSpan ? textSpan.textContent.trim() : opt.dataset.value;
             close();
             updateResizeResult();
         });
@@ -239,14 +244,15 @@ window.__getResizeKernel = getResizeKernel;
 
 /* ── Quality slider ──────────────────────────────────── */
 (function initResizeQuality() {
-    const slider = document.getElementById('resize-quality');
-    const label  = document.getElementById('resize-quality-val');
+    const slider   = document.getElementById('resize-quality');
+    const label    = document.getElementById('resize-quality-val');
+    const fillBar  = document.getElementById('ri-quality-fill');
     if (!slider || !label) return;
 
     function updateFill() {
         const pct = ((slider.value - slider.min) / (slider.max - slider.min)) * 100;
-        slider.style.setProperty('--slider-pct', pct + '%');
         label.textContent = slider.value + '%';
+        if (fillBar) fillBar.style.width = pct + '%';
     }
 
     slider.addEventListener('input', () => { updateFill(); updateResizeResult(); });
