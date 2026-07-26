@@ -547,6 +547,24 @@ async function selectPhoto(index) {
         window.resizeLoadPhoto?.(photo);
     }
 
+    // If watermark tab is active, refresh the watermark canvas
+    if (activeTool === 'watermark') {
+        const wmImg         = document.getElementById('wm-editor-img');
+        const wmPlaceholder = document.getElementById('wm-editor-placeholder');
+        if (wmImg && wmPlaceholder) {
+            const src = photo.preview || photo.objectUrl;
+            if (src) {
+                wmImg.src = src;
+                wmImg.style.display = 'block';
+                wmPlaceholder.classList.add('has-photo');
+            } else {
+                wmImg.src = '';
+                wmImg.style.display = 'none';
+                wmPlaceholder.classList.remove('has-photo');
+            }
+        }
+    }
+
     const list = document.querySelector('.gallery-list');
     const item = list && list.querySelector(`[data-index="${index}"]`);
     if (item) item.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
@@ -753,19 +771,23 @@ function initDragDrop() {
 
 // ── UI init helpers ────────────────────────────────────
 function switchToTool(toolName) {
-    const cropEditorView   = document.getElementById('crop-editor-view');
-    const resizeEditorView = document.getElementById('resize-editor-view');
-    const cropInspector    = document.getElementById('crop-inspector-view');
-    const resizeInspector  = document.getElementById('resize-inspector-view');
+    const cropEditorView      = document.getElementById('crop-editor-view');
+    const resizeEditorView    = document.getElementById('resize-editor-view');
+    const watermarkEditorView = document.getElementById('watermark-editor-view');
+    const cropInspector       = document.getElementById('crop-inspector-view');
+    const resizeInspector     = document.getElementById('resize-inspector-view');
+    const watermarkInspector  = document.getElementById('watermark-inspector-view');
 
-    const isResize = toolName === 'resize';
-    // All tools except resize fall back to showing the crop/default editor view
-    const showCrop = !isResize;
+    const isResize    = toolName === 'resize';
+    const isWatermark = toolName === 'watermark';
+    const isCrop      = !isResize && !isWatermark;
 
-    if (cropEditorView)   cropEditorView.style.display   = showCrop  ? 'contents' : 'none';
-    if (resizeEditorView) resizeEditorView.style.display  = isResize  ? 'flex'     : 'none';
-    if (cropInspector)    cropInspector.style.display    = showCrop  ? 'contents' : 'none';
-    if (resizeInspector)  resizeInspector.style.display  = isResize  ? 'flex'     : 'none';
+    if (cropEditorView)      cropEditorView.style.display      = isCrop      ? 'contents' : 'none';
+    if (resizeEditorView)    resizeEditorView.style.display    = isResize    ? 'flex'     : 'none';
+    if (watermarkEditorView) watermarkEditorView.style.display = isWatermark ? 'flex'     : 'none';
+    if (cropInspector)       cropInspector.style.display       = isCrop      ? 'contents' : 'none';
+    if (resizeInspector)     resizeInspector.style.display     = isResize    ? 'flex'     : 'none';
+    if (watermarkInspector)  watermarkInspector.style.display  = isWatermark ? 'flex'     : 'none';
 
     // Photos are stored in the shared global `photos[]` array and are always
     // available across all tools. When switching, reload the current photo
@@ -774,8 +796,21 @@ function switchToTool(toolName) {
     if (photo) {
         if (isResize) {
             window.resizeLoadPhoto?.(photo);
+        } else if (isWatermark) {
+            // Load photo into the watermark canvas
+            const wmImg = document.getElementById('wm-editor-img');
+            const wmPlaceholder = document.getElementById('wm-editor-placeholder');
+            if (wmImg && wmPlaceholder) {
+                const src = photo.preview || photo.objectUrl;
+                if (src) {
+                    wmImg.src = src;
+                    wmImg.style.display = 'block';
+                    wmPlaceholder.classList.add('has-photo');
+                }
+            }
+            window.wmActivate?.();
         } else {
-            // Crop, watermark, batch, export — all use the same canvas area
+            // Crop, batch, export — use the shared canvas area
             loadEditorPreview(photo);
         }
     }

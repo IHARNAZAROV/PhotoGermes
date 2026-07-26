@@ -441,6 +441,52 @@
 
       </div><!-- /#crop-editor-view -->
 
+      <!-- ══ WATERMARK VIEW ══════════════════════ -->
+      <div id="watermark-editor-view" style="display:none; flex:1; flex-direction:column; overflow:hidden;">
+
+        <div class="editor-header">
+          <div>
+            <div class="editor-title">Ватермарк</div>
+            <div class="resize-editor-subtitle">Наложение текста и изображений</div>
+          </div>
+          <div class="editor-actions">
+            <button class="btn-icon" id="wm-toggle-preview" data-tooltip="Показать/скрыть ватермарк">
+              <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M1 8s3-5 7-5 7 5 7 5-3 5-7 5-7-5-7-5z"/>
+                <circle cx="8" cy="8" r="2.5"/>
+              </svg>
+            </button>
+            <button class="btn-icon" data-tooltip="Сбросить позицию">
+              <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M2.5 8a5.5 5.5 0 1 0 1-3.3"/>
+                <polyline points="2.5,2 2.5,5.5 6,5.5"/>
+              </svg>
+            </button>
+            <button class="btn-icon" data-tooltip="Сравнить оригинал">
+              <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><rect x="1" y="3" width="6" height="10" rx="1"/><rect x="9" y="3" width="6" height="10" rx="1"/></svg>
+            </button>
+          </div>
+        </div>
+
+        <!-- Canvas area -->
+        <div class="editor-canvas-area">
+          <div class="editor-canvas-wrap">
+            <div class="wm-canvas-bg editor-image-placeholder" id="wm-editor-placeholder">
+              <img id="wm-editor-img" class="editor-real-img" src="" alt="" style="display:none;" />
+
+              <!-- Watermark overlay (draggable) -->
+              <div class="wm-overlay" id="wm-overlay">
+                <div class="wm-label" id="wm-label">
+                  <span id="wm-label-text">© ГермесГарант</span>
+                </div>
+              </div>
+
+            </div>
+          </div>
+        </div>
+
+      </div><!-- /#watermark-editor-view -->
+
       <!-- ══ RESIZE VIEW ══════════════════════════ -->
       <div id="resize-editor-view" style="display:none; flex:1; flex-direction:column; overflow:hidden;">
 
@@ -730,6 +776,366 @@
         </div>
 
       </div><!-- /#crop-inspector-view -->
+
+      <!-- ══ WATERMARK INSPECTOR ════════════════════ -->
+      <div id="watermark-inspector-view" style="display:none; flex:1; flex-direction:column; overflow:hidden;">
+
+        <!-- Header -->
+        <div class="ri-header">
+          <div class="ri-header-accent"></div>
+          <div class="ri-header-inner">
+            <div class="ri-header-icon">
+              <svg width="15" height="15" viewBox="0 0 15 15" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
+                <rect x="1" y="1" width="13" height="13" rx="2"/>
+                <text x="3.5" y="11" font-size="7" stroke="none" fill="currentColor" font-family="sans-serif" font-weight="700">©</text>
+              </svg>
+            </div>
+            <div>
+              <div class="ri-header-title">Ватермарк</div>
+              <div class="ri-header-sub">Текст и изображения</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Sub-tabs: Text / Image -->
+        <div class="wm-subtab-bar">
+          <button class="wm-subtab active" id="wm-tab-text" data-wm="text">
+            <svg width="13" height="13" viewBox="0 0 13 13" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round">
+              <line x1="2" y1="3" x2="11" y2="3"/>
+              <line x1="6.5" y1="3" x2="6.5" y2="11"/>
+            </svg>
+            Текст
+          </button>
+          <button class="wm-subtab" id="wm-tab-image" data-wm="image">
+            <svg width="13" height="13" viewBox="0 0 13 13" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+              <rect x="1" y="2" width="11" height="9" rx="1.5"/>
+              <circle cx="4.5" cy="5" r="1.2"/>
+              <path d="M1 9l3-3 2 2 2-2.5 3 3"/>
+            </svg>
+            Изображение
+          </button>
+        </div>
+
+        <!-- ── TEXT PANEL ───────────────────────────── -->
+        <div class="wm-panel" id="wm-panel-text">
+
+          <!-- Текст -->
+          <div class="wm-block">
+            <div class="ri-section-label">Содержимое</div>
+            <textarea class="wm-textarea" id="wm-text-input" placeholder="Введите текст ватермарка…" rows="3">© ГермесГарант</textarea>
+          </div>
+
+          <!-- Шрифт -->
+          <div class="wm-block" style="padding-top:0;">
+            <div class="ri-section-label">Шрифт</div>
+            <div class="wm-font-row">
+              <select class="wm-select" id="wm-font-family">
+                <option value="Inter">Inter</option>
+                <option value="Arial">Arial</option>
+                <option value="Georgia">Georgia</option>
+                <option value="Times New Roman">Times New Roman</option>
+                <option value="Courier New">Courier New</option>
+                <option value="Trebuchet MS">Trebuchet MS</option>
+              </select>
+              <div class="ri-dims-card wm-size-card">
+                <div class="ri-dim-field" style="padding:6px 10px;">
+                  <div class="ri-dim-axis" style="font-size:10px;">pt</div>
+                  <input type="number" id="wm-font-size" value="24" min="6" max="200" class="ri-dim-input" style="font-size:16px;" />
+                </div>
+              </div>
+              <button class="wm-style-btn" id="wm-bold" data-tooltip="Жирный" title="Жирный">
+                <svg width="13" height="13" viewBox="0 0 13 13" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M3 2h5a3 3 0 010 5H3V2zM3 7h5.5a3 3 0 010 5H3V7z"/>
+                </svg>
+              </button>
+              <button class="wm-style-btn" id="wm-italic" data-tooltip="Курсив" title="Курсив">
+                <svg width="13" height="13" viewBox="0 0 13 13" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+                  <line x1="8" y1="2" x2="5" y2="11"/>
+                  <line x1="5" y1="2" x2="10" y2="2"/>
+                  <line x1="3" y1="11" x2="8" y2="11"/>
+                </svg>
+              </button>
+            </div>
+          </div>
+
+          <!-- Цвет и прозрачность -->
+          <div class="wm-block" style="padding-top:0;">
+            <div class="ri-section-label">Цвет и прозрачность</div>
+            <div class="wm-color-card">
+              <div class="wm-color-row">
+                <span class="wm-color-lbl">Цвет</span>
+                <input type="color" id="wm-text-color" value="#ffffff" class="wm-color-input" title="Цвет текста" />
+                <div class="wm-color-preview" id="wm-text-color-preview" style="background:#ffffff;"></div>
+              </div>
+              <div class="wm-opacity-row">
+                <span class="wm-color-lbl">Прозрачность</span>
+                <div class="wm-opacity-wrap">
+                  <div class="wm-slider-track">
+                    <input type="range" class="wm-slider" id="wm-text-opacity" min="0" max="100" value="70" />
+                    <div class="wm-slider-fill" id="wm-text-opacity-fill" style="width:70%;"></div>
+                  </div>
+                  <span class="wm-slider-val" id="wm-text-opacity-val">70%</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Расположение -->
+          <div class="wm-block" style="padding-top:0;">
+            <div class="ri-section-label">Расположение</div>
+            <div class="wm-position-wrap">
+              <div class="wm-position-grid" id="wm-text-position-grid">
+                <button class="wm-pos-cell" data-pos="tl"></button>
+                <button class="wm-pos-cell" data-pos="tc"></button>
+                <button class="wm-pos-cell" data-pos="tr"></button>
+                <button class="wm-pos-cell" data-pos="cl"></button>
+                <button class="wm-pos-cell active" data-pos="cc"></button>
+                <button class="wm-pos-cell" data-pos="cr"></button>
+                <button class="wm-pos-cell" data-pos="bl"></button>
+                <button class="wm-pos-cell" data-pos="bc"></button>
+                <button class="wm-pos-cell" data-pos="br"></button>
+              </div>
+              <div class="wm-position-labels">
+                <label class="wm-check-row">
+                  <input type="checkbox" id="wm-tile" class="wm-check-input" />
+                  <span class="wm-check-box">
+                    <svg width="8" height="8" viewBox="0 0 8 8" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="1,4 3,6 7,2"/></svg>
+                  </span>
+                  <span class="wm-check-label">Мозаика</span>
+                </label>
+                <label class="wm-check-row">
+                  <input type="checkbox" id="wm-diagonal" class="wm-check-input" />
+                  <span class="wm-check-box">
+                    <svg width="8" height="8" viewBox="0 0 8 8" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="1,4 3,6 7,2"/></svg>
+                  </span>
+                  <span class="wm-check-label">По диагонали</span>
+                </label>
+              </div>
+            </div>
+          </div>
+
+          <!-- Отступ -->
+          <div class="wm-block" style="padding-top:0;">
+            <div class="ri-section-label">Отступ от края</div>
+            <div class="ri-dims-card">
+              <div class="ri-dim-field">
+                <div class="ri-dim-axis">X</div>
+                <input type="number" id="wm-offset-x" value="20" min="0" max="500" class="ri-dim-input" style="font-size:16px;" />
+                <div class="ri-dim-unit">px</div>
+              </div>
+              <div style="width:1px;background:var(--color-border);align-self:stretch;flex-shrink:0;"></div>
+              <div class="ri-dim-field">
+                <div class="ri-dim-axis">Y</div>
+                <input type="number" id="wm-offset-y" value="20" min="0" max="500" class="ri-dim-input" style="font-size:16px;" />
+                <div class="ri-dim-unit">px</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Угол поворота -->
+          <div class="wm-block" style="padding-top:0;">
+            <div class="ri-section-label">Угол поворота</div>
+            <div class="icp-align-card">
+              <div class="icp-align-top">
+                <div class="icp-align-angle-wrap">
+                  <input type="number" id="wm-text-angle" min="-180" max="180" step="1" value="0" class="icp-align-angle-input" />
+                  <span class="icp-align-angle-unit">°</span>
+                </div>
+                <button class="icp-align-reset-btn" id="wm-text-angle-reset">
+                  <svg width="13" height="13" viewBox="0 0 13 13" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M2 6.5a4.5 4.5 0 1 0 .85-2.7"/>
+                    <polyline points="2,2.5 2,5.5 5,5.5"/>
+                  </svg>
+                  Сбросить
+                </button>
+              </div>
+              <div class="icp-align-track-wrap">
+                <div class="icp-align-zero"></div>
+                <input type="range" id="wm-text-angle-slider" min="-180" max="180" step="1" value="0" class="icp-align-slider" />
+              </div>
+              <div class="icp-align-labels">
+                <span>−180°</span><span>0°</span><span>+180°</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="icp-hint">✦ Перетащите ватермарк на холсте или выберите позицию в сетке.</div>
+
+        </div><!-- /#wm-panel-text -->
+
+        <!-- ── IMAGE PANEL ──────────────────────────── -->
+        <div class="wm-panel" id="wm-panel-image" style="display:none;">
+
+          <!-- Загрузка -->
+          <div class="wm-block">
+            <div class="ri-section-label">Изображение</div>
+            <label class="wm-upload-zone" id="wm-upload-zone" for="wm-image-input">
+              <input type="file" id="wm-image-input" accept="image/*,.svg" style="display:none;" />
+              <div class="wm-upload-idle" id="wm-upload-idle">
+                <div class="wm-upload-icon">
+                  <svg width="28" height="28" viewBox="0 0 28 28" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+                    <rect x="3" y="7" width="22" height="16" rx="2.5"/>
+                    <circle cx="10" cy="13" r="2.5"/>
+                    <path d="M3 18l6-6 4 4 4-4.5 8 7"/>
+                    <line x1="14" y1="1" x2="14" y2="7"/>
+                    <polyline points="11,4 14,1 17,4"/>
+                  </svg>
+                </div>
+                <div class="wm-upload-text">Нажмите для выбора логотипа</div>
+                <div class="wm-upload-hint">PNG, SVG, WebP — рекомендуется прозрачный фон</div>
+              </div>
+              <div class="wm-upload-preview" id="wm-upload-preview" style="display:none;">
+                <img class="wm-upload-thumb" id="wm-upload-thumb" src="" alt="" />
+                <button class="wm-upload-remove" id="wm-upload-remove" title="Удалить изображение">
+                  <svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+                    <line x1="2" y1="2" x2="10" y2="10"/><line x1="10" y1="2" x2="2" y2="10"/>
+                  </svg>
+                </button>
+              </div>
+            </label>
+          </div>
+
+          <!-- Размер -->
+          <div class="wm-block" style="padding-top:0;">
+            <div class="ri-section-label">Размер</div>
+            <div class="ri-dims-card">
+              <div class="ri-dim-field">
+                <div class="ri-dim-axis">Ш</div>
+                <input type="number" id="wm-img-width" value="200" min="10" max="5000" class="ri-dim-input" />
+                <div class="ri-dim-unit">px</div>
+              </div>
+
+              <button class="ri-chain-btn active" id="wm-img-link-btn" data-tooltip="Сохранить пропорции">
+                <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
+                  <rect x="2" y="7" width="10" height="6" rx="1.5"/>
+                  <path d="M4.5 7V5a3 3 0 016 0v2"/>
+                </svg>
+                <div class="ri-chain-lines">
+                  <div class="ri-chain-line ri-chain-line--top"></div>
+                  <div class="ri-chain-line ri-chain-line--bot"></div>
+                </div>
+              </button>
+
+              <div class="ri-dim-field">
+                <div class="ri-dim-axis">В</div>
+                <input type="number" id="wm-img-height" value="200" min="10" max="5000" class="ri-dim-input" />
+                <div class="ri-dim-unit">px</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Прозрачность -->
+          <div class="wm-block" style="padding-top:0;">
+            <div class="ri-section-label">Прозрачность</div>
+            <div class="wm-color-card">
+              <div class="wm-opacity-row" style="padding:2px 0;">
+                <span class="wm-color-lbl">Непрозрачность</span>
+                <div class="wm-opacity-wrap">
+                  <div class="wm-slider-track">
+                    <input type="range" class="wm-slider" id="wm-img-opacity" min="0" max="100" value="80" />
+                    <div class="wm-slider-fill" id="wm-img-opacity-fill" style="width:80%;"></div>
+                  </div>
+                  <span class="wm-slider-val" id="wm-img-opacity-val">80%</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Расположение -->
+          <div class="wm-block" style="padding-top:0;">
+            <div class="ri-section-label">Расположение</div>
+            <div class="wm-position-wrap">
+              <div class="wm-position-grid" id="wm-img-position-grid">
+                <button class="wm-pos-cell" data-pos="tl"></button>
+                <button class="wm-pos-cell" data-pos="tc"></button>
+                <button class="wm-pos-cell" data-pos="tr"></button>
+                <button class="wm-pos-cell" data-pos="cl"></button>
+                <button class="wm-pos-cell" data-pos="cc"></button>
+                <button class="wm-pos-cell" data-pos="cr"></button>
+                <button class="wm-pos-cell" data-pos="bl"></button>
+                <button class="wm-pos-cell" data-pos="bc"></button>
+                <button class="wm-pos-cell active" data-pos="br"></button>
+              </div>
+              <div class="wm-position-labels">
+                <label class="wm-check-row">
+                  <input type="checkbox" id="wm-img-tile" class="wm-check-input" />
+                  <span class="wm-check-box">
+                    <svg width="8" height="8" viewBox="0 0 8 8" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="1,4 3,6 7,2"/></svg>
+                  </span>
+                  <span class="wm-check-label">Мозаика</span>
+                </label>
+              </div>
+            </div>
+          </div>
+
+          <!-- Отступ -->
+          <div class="wm-block" style="padding-top:0;">
+            <div class="ri-section-label">Отступ от края</div>
+            <div class="ri-dims-card">
+              <div class="ri-dim-field">
+                <div class="ri-dim-axis">X</div>
+                <input type="number" id="wm-img-offset-x" value="20" min="0" max="500" class="ri-dim-input" style="font-size:16px;" />
+                <div class="ri-dim-unit">px</div>
+              </div>
+              <div style="width:1px;background:var(--color-border);align-self:stretch;flex-shrink:0;"></div>
+              <div class="ri-dim-field">
+                <div class="ri-dim-axis">Y</div>
+                <input type="number" id="wm-img-offset-y" value="20" min="0" max="500" class="ri-dim-input" style="font-size:16px;" />
+                <div class="ri-dim-unit">px</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Угол поворота -->
+          <div class="wm-block" style="padding-top:0;">
+            <div class="ri-section-label">Угол поворота</div>
+            <div class="icp-align-card">
+              <div class="icp-align-top">
+                <div class="icp-align-angle-wrap">
+                  <input type="number" id="wm-img-angle" min="-180" max="180" step="1" value="0" class="icp-align-angle-input" />
+                  <span class="icp-align-angle-unit">°</span>
+                </div>
+                <button class="icp-align-reset-btn" id="wm-img-angle-reset">
+                  <svg width="13" height="13" viewBox="0 0 13 13" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M2 6.5a4.5 4.5 0 1 0 .85-2.7"/>
+                    <polyline points="2,2.5 2,5.5 5,5.5"/>
+                  </svg>
+                  Сбросить
+                </button>
+              </div>
+              <div class="icp-align-track-wrap">
+                <div class="icp-align-zero"></div>
+                <input type="range" id="wm-img-angle-slider" min="-180" max="180" step="1" value="0" class="icp-align-slider" />
+              </div>
+              <div class="icp-align-labels">
+                <span>−180°</span><span>0°</span><span>+180°</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="icp-hint">✦ Рекомендуется PNG или SVG с прозрачным фоном.</div>
+
+        </div><!-- /#wm-panel-image -->
+
+        <!-- Footer -->
+        <div class="inspector-footer">
+          <button class="btn btn-primary btn-lg btn-full" id="btn-apply-watermark">
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <rect x="2" y="2" width="12" height="12" rx="2"/>
+              <polyline points="5,8 7,10.5 11,6"/>
+            </svg>
+            Применить
+          </button>
+          <button class="btn btn-outline btn-lg btn-full">
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M8 2v9M4 8l4 4 4-4"/>
+              <path d="M2 13h12"/>
+            </svg>
+            Экспортировать
+          </button>
+        </div>
+
+      </div><!-- /#watermark-inspector-view -->
 
       <!-- ══ RESIZE INSPECTOR ════════════════════════ -->
       <div id="resize-inspector-view" style="display:none; flex:1; flex-direction:column; overflow:hidden;">
@@ -1092,5 +1498,7 @@
 <script src="js/crop.js"></script>
 <script src="js/zoom.js"></script>
 <script src="js/resize.js"></script>
+<script src="js/watermark.js"></script>
+<script>document.addEventListener('DOMContentLoaded', () => window.initWatermark?.());</script>
 </body>
 </html>

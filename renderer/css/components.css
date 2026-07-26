@@ -2753,6 +2753,470 @@
   color: var(--color-text);
 }
 
+/* ═══════════════════════════════════════
+   Watermark tab
+═══════════════════════════════════════ */
+
+/* ── Sub-tab bar ────────────────────────────────────── */
+.wm-subtab-bar {
+  display: flex;
+  gap: 0;
+  padding: 8px 12px;
+  border-bottom: 1px solid var(--color-border);
+  background: var(--color-panel);
+  flex-shrink: 0;
+}
+
+.wm-subtab {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  height: 34px;
+  border: 1.5px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  background: transparent;
+  font-family: var(--font-family);
+  font-size: var(--text-sm);
+  font-weight: 500;
+  color: var(--color-muted);
+  cursor: pointer;
+  transition: background var(--transition), color var(--transition),
+              border-color var(--transition);
+}
+
+.wm-subtab:first-child { border-right: none; border-radius: var(--radius-sm) 0 0 var(--radius-sm); }
+.wm-subtab:last-child  { border-left: none; border-radius: 0 var(--radius-sm) var(--radius-sm) 0; }
+
+.wm-subtab.active {
+  background: var(--color-primary);
+  border-color: var(--color-primary);
+  color: #fff;
+}
+.wm-subtab:not(.active):hover {
+  background: var(--color-bg);
+  color: var(--color-text);
+}
+
+/* ── Panel (scrollable body) ────────────────────────── */
+.wm-panel {
+  flex: 1;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+}
+
+/* ── Block (section wrapper) ────────────────────────── */
+.wm-block {
+  padding: 14px 16px;
+}
+
+/* ── Textarea ───────────────────────────────────────── */
+.wm-textarea {
+  width: 100%;
+  padding: 10px 12px;
+  border: 1.5px solid var(--color-border);
+  border-radius: var(--radius-md);
+  background: var(--color-bg);
+  font-family: var(--font-family);
+  font-size: var(--text-base);
+  color: var(--color-text);
+  resize: vertical;
+  min-height: 64px;
+  outline: none;
+  line-height: 1.5;
+  transition: border-color var(--transition);
+  box-sizing: border-box;
+}
+.wm-textarea:focus { border-color: var(--color-primary); background: var(--color-panel); }
+
+/* ── Font row ───────────────────────────────────────── */
+.wm-font-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.wm-select {
+  flex: 1;
+  min-width: 0;
+  height: 36px;
+  padding: 0 10px;
+  border: 1.5px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  background: var(--color-panel);
+  font-family: var(--font-family);
+  font-size: var(--text-base);
+  color: var(--color-text);
+  outline: none;
+  cursor: pointer;
+  transition: border-color var(--transition);
+}
+.wm-select:focus { border-color: var(--color-primary); }
+
+.wm-size-card {
+  width: 70px;
+  flex-shrink: 0;
+}
+
+.wm-style-btn {
+  width: 34px;
+  height: 36px;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1.5px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  background: var(--color-panel);
+  color: var(--color-muted);
+  cursor: pointer;
+  transition: background var(--transition), color var(--transition),
+              border-color var(--transition);
+}
+.wm-style-btn:hover { background: var(--color-bg); color: var(--color-text); border-color: var(--color-border2); }
+.wm-style-btn.active {
+  background: var(--color-primary-muted);
+  border-color: var(--color-primary);
+  color: var(--color-primary);
+}
+
+/* ── Color card ─────────────────────────────────────── */
+.wm-color-card {
+  background: var(--color-bg);
+  border: 1.5px solid var(--color-border);
+  border-radius: var(--radius-md);
+  padding: 10px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.wm-color-row,
+.wm-opacity-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.wm-color-lbl {
+  font-size: var(--text-xs);
+  font-weight: 600;
+  color: var(--color-faint);
+  letter-spacing: .04em;
+  min-width: 90px;
+  flex-shrink: 0;
+}
+
+/* Hidden native color picker — triggered by clicking the swatch */
+.wm-color-input {
+  position: absolute;
+  opacity: 0;
+  width: 0;
+  height: 0;
+  pointer-events: none;
+}
+
+.wm-color-preview {
+  width: 28px;
+  height: 28px;
+  border-radius: var(--radius-sm);
+  border: 2px solid var(--color-border2);
+  cursor: pointer;
+  flex-shrink: 0;
+  background: #fff;
+  transition: border-color var(--transition);
+  position: relative;
+}
+.wm-color-preview:hover { border-color: var(--color-primary); }
+
+.wm-opacity-wrap {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+/* Opacity / generic slider */
+.wm-slider-track {
+  flex: 1;
+  position: relative;
+  height: 6px;
+  background: var(--color-border);
+  border-radius: 3px;
+}
+
+.wm-slider-fill {
+  position: absolute;
+  top: 0; left: 0; bottom: 0;
+  background: linear-gradient(90deg, #2fbd8a 0%, var(--color-primary) 100%);
+  border-radius: 3px;
+  pointer-events: none;
+  transition: width .04s linear;
+}
+
+.wm-slider {
+  position: absolute;
+  top: 50%;
+  left: 0;
+  width: 100%;
+  height: 16px;
+  transform: translateY(-50%);
+  -webkit-appearance: none;
+  appearance: none;
+  background: transparent;
+  cursor: pointer;
+  outline: none;
+  z-index: 1;
+}
+.wm-slider::-webkit-slider-runnable-track { height: 6px; background: transparent; border-radius: 3px; }
+.wm-slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 18px; height: 18px;
+  border-radius: 50%;
+  background: #fff;
+  border: 2.5px solid var(--color-primary);
+  box-shadow: 0 2px 8px rgba(22,98,76,.30);
+  cursor: pointer;
+  margin-top: -6px;
+  transition: transform .1s ease, box-shadow .1s ease;
+}
+.wm-slider::-webkit-slider-thumb:hover { transform: scale(1.15); box-shadow: 0 3px 12px rgba(22,98,76,.45); }
+.wm-slider::-moz-range-thumb {
+  width: 18px; height: 18px;
+  border-radius: 50%;
+  background: #fff;
+  border: 2.5px solid var(--color-primary);
+  box-shadow: 0 2px 8px rgba(22,98,76,.30);
+  cursor: pointer;
+}
+.wm-slider::-moz-range-track { height: 6px; background: transparent; border-radius: 3px; }
+
+.wm-slider-val {
+  font-size: var(--text-sm);
+  font-weight: 600;
+  color: var(--color-primary);
+  min-width: 34px;
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+/* ── Position grid ──────────────────────────────────── */
+.wm-position-wrap {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.wm-position-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 28px);
+  grid-template-rows: repeat(3, 28px);
+  gap: 4px;
+  flex-shrink: 0;
+}
+
+.wm-pos-cell {
+  width: 28px;
+  height: 28px;
+  border: 1.5px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  background: var(--color-panel);
+  cursor: pointer;
+  transition: background var(--transition), border-color var(--transition),
+              box-shadow var(--transition);
+  position: relative;
+}
+.wm-pos-cell::after {
+  content: '';
+  position: absolute;
+  top: 50%; left: 50%;
+  transform: translate(-50%, -50%);
+  width: 6px; height: 6px;
+  border-radius: 50%;
+  background: var(--color-border2);
+  transition: background var(--transition);
+}
+.wm-pos-cell:hover { border-color: var(--color-primary); background: var(--color-primary-muted); }
+.wm-pos-cell:hover::after { background: var(--color-primary); }
+.wm-pos-cell.active {
+  background: var(--color-primary);
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 2px var(--color-primary-muted);
+}
+.wm-pos-cell.active::after { background: #fff; }
+
+.wm-position-labels {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+/* ── Checkbox row ───────────────────────────────────── */
+.wm-check-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  user-select: none;
+}
+.wm-check-input {
+  position: absolute;
+  opacity: 0;
+  width: 0; height: 0;
+  pointer-events: none;
+}
+.wm-check-box {
+  width: 17px; height: 17px;
+  flex-shrink: 0;
+  border: 1.5px solid var(--color-border2);
+  border-radius: 4px;
+  background: var(--color-panel);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: transparent;
+  transition: background var(--transition), border-color var(--transition), color var(--transition);
+}
+.wm-check-row:hover .wm-check-box { border-color: var(--color-primary); }
+.wm-check-input:checked + .wm-check-box {
+  background: var(--color-primary);
+  border-color: var(--color-primary);
+  color: #fff;
+}
+.wm-check-label {
+  font-size: var(--text-base);
+  color: var(--color-text);
+  line-height: 1.3;
+}
+
+/* ── Upload zone ────────────────────────────────────── */
+.wm-upload-zone {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 2px dashed var(--color-border2);
+  border-radius: var(--radius-md);
+  background: var(--color-bg);
+  cursor: pointer;
+  transition: border-color var(--transition), background var(--transition);
+  min-height: 110px;
+  position: relative;
+  overflow: hidden;
+}
+.wm-upload-zone:hover {
+  border-color: var(--color-primary);
+  background: var(--color-primary-muted);
+}
+
+.wm-upload-idle {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  padding: 16px;
+  text-align: center;
+}
+
+.wm-upload-icon {
+  width: 48px; height: 48px;
+  border-radius: 50%;
+  background: var(--color-panel);
+  border: 1.5px solid var(--color-border);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--color-muted);
+  margin-bottom: 2px;
+}
+.wm-upload-zone:hover .wm-upload-icon { border-color: var(--color-primary); color: var(--color-primary); background: var(--color-primary-muted); }
+
+.wm-upload-text {
+  font-size: var(--text-base);
+  font-weight: 600;
+  color: var(--color-text);
+}
+.wm-upload-hint {
+  font-size: var(--text-xs);
+  color: var(--color-faint);
+  line-height: 1.4;
+}
+
+/* Preview state */
+.wm-upload-preview {
+  width: 100%;
+  height: 100%;
+  min-height: 110px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  padding: 10px;
+  box-sizing: border-box;
+}
+.wm-upload-thumb {
+  max-width: 100%;
+  max-height: 90px;
+  object-fit: contain;
+  border-radius: var(--radius-sm);
+}
+.wm-upload-remove {
+  position: absolute;
+  top: 8px; right: 8px;
+  width: 22px; height: 22px;
+  border-radius: 50%;
+  border: none;
+  background: rgba(0,0,0,.45);
+  color: #fff;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background var(--transition);
+  z-index: 2;
+}
+.wm-upload-remove:hover { background: var(--color-danger); }
+
+/* ── Editor canvas watermark overlay ────────────────── */
+.wm-canvas-bg {
+  /* inherits from editor-image-placeholder */
+}
+
+.wm-overlay {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+  z-index: 2;
+}
+
+.wm-label {
+  padding: 8px 14px;
+  background: rgba(0,0,0,.35);
+  border: 1.5px dashed rgba(255,255,255,.55);
+  border-radius: var(--radius-sm);
+  backdrop-filter: blur(4px);
+  cursor: move;
+  user-select: none;
+  pointer-events: auto;
+  max-width: 80%;
+  text-align: center;
+}
+
+#wm-label-text {
+  font-family: 'Inter', sans-serif;
+  font-size: 18px;
+  font-weight: 600;
+  color: #fff;
+  white-space: pre-wrap;
+  word-break: break-word;
+  opacity: .7;
+  display: block;
+}
+
 /* ─────────────────────────────────────
    Scrollbar styling
 ───────────────────────────────────── */
