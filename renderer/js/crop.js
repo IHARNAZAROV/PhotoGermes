@@ -363,6 +363,21 @@ function initCrop() {
 
 document.addEventListener('DOMContentLoaded', initCrop);
 
+// ── Public: set crop frame directly in % coordinates ──────
+window.cropSetPct = function(x, y, w, h) {
+    Object.assign(crop, clampCrop(x, y, w, h));
+    applyCrop();
+};
+
+// ── Public: reset to the default crop frame ───────────────
+window.cropResetToDefault = function() {
+    cropAspect = null;
+    crop.x = 8; crop.y = 10; crop.w = 84; crop.h = 80;
+    applyCrop();
+    setSelectValue('Свободно');
+    syncPresetBtns('Свободно');
+};
+
 // ── Public API for app.js ─────────────────────────────
 /**
  * Convert the current crop frame (% of container) into normalized image

@@ -73,8 +73,9 @@ let checkedIndices   = new Set(); // photos checked for deletion
 let lastCheckedIndex = -1;   // anchor for shift-range selection
 
 // ── Editor transform state ──────────────────────────────
-let editorRotation = 0;     // 0 | 90 | 180 | 270
-let editorFlipH    = false;
+let editorRotation  = 0;      // 0 | 90 | 180 | 270
+let editorFlipH     = false;
+let straightenAngle = 0;      // −45..+45  fine rotation for horizon leveling
 
 // ── Undo / Redo — per-photo stacks ─────────────────────
 // Each photo object carries ._undoStack and ._redoStack.
@@ -527,9 +528,11 @@ async function selectPhoto(index) {
     updateSelectionUI();
 
     // Restore this photo's own transform state (each photo remembers its own)
-    editorRotation = photo._rotation ?? 0;
-    editorFlipH    = photo._flipH    ?? false;
+    editorRotation  = photo._rotation       ?? 0;
+    editorFlipH     = photo._flipH          ?? false;
+    straightenAngle = photo._straightenAngle ?? 0;
     applyEditorTransform();
+    syncStraightenUI();
     updateUndoRedoBtns();
 
     const wInput = document.getElementById('frame-width');
@@ -914,11 +917,26 @@ function applyCropToPhotoCanvas(photo, norm) {
 
             if (srcW < 1 || srcH < 1) { resolve(false); return; }
 
+            // If there's a fine straighten angle, rotate the image first on a temporary canvas
+            let sourceImg = img;
+            if (straightenAngle !== 0) {
+                const ang  = straightenAngle * Math.PI / 180;
+                const rotC = document.createElement('canvas');
+                rotC.width  = img.naturalWidth;
+                rotC.height = img.naturalHeight;
+                const rCtx  = rotC.getContext('2d');
+                rCtx.translate(img.naturalWidth / 2, img.naturalHeight / 2);
+                rCtx.rotate(ang);
+                rCtx.translate(-img.naturalWidth / 2, -img.naturalHeight / 2);
+                rCtx.drawImage(img, 0, 0);
+                sourceImg = rotC;
+            }
+
             // Full-res cropped canvas
             const canvas    = document.createElement('canvas');
             canvas.width    = srcW;
             canvas.height   = srcH;
-            canvas.getContext('2d').drawImage(img, srcX, srcY, srcW, srcH, 0, 0, srcW, srcH);
+            canvas.getContext('2d').drawImage(sourceImg, srcX, srcY, srcW, srcH, 0, 0, srcW, srcH);
 
             photo.preview   = canvas.toDataURL('image/jpeg', 0.92);
             photo.width     = srcW;
@@ -1307,6 +1325,7 @@ function snapshotPhoto(photo) {
     return {
         rotation:  editorRotation,
         flipH:     editorFlipH,
+        straighten: straightenAngle,
         preview:   photo.preview,
         width:     photo.width,
         height:    photo.height,
@@ -1354,8 +1373,10 @@ async function doRedo() {
 
 /** Apply a snapshot to a specific photo (must already be selected). */
 async function restorePhotoSnapshot(photo, snap) {
-    editorRotation = snap.rotation;
-    editorFlipH    = snap.flipH;
+    editorRotation  = snap.rotation;
+    editorFlipH     = snap.flipH;
+    straightenAngle = snap.straighten ?? 0;
+    syncStraightenUI();
     photo.preview   = snap.preview;
     photo.width     = snap.width;
     photo.height    = snap.height;
@@ -1445,8 +1466,8 @@ function initTooltips() {
 function applyEditorTransform() {
     const img = document.getElementById('editor-img');
     if (!img) return;
-    // Combine rotation and horizontal flip into one transform
-    const t = `rotate(${editorRotation}deg) scaleX(${editorFlipH ? -1 : 1})`;
+    // Combine rotation, fine straighten angle, and horizontal flip into one transform
+    const t = `rotate(${editorRotation + straightenAngle}deg) scaleX(${editorFlipH ? -1 : 1})`;
     img.style.transform = t;
 
     // Visual hint on the placeholder background too (CSS class)
@@ -1459,8 +1480,9 @@ function applyEditorTransform() {
     // Persist transform back to the photo object so switching photos
     // and returning later restores the correct orientation.
     if (selectedIndex >= 0 && photos[selectedIndex]) {
-        photos[selectedIndex]._rotation = editorRotation;
-        photos[selectedIndex]._flipH    = editorFlipH;
+        photos[selectedIndex]._rotation       = editorRotation;
+        photos[selectedIndex]._flipH          = editorFlipH;
+        photos[selectedIndex]._straightenAngle = straightenAngle;
     }
 }
 
@@ -1505,9 +1527,96 @@ function initEditorTransformButtons() {
         const label = btn.querySelector('.preset-action-label')?.textContent?.trim();
         if (label === 'Повернуть') btn.addEventListener('click', () => rotateEditor(1));
         if (label === 'Отразить')  btn.addEventListener('click', () => flipEditorH());
-        // 'Сбросить' in crop.js handles crop reset; we also reset transform
-        if (label === 'Сбросить')  btn.addEventListener('click', () => resetEditorTransform());
+        // 'Сбросить' in crop.js handles crop reset; we also reset transform + straighten
+        if (label === 'Сбросить')  btn.addEventListener('click', () => {
+            resetEditorTransform();
+            applyStraighten(0);
+        });
     });
+}
+
+// ── Straighten ─────────────────────────────────────────
+/**
+ * Compute the crop frame (% of container) for the largest axis-aligned
+ * rectangle inscribed inside an image of size photoW×photoH rotated by
+ * `angle` degrees, accounting for object-fit:contain letterboxing.
+ */
+function getStraightenCropPct(angle, photoW, photoH) {
+    const c = document.getElementById('editor-placeholder');
+    if (!c || !photoW || !photoH || !angle) return null;
+    const cW = c.offsetWidth, cH = c.offsetHeight;
+    if (!cW || !cH) return null;
+
+    const ang  = Math.abs(angle) * Math.PI / 180;
+    const cosA = Math.cos(ang), sinA = Math.sin(ang);
+    const wr   = photoW / photoH;
+
+    // Largest same-AR rectangle inscribed in the rotated image (in image px)
+    const ih = Math.min(
+        photoW / (wr * cosA + sinA),
+        photoH / (cosA + wr * sinA)
+    );
+    const iw = wr * ih;
+
+    // Convert to container % via object-fit:contain letterbox geometry
+    const scale     = Math.min(cW / photoW, cH / photoH);
+    const renderedW = photoW * scale;
+    const renderedH = photoH * scale;
+    const offX      = (cW - renderedW) / 2;
+    const offY      = (cH - renderedH) / 2;
+    const insetXpx  = (photoW - iw) / 2;
+    const insetYpx  = (photoH - ih) / 2;
+
+    const x = (offX + insetXpx * scale) / cW * 100;
+    const y = (offY + insetYpx * scale) / cH * 100;
+    const w = (renderedW - 2 * insetXpx * scale) / cW * 100;
+    const h = (renderedH - 2 * insetYpx * scale) / cH * 100;
+    return { x, y, w, h };
+}
+
+function syncStraightenUI() {
+    const slider = document.getElementById('straighten-slider');
+    const input  = document.getElementById('straighten-input');
+    if (slider && document.activeElement !== slider) slider.value = straightenAngle;
+    if (input  && document.activeElement !== input)
+        input.value = (straightenAngle === 0) ? '0' : straightenAngle.toFixed(1);
+}
+
+function applyStraighten(angle) {
+    straightenAngle = Math.max(-45, Math.min(45, +angle || 0));
+    applyEditorTransform();
+
+    // Auto-fit crop frame to the safe (non-black-corner) region
+    if (straightenAngle === 0) {
+        window.cropResetToDefault?.();
+    } else {
+        const photo = photos[selectedIndex];
+        if (photo) {
+            const pct = getStraightenCropPct(straightenAngle, photo.width, photo.height);
+            if (pct) window.cropSetPct?.(pct.x, pct.y, pct.w, pct.h);
+        }
+    }
+    syncStraightenUI();
+}
+
+function initStraighten() {
+    const slider   = document.getElementById('straighten-slider');
+    const input    = document.getElementById('straighten-input');
+    const resetBtn = document.getElementById('btn-straighten-reset');
+
+    slider?.addEventListener('input', () => applyStraighten(parseFloat(slider.value)));
+
+    input?.addEventListener('change', () => {
+        const v = parseFloat(input.value);
+        if (!isNaN(v)) applyStraighten(v);
+        else syncStraightenUI();
+    });
+    input?.addEventListener('keydown', e => {
+        if (e.key === 'Enter')  input.blur();
+        if (e.key === 'Escape') { syncStraightenUI(); input.blur(); }
+    });
+
+    resetBtn?.addEventListener('click', () => applyStraighten(0));
 }
 
 // ── History modal ──────────────────────────────────────
@@ -1591,4 +1700,5 @@ document.addEventListener('DOMContentLoaded', () => {
     updateUndoRedoBtns();
     initHistoryModal();
     initAboutModal();
+    initStraighten();
 });
