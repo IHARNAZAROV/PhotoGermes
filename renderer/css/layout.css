@@ -35,8 +35,8 @@ html, body {
   grid-column: 1;
   display: flex;
   align-items: center;
-  gap: 8px;
-  padding: 0 20px;
+  gap: 5px;
+  padding: 0 16px;
   background: var(--color-panel);
   border-bottom: 1px solid var(--color-border);
   box-shadow: var(--shadow-xs);

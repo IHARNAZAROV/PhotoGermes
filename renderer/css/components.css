@@ -8,8 +8,8 @@
 .btn {
   display: inline-flex;
   align-items: center;
-  gap: 7px;
-  padding: 0 16px;
+  gap: 6px;
+  padding: 0 12px;
   height: 38px;
   border: none;
   border-radius: var(--radius-md);
@@ -758,18 +758,101 @@
   flex-shrink: 0;
 }
 
-/* ── Block 1: preset buttons grid ── */
+/* ── Block 1: preset buttons grid — 3 equal columns ── */
 .icp-presets {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 4px;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 6px;
 }
 
-/* ── Block 2: transform actions row ── */
-.icp-actions {
-  display: flex;
-  gap: 4px;
+/* "Польз." spans the full row */
+.icp-presets .preset-btn-wide {
+  grid-column: 1 / -1;
+  flex-direction: row;
+  gap: 8px;
+  padding: 8px 12px;
+  justify-content: center;
 }
+
+/* Preset button — card style */
+.icp-presets .preset-btn {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  padding: 10px 4px 8px;
+  width: 100%;
+  border: 1.5px solid var(--color-border);
+  background: var(--color-panel);
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  transition: border-color var(--transition), background var(--transition);
+  font-family: var(--font-family);
+  flex-shrink: 0;
+}
+.icp-presets .preset-btn:hover {
+  border-color: var(--color-border2);
+  background: var(--color-bg);
+}
+.icp-presets .preset-btn.active {
+  border-color: var(--color-primary);
+  background: var(--color-primary-muted);
+}
+
+/* Icon box inside card — remove inner border, let the card be the border */
+.icp-presets .preset-icon {
+  width: auto;
+  height: auto;
+  border: none;
+  background: transparent;
+  color: var(--color-muted);
+}
+.icp-presets .preset-btn.active .preset-icon {
+  border-color: transparent;
+  background: transparent;
+  color: var(--color-primary);
+}
+.icp-presets .preset-icon svg { width: 22px; height: 22px; }
+
+/* Labels inside preset cards */
+.icp-presets .preset-label {
+  font-size: 10px;
+  font-weight: 600;
+  color: var(--color-muted);
+}
+.icp-presets .preset-btn.active .preset-label { color: var(--color-primary); }
+
+/* ── Block 2: transform actions — 3 equal columns ── */
+.icp-actions {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 6px;
+}
+
+.icp-actions .preset-action {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  padding: 10px 4px;
+  width: 100%;
+  border: 1.5px solid var(--color-border);
+  background: var(--color-panel);
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  transition: border-color var(--transition), background var(--transition), color var(--transition);
+  font-family: var(--font-family);
+  color: var(--color-muted);
+  flex-shrink: 0;
+}
+.icp-actions .preset-action:hover {
+  border-color: var(--color-border2);
+  background: var(--color-bg);
+  color: var(--color-text);
+}
+.icp-actions .preset-action svg { width: 20px; height: 20px; }
 
 /* ── Block 3: size inputs ── */
 .icp-size-row {
