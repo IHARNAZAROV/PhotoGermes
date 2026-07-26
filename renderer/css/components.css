@@ -3178,6 +3178,24 @@
 }
 .wm-upload-remove:hover { background: var(--color-danger); }
 
+/* ── Disabled angle controls (diagonal locked) ──────── */
+.wm-block input[type="number"]:disabled,
+.wm-block input[type="range"]:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+  pointer-events: none;
+}
+.wm-block button:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+
+/* Diagonal active: grey out angle card */
+.icp-align-card:has(input:disabled) {
+  opacity: 0.55;
+  pointer-events: none;
+}
+
 /* ── Editor canvas watermark overlay ────────────────── */
 .wm-canvas-bg {
   /* inherits from editor-image-placeholder */
