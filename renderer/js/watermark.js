@@ -202,6 +202,7 @@ function resetLabelFromDrag() {
 // Stores the original SVG text so we can re-tint it on demand
 let _wmOriginalSvgText = null;
 let _wmIsSvg           = false;
+let _wmSizeUnit        = 'px';  // 'px' | '%'
 
 
 /** Replace all non-transparent fill/stroke/stop-color values with newColor */
@@ -372,10 +373,16 @@ function initWmImageControls() {
         const img = new Image();
         img.onload = () => {
             aspectRatio = img.naturalWidth / img.naturalHeight;
-            const w = Math.round(Math.min(img.naturalWidth, 400));
-            const h = Math.round(w / aspectRatio);
-            if (widthInput)  widthInput.value  = w;
-            if (heightInput) heightInput.value = h;
+            if (_wmSizeUnit === 'px') {
+                const w = Math.round(Math.min(img.naturalWidth, 400));
+                const h = Math.round(w / aspectRatio);
+                if (widthInput)  widthInput.value  = w;
+                if (heightInput) heightInput.value = h;
+            } else {
+                // В режиме % — по умолчанию 30%
+                if (widthInput)  widthInput.value  = 30;
+                if (heightInput) heightInput.value = 30;
+            }
             updateWmOverlay();
         };
         img.src = url;
@@ -408,15 +415,56 @@ function initWmImageControls() {
     // Width input → sync height if linked
     widthInput?.addEventListener('input', () => {
         if (isLinked && aspectRatio && heightInput) {
-            heightInput.value = Math.round(+widthInput.value / aspectRatio) || '';
+            heightInput.value = _wmSizeUnit === '%'
+                ? widthInput.value   // одинаковый % — равномерное масштабирование
+                : Math.round(+widthInput.value / aspectRatio) || '';
         }
         updateWmOverlay();
     });
     heightInput?.addEventListener('input', () => {
         if (isLinked && aspectRatio && widthInput) {
-            widthInput.value = Math.round(+heightInput.value * aspectRatio) || '';
+            widthInput.value = _wmSizeUnit === '%'
+                ? heightInput.value
+                : Math.round(+heightInput.value * aspectRatio) || '';
         }
         updateWmOverlay();
+    });
+
+    // Unit toggle px / %
+    document.getElementById('wm-size-unit-toggle')?.querySelectorAll('.wm-unit-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+            const newUnit = btn.dataset.unit;
+            if (newUnit === _wmSizeUnit) return;
+
+            const overlay = document.getElementById('wm-overlay');
+            const ovW = overlay?.clientWidth  || 400;
+            const ovH = overlay?.clientHeight || 300;
+            const wv  = +(widthInput?.value  || 0);
+            const hv  = +(heightInput?.value || 0);
+
+            if (newUnit === '%') {
+                if (widthInput)  widthInput.value  = Math.max(1, Math.round(wv / ovW * 100));
+                if (heightInput) heightInput.value = Math.max(1, Math.round(hv / ovH * 100));
+                if (widthInput)  { widthInput.min  = '1'; widthInput.max  = '200'; }
+                if (heightInput) { heightInput.min = '1'; heightInput.max = '200'; }
+            } else {
+                if (widthInput)  widthInput.value  = Math.round(wv / 100 * ovW);
+                if (heightInput) heightInput.value = Math.round(hv / 100 * ovH);
+                if (widthInput)  { widthInput.min  = '1'; widthInput.max  = '5000'; }
+                if (heightInput) { heightInput.min = '1'; heightInput.max = '5000'; }
+            }
+
+            _wmSizeUnit = newUnit;
+            const unitW = document.getElementById('wm-img-width-unit');
+            const unitH = document.getElementById('wm-img-height-unit');
+            if (unitW) unitW.textContent = newUnit;
+            if (unitH) unitH.textContent = newUnit;
+
+            document.querySelectorAll('#wm-size-unit-toggle .wm-unit-btn')
+                .forEach(b => b.classList.toggle('active', b.dataset.unit === newUnit));
+
+            updateWmOverlay();
+        });
     });
 
     // Opacity
@@ -570,14 +618,20 @@ function updateWmOverlay() {
         const hasSrc  = thumb?.src && !thumb.src.endsWith('#') && !thumb.src.endsWith('/');
         const opacity = (document.getElementById('wm-img-opacity')?.value ?? 80) / 100;
         const angle   = +(document.getElementById('wm-img-angle')?.value || 0);
-        const wVal    = +(document.getElementById('wm-img-width')?.value  || 200);
-        const hVal    = +(document.getElementById('wm-img-height')?.value || 200);
-        const tile    = document.getElementById('wm-img-tile')?.checked;
-        const src     = hasSrc ? thumb.src : null;
+        const wRaw = +(document.getElementById('wm-img-width')?.value  || 200);
+        const hRaw = +(document.getElementById('wm-img-height')?.value || 200);
+        const tile  = document.getElementById('wm-img-tile')?.checked;
+        const src   = hasSrc ? thumb.src : null;
+
+        // Если режим %, переводим в px от размеров оверлея
+        const ovW  = overlay.clientWidth  || 400;
+        const ovH  = overlay.clientHeight || 300;
+        const wVal = _wmSizeUnit === '%' ? Math.round(wRaw / 100 * ovW) : wRaw;
+        const hVal = _wmSizeUnit === '%' ? Math.round(hRaw / 100 * ovH) : hRaw;
 
         const imgStyles = {
-            width:  Math.min(wVal, 200) + 'px',
-            height: Math.min(hVal, 150) + 'px',
+            width:  wVal + 'px',
+            height: hVal + 'px',
             opacity,
         };
 
@@ -822,6 +876,7 @@ function getWmSettings() {
         textAngle: +(document.getElementById('wm-text-angle')?.value || 0),
         imageSrc: document.getElementById('wm-upload-thumb')?.src || '',
         imageOpacity: (document.getElementById('wm-img-opacity')?.value ?? 80) / 100,
+        imageSizeUnit: _wmSizeUnit,
         imageWidth: +(document.getElementById('wm-img-width')?.value || 200),
         imageHeight: +(document.getElementById('wm-img-height')?.value || 200),
         imageTile: document.getElementById('wm-img-tile')?.checked,
@@ -885,8 +940,13 @@ async function applyWatermarkToPhotoCanvas(photo, settings, cachedLogo) {
     } else {
         if (!cachedLogo) return false;
         ctx.globalAlpha = settings.imageOpacity;
-        const w = Math.min(settings.imageWidth, canvas.width);
-        const h = Math.min(settings.imageHeight, canvas.height);
+        // Переводим % в px от размеров финального холста
+        const w = settings.imageSizeUnit === '%'
+            ? Math.max(1, Math.round(settings.imageWidth  / 100 * canvas.width))
+            : Math.min(settings.imageWidth,  canvas.width);
+        const h = settings.imageSizeUnit === '%'
+            ? Math.max(1, Math.round(settings.imageHeight / 100 * canvas.height))
+            : Math.min(settings.imageHeight, canvas.height);
         const draw = (x, y) => drawRotated(ctx, x, y, w, h, settings.imageAngle, (dx, dy) => ctx.drawImage(cachedLogo, dx, dy, w, h));
         if (settings.imageTile) {
             for (let r = 0; r < 3; r++) for (let c = 0; c < 4; c++) draw((c + .5) * canvas.width / 4 - w / 2, (r + .5) * canvas.height / 3 - h / 2);

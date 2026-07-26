@@ -3252,6 +3252,35 @@
   display: block;
 }
 
+/* ── Unit toggle (px / %) ───────────────────────────── */
+.wm-unit-toggle {
+  display: flex;
+  background: var(--color-bg);
+  border: 1.5px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  overflow: hidden;
+}
+.wm-unit-btn {
+  padding: 2px 9px;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: .03em;
+  color: var(--color-muted);
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  transition: background var(--transition), color var(--transition);
+  line-height: 1.6;
+}
+.wm-unit-btn.active {
+  background: var(--color-primary);
+  color: #fff;
+}
+.wm-unit-btn:not(.active):hover {
+  background: var(--color-panel2);
+  color: var(--color-text);
+}
+
 /* ── SVG palette ────────────────────────────────────── */
 .wm-palette-row {
   display: flex;

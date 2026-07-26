@@ -1036,12 +1036,18 @@
 
           <!-- Размер -->
           <div class="wm-block" style="padding-top:0;">
-            <div class="ri-section-label">Размер</div>
+            <div class="ri-section-label" style="display:flex;align-items:center;justify-content:space-between;">
+              Размер
+              <div class="wm-unit-toggle" id="wm-size-unit-toggle">
+                <button class="wm-unit-btn active" data-unit="px" type="button">px</button>
+                <button class="wm-unit-btn" data-unit="%" type="button">%</button>
+              </div>
+            </div>
             <div class="ri-dims-card">
               <div class="ri-dim-field">
                 <div class="ri-dim-axis">Ш</div>
-                <input type="number" id="wm-img-width" value="200" min="10" max="5000" class="ri-dim-input" />
-                <div class="ri-dim-unit">px</div>
+                <input type="number" id="wm-img-width" value="200" min="1" max="5000" class="ri-dim-input" />
+                <div class="ri-dim-unit" id="wm-img-width-unit">px</div>
               </div>
 
               <button class="ri-chain-btn active" id="wm-img-link-btn" data-tooltip="Сохранить пропорции">
@@ -1057,8 +1063,8 @@
 
               <div class="ri-dim-field">
                 <div class="ri-dim-axis">В</div>
-                <input type="number" id="wm-img-height" value="200" min="10" max="5000" class="ri-dim-input" />
-                <div class="ri-dim-unit">px</div>
+                <input type="number" id="wm-img-height" value="200" min="1" max="5000" class="ri-dim-input" />
+                <div class="ri-dim-unit" id="wm-img-height-unit">px</div>
               </div>
             </div>
           </div>
