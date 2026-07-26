@@ -3252,6 +3252,64 @@
   display: block;
 }
 
+/* ── SVG palette ────────────────────────────────────── */
+.wm-palette-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  padding-top: 2px;
+}
+
+.wm-palette-swatch {
+  width: 24px;
+  height: 24px;
+  border-radius: var(--radius-sm);
+  border: 2px solid transparent;
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: transform .12s, border-color .12s, box-shadow .12s;
+  position: relative;
+}
+.wm-palette-swatch:hover {
+  transform: scale(1.18);
+  box-shadow: 0 2px 8px rgba(0,0,0,.28);
+}
+.wm-palette-swatch.active {
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 2px var(--color-primary-muted);
+}
+/* Checker pattern for white swatch border visibility */
+.wm-palette-swatch[data-color="#ffffff"],
+.wm-palette-swatch[data-color="#fff"] {
+  border-color: var(--color-border2);
+}
+.wm-palette-swatch[data-color="#ffffff"].active,
+.wm-palette-swatch[data-color="#fff"].active {
+  border-color: var(--color-primary);
+}
+
+.wm-svg-reset-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  margin-left: auto;
+  padding: 4px 10px;
+  font-size: var(--text-xs);
+  font-weight: 600;
+  color: var(--color-muted);
+  background: var(--color-panel);
+  border: 1.5px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  white-space: nowrap;
+  transition: color var(--transition), border-color var(--transition), background var(--transition);
+}
+.wm-svg-reset-btn:hover {
+  color: var(--color-text);
+  border-color: var(--color-border2);
+  background: var(--color-bg);
+}
+
 /* ─────────────────────────────────────
    Scrollbar styling
 ───────────────────────────────────── */

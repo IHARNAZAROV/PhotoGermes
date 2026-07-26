@@ -196,6 +196,134 @@ function resetLabelFromDrag() {
     overlay.style.position = 'absolute'; // keep absolute on the overlay itself
 }
 
+// ── SVG recoloring ─────────────────────────────────────
+// Stores the original SVG text so we can re-tint it on demand
+let _wmOriginalSvgText = null;
+let _wmIsSvg           = false;
+
+const WM_PALETTE = [
+    '#ffffff','#e0e0e0','#9e9e9e','#616161','#212121',
+    '#ef5350','#ff7043','#ffa726','#fdd835','#66bb6a',
+    '#26a69a','#29b6f6','#42a5f5','#5c6bc0','#ab47bc',
+    '#ec407a','#8d6e63','#78909c','#00bcd4','#ffc107',
+];
+
+/** Replace all non-transparent fill/stroke/stop-color values with newColor */
+function recolorSvg(svgText, newColor) {
+    const parser  = new DOMParser();
+    const doc     = parser.parseFromString(svgText, 'image/svg+xml');
+    const svgEl   = doc.documentElement;
+
+    // Check for parse errors
+    if (svgEl.tagName === 'parsererror') return svgText;
+
+    const KEEP = new Set(['none', 'transparent', 'inherit', 'currentcolor', '']);
+
+    function colorable(v) {
+        if (!v) return false;
+        return !KEEP.has(v.trim().toLowerCase());
+    }
+
+    function processEl(el) {
+        ['fill', 'stroke'].forEach(attr => {
+            const v = el.getAttribute(attr);
+            if (v !== null && colorable(v)) el.setAttribute(attr, newColor);
+        });
+
+        // stop-color for gradient stops
+        const sc = el.getAttribute('stop-color');
+        if (sc !== null && colorable(sc)) el.setAttribute('stop-color', newColor);
+
+        // inline style
+        const style = el.getAttribute('style');
+        if (style) {
+            const updated = style
+                .replace(/((?:fill|stroke|stop-color)\s*:\s*)([^;]+)/gi, (_m, prop, val) => {
+                    return colorable(val.trim()) ? prop + newColor : _m;
+                });
+            el.setAttribute('style', updated);
+        }
+
+        for (const child of el.children) processEl(child);
+    }
+
+    processEl(svgEl);
+    return new XMLSerializer().serializeToString(doc);
+}
+
+/** Turn SVG text into a data: URL usable as <img src> */
+function svgTextToDataUrl(svgText) {
+    // Base64-encode to avoid URI-encoding issues with complex SVGs
+    return 'data:image/svg+xml;base64,' + btoa(unescape(encodeURIComponent(svgText)));
+}
+
+/** Apply chosen color to the stored SVG and update the preview thumb */
+function applyWmSvgColor(color) {
+    if (!_wmOriginalSvgText) return;
+    const recolored = recolorSvg(_wmOriginalSvgText, color);
+    const dataUrl   = svgTextToDataUrl(recolored);
+    const thumb     = document.getElementById('wm-upload-thumb');
+    if (thumb) thumb.src = dataUrl;
+
+    // Update color preview swatch
+    const preview = document.getElementById('wm-svg-color-preview');
+    if (preview) preview.style.background = color;
+
+    // Update native picker value
+    const picker = document.getElementById('wm-svg-color-input');
+    if (picker) picker.value = color;
+
+    // Mark active swatch
+    document.querySelectorAll('.wm-palette-swatch').forEach(s => {
+        s.classList.toggle('active', s.dataset.color === color);
+    });
+
+    updateWmOverlay();
+}
+
+/** Show / hide the SVG color block and build palette swatches */
+function showWmSvgColorBlock(show) {
+    const block = document.getElementById('wm-svg-color-block');
+    if (!block) return;
+    block.style.display = show ? '' : 'none';
+}
+
+function initWmSvgColorControls() {
+    // Build palette swatches
+    const palette = document.getElementById('wm-svg-palette');
+    if (palette && !palette.hasChildNodes()) {
+        WM_PALETTE.forEach(color => {
+            const btn = document.createElement('button');
+            btn.type = 'button';
+            btn.className = 'wm-palette-swatch';
+            btn.dataset.color = color;
+            btn.style.background = color;
+            btn.title = color;
+            btn.addEventListener('click', () => applyWmSvgColor(color));
+            palette.appendChild(btn);
+        });
+    }
+
+    // Native color picker
+    const colorInput   = document.getElementById('wm-svg-color-input');
+    const colorPreview = document.getElementById('wm-svg-color-preview');
+    colorPreview?.addEventListener('click', () => colorInput?.click());
+    colorInput?.addEventListener('input', () => applyWmSvgColor(colorInput.value));
+
+    // Reset to original
+    document.getElementById('wm-svg-color-reset')?.addEventListener('click', () => {
+        if (!_wmOriginalSvgText) return;
+        const thumb = document.getElementById('wm-upload-thumb');
+        if (thumb) thumb.src = svgTextToDataUrl(_wmOriginalSvgText);
+        // Clear active swatch + reset preview
+        document.querySelectorAll('.wm-palette-swatch').forEach(s => s.classList.remove('active'));
+        const preview = document.getElementById('wm-svg-color-preview');
+        if (preview) preview.style.background = '#ffffff';
+        if (colorInput) colorInput.value = '#ffffff';
+        updateWmOverlay();
+    });
+}
+
 // ── Image controls ─────────────────────────────────────
 function initWmImageControls() {
     const fileInput      = document.getElementById('wm-image-input');
@@ -222,8 +350,30 @@ function initWmImageControls() {
     fileInput?.addEventListener('change', () => {
         const file = fileInput.files[0];
         if (!file) return;
-        const url = URL.createObjectURL(file);
-        showImagePreview(url);
+        const isSvg = file.type === 'image/svg+xml' || file.name.toLowerCase().endsWith('.svg');
+        if (isSvg) {
+            // Read SVG text, store it, then show preview from data URL
+            const reader = new FileReader();
+            reader.onload = () => {
+                _wmOriginalSvgText = reader.result;
+                _wmIsSvg = true;
+                showWmSvgColorBlock(true);
+                // Reset color state
+                document.querySelectorAll('.wm-palette-swatch').forEach(s => s.classList.remove('active'));
+                const preview = document.getElementById('wm-svg-color-preview');
+                const picker  = document.getElementById('wm-svg-color-input');
+                if (preview) preview.style.background = '#ffffff';
+                if (picker)  picker.value = '#ffffff';
+                showImagePreview(svgTextToDataUrl(_wmOriginalSvgText));
+            };
+            reader.readAsText(file);
+        } else {
+            _wmOriginalSvgText = null;
+            _wmIsSvg = false;
+            showWmSvgColorBlock(false);
+            const url = URL.createObjectURL(file);
+            showImagePreview(url);
+        }
     });
 
     // Drag-over on upload zone
@@ -233,7 +383,26 @@ function initWmImageControls() {
         e.preventDefault();
         uploadZone.classList.remove('drag-active');
         const file = e.dataTransfer.files[0];
-        if (file && file.type.startsWith('image/')) {
+        if (!file || !file.type.startsWith('image/')) return;
+        const isSvg = file.type === 'image/svg+xml' || file.name.toLowerCase().endsWith('.svg');
+        if (isSvg) {
+            const reader = new FileReader();
+            reader.onload = () => {
+                _wmOriginalSvgText = reader.result;
+                _wmIsSvg = true;
+                showWmSvgColorBlock(true);
+                document.querySelectorAll('.wm-palette-swatch').forEach(s => s.classList.remove('active'));
+                const preview = document.getElementById('wm-svg-color-preview');
+                const picker  = document.getElementById('wm-svg-color-input');
+                if (preview) preview.style.background = '#ffffff';
+                if (picker)  picker.value = '#ffffff';
+                showImagePreview(svgTextToDataUrl(_wmOriginalSvgText));
+            };
+            reader.readAsText(file);
+        } else {
+            _wmOriginalSvgText = null;
+            _wmIsSvg = false;
+            showWmSvgColorBlock(false);
             const url = URL.createObjectURL(file);
             showImagePreview(url);
         }
@@ -264,6 +433,9 @@ function initWmImageControls() {
         if (idleState)    idleState.style.display    = 'flex';
         if (previewState) previewState.style.display = 'none';
         if (fileInput)    fileInput.value = '';
+        _wmOriginalSvgText = null;
+        _wmIsSvg = false;
+        showWmSvgColorBlock(false);
         updateWmOverlay();
     });
 
@@ -880,6 +1052,7 @@ window.initWatermark = function () {
     initWmTextControls();
     initWmPositionGrids();
     initWmImageControls();
+    initWmSvgColorControls();
     initWmDrag();
     initWmApplyBtn();
     initWmClearControls();
