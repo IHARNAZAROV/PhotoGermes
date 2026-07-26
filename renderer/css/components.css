@@ -816,6 +816,32 @@
 }
 .icp-presets .preset-btn.active .preset-label { color: var(--color-primary); }
 
+/* ── Crop frame-lock button ─────────────────────────── */
+.icp-lock-btn {
+  width: 36px;
+  flex-shrink: 0;
+  align-self: stretch;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--color-panel);
+  border: none;
+  border-left: 1.5px solid var(--color-border);
+  border-right: 1.5px solid var(--color-border);
+  cursor: pointer;
+  color: var(--color-muted);
+  transition: color var(--transition), background var(--transition);
+}
+.icp-lock-btn:hover {
+  background: var(--color-bg);
+  color: var(--color-text);
+}
+.icp-lock-btn.locked {
+  color: var(--color-primary);
+  background: rgba(22,98,76,.06);
+  border-color: rgba(22,98,76,.20);
+}
+
 /* ── Text variant of ri-dim-input (for frame-width/height) */
 .ri-dim-input--text {
   font-size: 18px !important;
