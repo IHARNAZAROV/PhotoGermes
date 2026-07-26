@@ -321,12 +321,59 @@ function initWmImageControls() {
     });
 }
 
+
+// ── Keep preview overlay bound to the visible image ─────
+function syncWmOverlayBounds() {
+    const placeholder = document.getElementById('wm-editor-placeholder');
+    const img = document.getElementById('wm-editor-img');
+    const overlay = document.getElementById('wm-overlay');
+    if (!placeholder || !img || !overlay) return;
+
+    const hasPhoto = placeholder.classList.contains('has-photo')
+        && img.style.display !== 'none'
+        && img.naturalWidth > 0
+        && img.naturalHeight > 0;
+
+    if (!hasPhoto) {
+        overlay.style.left = '0';
+        overlay.style.top = '0';
+        overlay.style.right = '0';
+        overlay.style.bottom = '0';
+        overlay.style.width = '100%';
+        overlay.style.height = '100%';
+        return;
+    }
+
+    const boxW = placeholder.clientWidth;
+    const boxH = placeholder.clientHeight;
+    if (!boxW || !boxH) return;
+
+    const boxRatio = boxW / boxH;
+    const imgRatio = img.naturalWidth / img.naturalHeight;
+    let visibleW = boxW;
+    let visibleH = boxH;
+
+    if (imgRatio > boxRatio) {
+        visibleH = boxW / imgRatio;
+    } else {
+        visibleW = boxH * imgRatio;
+    }
+
+    overlay.style.left = `${(boxW - visibleW) / 2}px`;
+    overlay.style.top = `${(boxH - visibleH) / 2}px`;
+    overlay.style.right = 'auto';
+    overlay.style.bottom = 'auto';
+    overlay.style.width = `${visibleW}px`;
+    overlay.style.height = `${visibleH}px`;
+}
+
 // ── Overlay update (live preview) ─────────────────────
 function updateWmOverlay() {
     const labelEl   = document.getElementById('wm-label');
     const labelText = document.getElementById('wm-label-text');
     const overlay   = document.getElementById('wm-overlay');
     if (!labelEl || !overlay) return;
+    syncWmOverlayBounds();
 
     const isText = document.getElementById('wm-tab-text')?.classList.contains('active');
 
@@ -814,6 +861,18 @@ function initWmToggle() {
     });
 }
 
+
+function initWmOverlayBounds() {
+    document.getElementById('wm-editor-img')?.addEventListener('load', () => {
+        syncWmOverlayBounds();
+        updateWmOverlay();
+    });
+    window.addEventListener('resize', () => {
+        syncWmOverlayBounds();
+        updateWmOverlay();
+    });
+}
+
 // ── Public init ────────────────────────────────────────
 window.initWatermark = function () {
     initWmFontDropdown();
@@ -825,6 +884,7 @@ window.initWatermark = function () {
     initWmApplyBtn();
     initWmClearControls();
     initWmToggle();
+    initWmOverlayBounds();
     updateWmOverlay();
 };
 
