@@ -829,14 +829,41 @@
           <div class="wm-block" style="padding-top:0;">
             <div class="ri-section-label">Шрифт</div>
             <div class="wm-font-row">
-              <select class="wm-select" id="wm-font-family">
-                <option value="Inter">Inter</option>
-                <option value="Arial">Arial</option>
-                <option value="Georgia">Georgia</option>
-                <option value="Times New Roman">Times New Roman</option>
-                <option value="Courier New">Courier New</option>
-                <option value="Trebuchet MS">Trebuchet MS</option>
-              </select>
+              <div class="ri-select-wrap wm-font-select-wrap" id="wm-font-family-wrap">
+                <button class="ri-select-btn" id="wm-font-family-btn" type="button">
+                  <span class="wm-font-preview" id="wm-font-family-preview" style="font-family:'Inter',sans-serif;">Aa</span>
+                  <span id="wm-font-family-label">Inter</span>
+                  <svg class="ri-select-chevron" width="10" height="10" viewBox="0 0 10 10" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                    <polyline points="1,3 5,7 9,3"/>
+                  </svg>
+                </button>
+                <div class="ri-select-dropdown" id="wm-font-family-dropdown">
+                  <div class="ri-select-option active" data-value="Inter">
+                    <span class="wm-font-preview" style="font-family:'Inter',sans-serif;">Aa</span>
+                    <span>Inter</span>
+                  </div>
+                  <div class="ri-select-option" data-value="Arial">
+                    <span class="wm-font-preview" style="font-family:'Arial',sans-serif;">Aa</span>
+                    <span>Arial</span>
+                  </div>
+                  <div class="ri-select-option" data-value="Georgia">
+                    <span class="wm-font-preview" style="font-family:'Georgia',serif;">Aa</span>
+                    <span>Georgia</span>
+                  </div>
+                  <div class="ri-select-option" data-value="Times New Roman">
+                    <span class="wm-font-preview" style="font-family:'Times New Roman',serif;">Aa</span>
+                    <span>Times New Roman</span>
+                  </div>
+                  <div class="ri-select-option" data-value="Courier New">
+                    <span class="wm-font-preview" style="font-family:'Courier New',monospace;">Aa</span>
+                    <span>Courier New</span>
+                  </div>
+                  <div class="ri-select-option" data-value="Trebuchet MS">
+                    <span class="wm-font-preview" style="font-family:'Trebuchet MS',sans-serif;">Aa</span>
+                    <span>Trebuchet MS</span>
+                  </div>
+                </div>
+              </div>
               <div class="ri-dims-card wm-size-card">
                 <div class="ri-dim-field" style="padding:6px 10px;">
                   <div class="ri-dim-axis" style="font-size:10px;">pt</div>

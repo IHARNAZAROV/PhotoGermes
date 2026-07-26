@@ -2838,22 +2838,39 @@
   gap: 6px;
 }
 
-.wm-select {
+/* Custom font dropdown — sizing */
+.wm-font-select-wrap {
   flex: 1;
   min-width: 0;
+}
+.wm-font-select-wrap .ri-select-btn {
   height: 36px;
   padding: 0 10px;
-  border: 1.5px solid var(--color-border);
   border-radius: var(--radius-sm);
-  background: var(--color-panel);
-  font-family: var(--font-family);
-  font-size: var(--text-base);
-  color: var(--color-text);
-  outline: none;
-  cursor: pointer;
-  transition: border-color var(--transition);
 }
-.wm-select:focus { border-color: var(--color-primary); }
+.wm-font-select-wrap .ri-select-dropdown {
+  z-index: 400;
+}
+
+/* "Aa" preview badge in button and dropdown options */
+.wm-font-preview {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 22px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--color-primary);
+  background: var(--color-primary-muted);
+  border-radius: 5px;
+  flex-shrink: 0;
+  line-height: 1;
+}
+.ri-select-option.active .wm-font-preview {
+  color: var(--color-primary);
+  background: color-mix(in srgb, var(--color-primary) 18%, transparent);
+}
 
 .wm-size-card {
   width: 70px;

@@ -3,6 +3,59 @@
    ======================================================== */
 'use strict';
 
+// ── Font family custom dropdown ────────────────────────
+function initWmFontDropdown() {
+    const btn      = document.getElementById('wm-font-family-btn');
+    const dropdown = document.getElementById('wm-font-family-dropdown');
+    const label    = document.getElementById('wm-font-family-label');
+    const preview  = document.getElementById('wm-font-family-preview');
+    if (!btn || !dropdown) return;
+
+    // Toggle open/close
+    btn.addEventListener('click', e => {
+        e.stopPropagation();
+        const isOpen = dropdown.classList.toggle('open');
+        btn.classList.toggle('open', isOpen);
+    });
+
+    // Option click
+    dropdown.querySelectorAll('.ri-select-option').forEach(opt => {
+        opt.addEventListener('click', () => {
+            const val = opt.dataset.value;
+
+            // Update active state
+            dropdown.querySelectorAll('.ri-select-option').forEach(o => o.classList.remove('active'));
+            opt.classList.add('active');
+
+            // Update button label + preview
+            if (label)   label.textContent = val;
+            if (preview) {
+                preview.style.fontFamily = `'${val}', sans-serif`;
+            }
+
+            // Close
+            dropdown.classList.remove('open');
+            btn.classList.remove('open');
+
+            updateWmOverlay();
+        });
+    });
+
+    // Close on outside click
+    document.addEventListener('click', e => {
+        if (!btn.contains(e.target) && !dropdown.contains(e.target)) {
+            dropdown.classList.remove('open');
+            btn.classList.remove('open');
+        }
+    });
+}
+
+// Helper: get selected font family value
+function getWmFontFamily() {
+    const active = document.querySelector('#wm-font-family-dropdown .ri-select-option.active');
+    return active?.dataset.value || 'Inter';
+}
+
 // ── Sub-tab switching ──────────────────────────────────
 function initWmSubTabs() {
     const tabText  = document.getElementById('wm-tab-text');
@@ -271,7 +324,7 @@ function updateWmOverlay() {
 
     if (isText) {
         const text     = document.getElementById('wm-text-input')?.value || '';
-        const family   = document.getElementById('wm-font-family')?.value || 'Inter';
+        const family   = getWmFontFamily();
         const size     = +(document.getElementById('wm-font-size')?.value || 24);
         const bold     = document.getElementById('wm-bold')?.classList.contains('active');
         const italic   = document.getElementById('wm-italic')?.classList.contains('active');
@@ -575,6 +628,7 @@ function initWmToggle() {
 
 // ── Public init ────────────────────────────────────────
 window.initWatermark = function () {
+    initWmFontDropdown();
     initWmSubTabs();
     initWmTextControls();
     initWmPositionGrids();
