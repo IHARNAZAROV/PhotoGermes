@@ -3311,6 +3311,207 @@
 }
 
 /* ─────────────────────────────────────
+   Кастомный пикер цвета
+───────────────────────────────────── */
+#cp-popup {
+  position: fixed;
+  z-index: 9999;
+  display: none;
+  width: 252px;
+  background: var(--color-panel);
+  border: 1.5px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  box-shadow: 0 8px 28px rgba(0,0,0,.14), 0 2px 6px rgba(0,0,0,.08);
+  overflow: hidden;
+  user-select: none;
+}
+
+/* SV-градиент ------------------------------------------------ */
+.cp-sv-wrap {
+  position: relative;
+  width: 100%;
+  height: 148px;
+  cursor: crosshair;
+  flex-shrink: 0;
+}
+.cp-sv-canvas {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+.cp-sv-cursor {
+  position: absolute;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  border: 2.5px solid #fff;
+  box-shadow: 0 0 0 1.5px rgba(0,0,0,.4), inset 0 0 0 1px rgba(0,0,0,.08);
+  transform: translate(-50%, -50%);
+  pointer-events: none;
+}
+
+/* Управление: пипетка | превью | оттенок -------------------- */
+.cp-controls-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 12px 6px;
+}
+
+.cp-eyedrop-btn {
+  flex-shrink: 0;
+  width: 30px;
+  height: 30px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1.5px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  background: var(--color-panel);
+  color: var(--color-muted);
+  cursor: pointer;
+  transition: background var(--transition), color var(--transition),
+              border-color var(--transition);
+  padding: 0;
+}
+.cp-eyedrop-btn:hover {
+  background: var(--color-bg);
+  color: var(--color-text);
+  border-color: var(--color-border2);
+}
+.cp-eyedrop-btn.cp-eyedrop--disabled {
+  opacity: .35;
+  cursor: not-allowed;
+  pointer-events: none;
+}
+
+.cp-preview-circle {
+  flex-shrink: 0;
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  border: 2px solid var(--color-border2);
+  background: #fff;
+  box-shadow: inset 0 0 0 1px rgba(0,0,0,.06);
+}
+
+/* Ползунок оттенка ------------------------------------------ */
+.cp-hue-wrap {
+  flex: 1;
+  position: relative;
+  height: 14px;
+  border-radius: 7px;
+  overflow: visible;
+}
+.cp-hue-canvas {
+  display: block;
+  width: 100%;
+  height: 14px;
+  border-radius: 7px;
+  cursor: pointer;
+}
+.cp-hue-thumb {
+  position: absolute;
+  top: 50%;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  border: 2.5px solid #fff;
+  box-shadow: 0 0 0 1.5px rgba(0,0,0,.3);
+  transform: translate(-50%, -50%);
+  pointer-events: none;
+  background: transparent;
+}
+
+/* RGB + HEX поля -------------------------------------------- */
+.cp-rgb-row {
+  display: flex;
+  align-items: stretch;
+  gap: 4px;
+  padding: 6px 12px 12px;
+}
+
+.cp-num-field {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  min-width: 0;
+}
+.cp-num-field input[type="number"] {
+  width: 100%;
+  padding: 5px 2px;
+  text-align: center;
+  font-size: var(--text-sm);
+  font-family: var(--font-family);
+  font-weight: 500;
+  color: var(--color-text);
+  background: var(--color-bg);
+  border: 1.5px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  outline: none;
+  box-sizing: border-box;
+  -moz-appearance: textfield;
+  transition: border-color var(--transition);
+}
+.cp-num-field input[type="number"]::-webkit-inner-spin-button,
+.cp-num-field input[type="number"]::-webkit-outer-spin-button { -webkit-appearance: none; }
+.cp-num-field input[type="number"]:focus { border-color: var(--color-primary); }
+
+.cp-num-label {
+  font-size: 10px;
+  font-weight: 600;
+  color: var(--color-faint);
+  letter-spacing: .05em;
+  text-transform: uppercase;
+}
+
+/* HEX-поле -------------------------------------------------- */
+.cp-hex-field {
+  flex: 1.5;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  min-width: 0;
+}
+.cp-hex-input-wrap {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  background: var(--color-bg);
+  border: 1.5px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  padding: 0 4px;
+  box-sizing: border-box;
+  transition: border-color var(--transition);
+}
+.cp-hex-input-wrap:focus-within { border-color: var(--color-primary); }
+.cp-hex-hash {
+  font-size: var(--text-sm);
+  font-weight: 600;
+  color: var(--color-muted);
+  line-height: 1;
+  flex-shrink: 0;
+  padding: 5px 0;
+}
+.cp-hex-input {
+  flex: 1;
+  min-width: 0;
+  padding: 5px 2px;
+  font-size: var(--text-sm);
+  font-family: 'Courier New', 'Consolas', monospace;
+  font-weight: 700;
+  color: var(--color-text);
+  background: transparent;
+  border: none;
+  outline: none;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+}
+
+/* ─────────────────────────────────────
    Scrollbar styling
 ───────────────────────────────────── */
 ::-webkit-scrollbar       { width: 6px; height: 6px; }

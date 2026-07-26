@@ -115,11 +115,13 @@ function initWmTextControls() {
         updateWmOverlay();
     });
 
-    // Color swatch click → open native picker
-    colorPreview?.addEventListener('click', () => colorInput?.click());
-    colorInput?.addEventListener('input', () => {
-        if (colorPreview) colorPreview.style.background = colorInput.value;
-        updateWmOverlay();
+    // Color swatch click → open custom picker
+    colorPreview?.addEventListener('click', () => {
+        openColorPicker(colorPreview, colorInput?.value || '#ffffff', hex => {
+            if (colorInput)   colorInput.value = hex;
+            if (colorPreview) colorPreview.style.background = hex;
+            updateWmOverlay();
+        });
     });
 
     // Opacity
@@ -276,8 +278,12 @@ function showWmSvgColorBlock(show) {
 function initWmSvgColorControls() {
     const colorInput   = document.getElementById('wm-svg-color-input');
     const colorPreview = document.getElementById('wm-svg-color-preview');
-    colorPreview?.addEventListener('click', () => colorInput?.click());
-    colorInput?.addEventListener('input', () => applyWmSvgColor(colorInput.value));
+    colorPreview?.addEventListener('click', () => {
+        openColorPicker(colorPreview, colorInput?.value || '#ffffff', hex => {
+            if (colorInput) colorInput.value = hex;
+            applyWmSvgColor(hex);
+        });
+    });
 }
 
 // ── Image controls ─────────────────────────────────────
