@@ -345,7 +345,7 @@ function updateWmOverlay() {
         // Sync angle controls with diagonal state
         syncDiagonalAngleUI(diagonal, 'wm-text-angle', 'wm-text-angle-slider', angle);
 
-        const labelContent = text || '© Ватермарк';
+        const labelContent = text;
         const textStyles = {
             fontFamily: `'${family}', sans-serif`,
             fontSize:   size + 'px',
@@ -356,7 +356,12 @@ function updateWmOverlay() {
             whiteSpace: 'nowrap',
         };
 
-        if (tile) {
+        if (!labelContent.trim()) {
+            clearTileGrid(overlay);
+            clearImageStyles(labelEl);
+            if (labelText) labelText.textContent = '';
+            labelEl.style.display = 'none';
+        } else if (tile) {
             renderTileGrid(overlay, labelContent, textStyles, angle, 'text');
         } else {
             // Restore single-label mode
@@ -626,7 +631,7 @@ function getWmSettings() {
             x: parseFloat(label.style.left) / Math.max(1, overlay.clientWidth),
             y: parseFloat(label.style.top) / Math.max(1, overlay.clientHeight),
         } : null,
-        text: document.getElementById('wm-text-input')?.value || '© Ватермарк',
+        text: document.getElementById('wm-text-input')?.value || '',
         family: getWmFontFamily(),
         fontSize: +(document.getElementById('wm-font-size')?.value || 24),
         bold: document.getElementById('wm-bold')?.classList.contains('active'),
@@ -683,6 +688,7 @@ async function applyWatermarkToPhotoCanvas(photo, settings, cachedLogo) {
     ctx.drawImage(base, 0, 0);
 
     if (settings.mode === 'text') {
+        if (!settings.text.trim()) return false;
         const angle = settings.diagonal ? 45 : settings.textAngle;
         ctx.font = `${settings.italic ? 'italic ' : ''}${settings.bold ? '700' : '500'} ${settings.fontSize}px ${settings.family}, sans-serif`;
         ctx.fillStyle = settings.color;
@@ -727,6 +733,7 @@ async function applyWatermarkToPhotoCanvas(photo, settings, cachedLogo) {
 async function applyWatermark() {
     if (selectedIndex < 0) { showToast('Откройте фото для ватермарка'); return; }
     const settings = getWmSettings();
+    if (settings.mode === 'text' && !settings.text.trim()) { showToast('Введите текст ватермарка'); return; }
     let cachedLogo = null;
     if (settings.mode === 'image') {
         if (!settings.imageSrc) { showToast('Загрузите изображение ватермарка'); return; }
@@ -752,6 +759,40 @@ async function applyWatermark() {
     if (typeof updateUndoRedoBtns === 'function') updateUndoRedoBtns();
     pushHistory('tool', indexes.length > 1 ? `Ватермарк применён к ${okCount} фото` : `Ватермарк применён: ${photos[selectedIndex].name}`);
     showToast(indexes.length > 1 ? `Ватермарк применён к ${okCount} фото` : 'Ватермарк применён');
+}
+
+
+function clearWatermarkControls() {
+    const textInput = document.getElementById('wm-text-input');
+    if (textInput) textInput.value = '';
+
+    const thumbEl = document.getElementById('wm-upload-thumb');
+    const fileInput = document.getElementById('wm-image-input');
+    const idleState = document.getElementById('wm-upload-idle');
+    const previewState = document.getElementById('wm-upload-preview');
+    if (thumbEl) thumbEl.src = '';
+    if (fileInput) fileInput.value = '';
+    if (idleState) idleState.style.display = 'flex';
+    if (previewState) previewState.style.display = 'none';
+
+    resetLabelFromDrag();
+    updateWmOverlay();
+    showToast('Ватермарк удалён из предпросмотра');
+}
+
+function isEditableTarget(target) {
+    return target?.closest?.('input, textarea, select, [contenteditable="true"]');
+}
+
+function initWmClearControls() {
+    document.getElementById('btn-clear-watermark')?.addEventListener('click', clearWatermarkControls);
+    document.addEventListener('keydown', e => {
+        if (e.key !== 'Delete' && e.key !== 'Backspace') return;
+        if (typeof activeTool !== 'undefined' && activeTool !== 'watermark') return;
+        if (isEditableTarget(e.target)) return;
+        e.preventDefault();
+        clearWatermarkControls();
+    });
 }
 
 function initWmApplyBtn() {
@@ -782,6 +823,7 @@ window.initWatermark = function () {
     initWmImageControls();
     initWmDrag();
     initWmApplyBtn();
+    initWmClearControls();
     initWmToggle();
     updateWmOverlay();
 };
