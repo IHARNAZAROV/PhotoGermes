@@ -549,42 +549,63 @@
       <!-- ══ CROP INSPECTOR (default) ══════════════ -->
       <div id="crop-inspector-view" style="display:contents;">
 
+        <!-- Premium header -->
+        <div class="ri-header">
+          <div class="ri-header-accent"></div>
+          <div class="ri-header-inner">
+            <div class="ri-header-icon">
+              <svg width="15" height="15" viewBox="0 0 15 15" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
+                <rect x="1" y="1" width="13" height="13" rx="1.5"/>
+                <path d="M4 1v3M11 1v3M4 11v3M11 11v3"/>
+                <path d="M1 4h3M1 11h3M11 4h3M11 11h3"/>
+              </svg>
+            </div>
+            <div>
+              <div class="ri-header-title">Обрезка</div>
+              <div class="ri-header-sub">Кадрирование изображения</div>
+            </div>
+          </div>
+        </div>
+
         <!-- Crop settings panel -->
         <div class="inspector-crop-panel">
 
-          <!-- ── Block 1: Соотношение сторон ─────────── -->
+          <!-- ── 1: Соотношение сторон ─────────── -->
           <div class="icp-block">
-            <div class="icp-block-label">Соотношение сторон</div>
+            <div class="ri-section-label">Соотношение сторон</div>
             <div class="icp-presets">
               <button class="preset-btn active">
-                <div class="preset-icon"><svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="2" y="4" width="16" height="12" rx="1"/></svg></div>
+                <div class="preset-icon">
+                  <svg width="22" height="22" viewBox="0 0 22 22" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="2" y="4" width="18" height="14" rx="1.5"/><line x1="8" y1="11" x2="14" y2="11" stroke-dasharray="2 1.5" opacity=".5"/></svg>
+                </div>
                 <span class="preset-label">Свободно</span>
               </button>
               <button class="preset-btn">
-                <div class="preset-icon"><svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="4" y="4" width="12" height="12" rx="1"/></svg></div>
+                <div class="preset-icon"><svg width="22" height="22" viewBox="0 0 22 22" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="4" y="4" width="14" height="14" rx="1.5"/></svg></div>
                 <span class="preset-label">1:1</span>
               </button>
               <button class="preset-btn">
-                <div class="preset-icon"><svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="2" y="5" width="16" height="10" rx="1"/></svg></div>
+                <div class="preset-icon"><svg width="22" height="22" viewBox="0 0 22 22" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="2" y="5" width="18" height="12" rx="1.5"/></svg></div>
                 <span class="preset-label">4:3</span>
               </button>
               <button class="preset-btn">
-                <div class="preset-icon"><svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="1" y="6" width="18" height="8" rx="1"/></svg></div>
+                <div class="preset-icon"><svg width="22" height="22" viewBox="0 0 22 22" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="1" y="7" width="20" height="8" rx="1.5"/></svg></div>
                 <span class="preset-label">16:9</span>
               </button>
               <button class="preset-btn">
-                <div class="preset-icon"><svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="2" y="4" width="15" height="12" rx="1"/></svg></div>
+                <div class="preset-icon"><svg width="22" height="22" viewBox="0 0 22 22" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="2" y="4" width="15" height="14" rx="1.5"/></svg></div>
                 <span class="preset-label">3:2</span>
               </button>
               <button class="preset-btn">
-                <div class="preset-icon"><svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="6" y="2" width="8" height="16" rx="1"/></svg></div>
+                <div class="preset-icon"><svg width="22" height="22" viewBox="0 0 22 22" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="7" y="2" width="8" height="18" rx="1.5"/></svg></div>
                 <span class="preset-label">9:16</span>
               </button>
               <button class="preset-btn preset-btn-wide">
                 <div class="preset-icon">
-                  <svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5">
-                    <rect x="2" y="4" width="16" height="12" rx="1"/>
-                    <line x1="8" y1="10" x2="12" y2="10" stroke-dasharray="2 1"/>
+                  <svg width="22" height="22" viewBox="0 0 22 22" fill="none" stroke="currentColor" stroke-width="1.5">
+                    <rect x="2" y="4" width="18" height="14" rx="1.5"/>
+                    <line x1="9" y1="11" x2="13" y2="11" stroke-dasharray="2 1"/>
+                    <line x1="11" y1="9" x2="11" y2="13" stroke-dasharray="2 1"/>
                   </svg>
                 </div>
                 <span class="preset-label">Пользовательский</span>
@@ -592,94 +613,99 @@
             </div>
           </div>
 
-          <div class="icp-divider"></div>
+          <!-- ── 2: Размер кадра ─────────────────── -->
+          <div class="icp-block" style="padding-top:0;">
+            <div class="ri-section-label">Размер кадра</div>
+            <div class="ri-dims-card">
 
-          <!-- ── Block 2: Трансформации ────────────────── -->
-          <div class="icp-block">
-            <div class="icp-block-label">Трансформации</div>
-            <div class="icp-actions">
-              <button class="preset-action" data-tooltip="Повернуть на 90°">
-                <svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
-                  <path d="M15.5 12A6 6 0 1 1 14 6.5"/>
-                  <polyline points="19,3.5 14.5,7 11.5,3"/>
+              <div class="ri-dim-field">
+                <div class="ri-dim-axis">Ш</div>
+                <input type="text" id="frame-width" value="—" aria-label="Ширина" class="ri-dim-input ri-dim-input--text" />
+                <div class="ri-dim-unit">px</div>
+              </div>
+
+              <button class="ri-chain-btn frame-lock-btn" data-tooltip="Зафиксировать пропорции" title="Зафиксировать пропорции">
+                <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
+                  <rect x="2" y="7" width="10" height="6" rx="1.5"/>
+                  <path d="M4.5 7V5a3 3 0 016 0v2"/>
                 </svg>
+                <div class="ri-chain-lines">
+                  <div class="ri-chain-line ri-chain-line--top"></div>
+                  <div class="ri-chain-line ri-chain-line--bot"></div>
+                </div>
+              </button>
+
+              <div class="ri-dim-field">
+                <div class="ri-dim-axis">В</div>
+                <input type="text" id="frame-height" value="—" aria-label="Высота" class="ri-dim-input ri-dim-input--text" />
+                <div class="ri-dim-unit">px</div>
+              </div>
+
+            </div>
+          </div>
+
+          <!-- ── 3: Трансформации ────────────────── -->
+          <div class="icp-block" style="padding-top:0;">
+            <div class="ri-section-label">Трансформации</div>
+            <div class="icp-transform-grid">
+              <button class="icp-transform-btn preset-action" data-tooltip="Повернуть на 90°">
+                <div class="icp-transform-icon">
+                  <svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M15.5 12A6 6 0 1 1 14 6.5"/>
+                    <polyline points="19,3.5 14.5,7 11.5,3"/>
+                  </svg>
+                </div>
                 <span class="preset-action-label">Повернуть</span>
               </button>
-              <button class="preset-action" data-tooltip="Отразить по горизонтали">
-                <svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
-                  <line x1="10" y1="2" x2="10" y2="18" stroke-dasharray="3 2"/>
-                  <polyline points="2,7 6,10 2,13"/>
-                  <polyline points="18,7 14,10 18,13"/>
-                </svg>
+              <button class="icp-transform-btn preset-action" data-tooltip="Отразить по горизонтали">
+                <div class="icp-transform-icon">
+                  <svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
+                    <line x1="10" y1="2" x2="10" y2="18" stroke-dasharray="3 2"/>
+                    <polyline points="2,7 6,10 2,13"/>
+                    <polyline points="18,7 14,10 18,13"/>
+                  </svg>
+                </div>
                 <span class="preset-action-label">Отразить</span>
               </button>
-              <button class="preset-action" data-tooltip="Сбросить кадр">
-                <svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
-                  <path d="M3 10a7 7 0 1 0 1.2-4"/>
-                  <polyline points="3,3 3,7 7,7"/>
-                </svg>
+              <button class="icp-transform-btn preset-action icp-transform-btn--reset" data-tooltip="Сбросить кадр">
+                <div class="icp-transform-icon">
+                  <svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M3 10a7 7 0 1 0 1.2-4"/>
+                    <polyline points="3,3 3,7 7,7"/>
+                  </svg>
+                </div>
                 <span class="preset-action-label">Сбросить</span>
               </button>
             </div>
           </div>
 
-          <div class="icp-divider"></div>
-
-          <!-- ── Block 2.5: Выравнивание ──────────────── -->
-          <div class="icp-block">
-            <div class="icp-block-label">Выравнивание</div>
-            <div class="icp-straighten">
-              <div class="icp-straighten-labels">
-                <span>−45°</span><span>0°</span><span>+45°</span>
-              </div>
-              <input type="range" id="straighten-slider" min="-45" max="45" step="0.5" value="0" class="icp-slider">
-              <div class="icp-straighten-row">
-                <button class="icp-reset-btn" id="btn-straighten-reset" title="Сбросить угол">
+          <!-- ── 4: Выравнивание ──────────────────── -->
+          <div class="icp-block" style="padding-top:0;">
+            <div class="ri-section-label">Выравнивание</div>
+            <div class="icp-align-card">
+              <!-- Angle display row -->
+              <div class="icp-align-top">
+                <div class="icp-align-angle-wrap">
+                  <input type="number" id="straighten-input" min="-45" max="45" step="0.5" value="0" class="icp-align-angle-input" />
+                  <span class="icp-align-angle-unit">°</span>
+                </div>
+                <button class="icp-align-reset-btn" id="btn-straighten-reset" title="Сбросить угол">
                   <svg width="13" height="13" viewBox="0 0 13 13" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
                     <path d="M2 6.5a4.5 4.5 0 1 0 .85-2.7"/>
                     <polyline points="2,2.5 2,5.5 5,5.5"/>
                   </svg>
+                  Сбросить
                 </button>
-                <div class="frame-input icp-angle-wrap">
-                  <input type="number" id="straighten-input" min="-45" max="45" step="0.5" value="0">
-                  <span class="unit">°</span>
-                </div>
+              </div>
+              <!-- Track -->
+              <div class="icp-align-track-wrap">
+                <div class="icp-align-zero"></div>
+                <input type="range" id="straighten-slider" min="-45" max="45" step="0.5" value="0" class="icp-align-slider" />
+              </div>
+              <div class="icp-align-labels">
+                <span>−45°</span><span>0°</span><span>+45°</span>
               </div>
             </div>
-          </div>
-
-          <div class="icp-divider"></div>
-
-          <!-- ── Block 3: Размер кадра ─────────────────── -->
-          <div class="icp-block">
-            <div class="icp-block-label">Размер кадра</div>
-
-            <!-- Width × Height on one row -->
-            <div class="icp-size-row">
-              <div class="icp-dim-group">
-                <span class="icp-dim-label">Ш</span>
-                <div class="frame-input">
-                  <input type="text" id="frame-width" value="—" aria-label="Ширина" />
-                  <span class="unit">px</span>
-                </div>
-              </div>
-
-              <button class="frame-lock-btn" data-tooltip="Зафиксировать пропорции" title="Зафиксировать пропорции">
-                <svg width="13" height="13" viewBox="0 0 13 13" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
-                  <rect x="2" y="6" width="9" height="6" rx="1.5"/>
-                  <path d="M4 6V4a2.5 2.5 0 015 0v2"/>
-                </svg>
-              </button>
-
-              <div class="icp-dim-group">
-                <span class="icp-dim-label">В</span>
-                <div class="frame-input">
-                  <input type="text" id="frame-height" value="—" aria-label="Высота" />
-                  <span class="unit">px</span>
-                </div>
-              </div>
-            </div>
-
           </div>
 
           <!-- ── Подсказка ─────────────────────────────── -->
