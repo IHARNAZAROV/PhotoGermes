@@ -201,12 +201,6 @@ function resetLabelFromDrag() {
 let _wmOriginalSvgText = null;
 let _wmIsSvg           = false;
 
-const WM_PALETTE = [
-    '#ffffff','#e0e0e0','#9e9e9e','#616161','#212121',
-    '#ef5350','#ff7043','#ffa726','#fdd835','#66bb6a',
-    '#26a69a','#29b6f6','#42a5f5','#5c6bc0','#ab47bc',
-    '#ec407a','#8d6e63','#78909c','#00bcd4','#ffc107',
-];
 
 /** Replace all non-transparent fill/stroke/stop-color values with newColor */
 function recolorSvg(svgText, newColor) {
@@ -265,18 +259,9 @@ function applyWmSvgColor(color) {
     const thumb     = document.getElementById('wm-upload-thumb');
     if (thumb) thumb.src = dataUrl;
 
-    // Update color preview swatch
+    // Sync preview swatch colour
     const preview = document.getElementById('wm-svg-color-preview');
     if (preview) preview.style.background = color;
-
-    // Update native picker value
-    const picker = document.getElementById('wm-svg-color-input');
-    if (picker) picker.value = color;
-
-    // Mark active swatch
-    document.querySelectorAll('.wm-palette-swatch').forEach(s => {
-        s.classList.toggle('active', s.dataset.color === color);
-    });
 
     updateWmOverlay();
 }
@@ -289,39 +274,10 @@ function showWmSvgColorBlock(show) {
 }
 
 function initWmSvgColorControls() {
-    // Build palette swatches
-    const palette = document.getElementById('wm-svg-palette');
-    if (palette && !palette.hasChildNodes()) {
-        WM_PALETTE.forEach(color => {
-            const btn = document.createElement('button');
-            btn.type = 'button';
-            btn.className = 'wm-palette-swatch';
-            btn.dataset.color = color;
-            btn.style.background = color;
-            btn.title = color;
-            btn.addEventListener('click', () => applyWmSvgColor(color));
-            palette.appendChild(btn);
-        });
-    }
-
-    // Native color picker
     const colorInput   = document.getElementById('wm-svg-color-input');
     const colorPreview = document.getElementById('wm-svg-color-preview');
     colorPreview?.addEventListener('click', () => colorInput?.click());
     colorInput?.addEventListener('input', () => applyWmSvgColor(colorInput.value));
-
-    // Reset to original
-    document.getElementById('wm-svg-color-reset')?.addEventListener('click', () => {
-        if (!_wmOriginalSvgText) return;
-        const thumb = document.getElementById('wm-upload-thumb');
-        if (thumb) thumb.src = svgTextToDataUrl(_wmOriginalSvgText);
-        // Clear active swatch + reset preview
-        document.querySelectorAll('.wm-palette-swatch').forEach(s => s.classList.remove('active'));
-        const preview = document.getElementById('wm-svg-color-preview');
-        if (preview) preview.style.background = '#ffffff';
-        if (colorInput) colorInput.value = '#ffffff';
-        updateWmOverlay();
-    });
 }
 
 // ── Image controls ─────────────────────────────────────
@@ -359,7 +315,6 @@ function initWmImageControls() {
                 _wmIsSvg = true;
                 showWmSvgColorBlock(true);
                 // Reset color state
-                document.querySelectorAll('.wm-palette-swatch').forEach(s => s.classList.remove('active'));
                 const preview = document.getElementById('wm-svg-color-preview');
                 const picker  = document.getElementById('wm-svg-color-input');
                 if (preview) preview.style.background = '#ffffff';
@@ -391,7 +346,6 @@ function initWmImageControls() {
                 _wmOriginalSvgText = reader.result;
                 _wmIsSvg = true;
                 showWmSvgColorBlock(true);
-                document.querySelectorAll('.wm-palette-swatch').forEach(s => s.classList.remove('active'));
                 const preview = document.getElementById('wm-svg-color-preview');
                 const picker  = document.getElementById('wm-svg-color-input');
                 if (preview) preview.style.background = '#ffffff';
