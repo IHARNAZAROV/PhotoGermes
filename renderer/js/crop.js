@@ -371,11 +371,7 @@ window.cropSetPct = function(x, y, w, h) {
 
 // ── Public: reset to the default crop frame ───────────────
 window.cropResetToDefault = function() {
-    cropAspect = null;
-    crop.x = 8; crop.y = 10; crop.w = 84; crop.h = 80;
-    applyCrop();
-    setSelectValue('Свободно');
-    syncPresetBtns('Свободно');
+    resetCrop();
 };
 
 // ── Public API for app.js ─────────────────────────────
