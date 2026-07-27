@@ -267,6 +267,20 @@ window.__getResizeKernel = getResizeKernel;
     updateFill(); // init
 })();
 
+/* ── Cached DOM references (queried on every slider/input event) ─────── */
+let _inpW, _inpH, _inpQuality, _rSize, _rFile, _rEconomy, _lblAfter, _noEnlarge;
+
+document.addEventListener('DOMContentLoaded', () => {
+    _inpW      = document.getElementById('resize-width');
+    _inpH      = document.getElementById('resize-height');
+    _inpQuality = document.getElementById('resize-quality');
+    _rSize     = document.getElementById('resize-result-size');
+    _rFile     = document.getElementById('resize-result-filesize');
+    _rEconomy  = document.getElementById('resize-result-economy');
+    _lblAfter  = document.getElementById('resize-label-after');
+    _noEnlarge = document.getElementById('resize-no-enlarge');
+});
+
 /* ── Shared dimension calculation ───────────────────── */
 /**
  * Compute target pixel dimensions from the resize inputs.
@@ -289,15 +303,13 @@ function _computeResizeDimensions(photo, mode, inpW, inpH) {
 /* ── Result calculation ─────────────────────────────── */
 function updateResizeResult() {
     const photo   = window.__resizeGetPhoto?.();
-    const inpW    = document.getElementById('resize-width');
-    const inpH    = document.getElementById('resize-height');
     const mode    = window.__resizeMode?.() ?? 'pct';
-    const quality = Number(document.getElementById('resize-quality')?.value ?? 90) / 100;
+    const quality = Number(_inpQuality?.value ?? 90) / 100;
 
-    const rSize    = document.getElementById('resize-result-size');
-    const rFile    = document.getElementById('resize-result-filesize');
-    const rEconomy = document.getElementById('resize-result-economy');
-    const lblAfter = document.getElementById('resize-label-after');
+    const rSize    = _rSize;
+    const rFile    = _rFile;
+    const rEconomy = _rEconomy;
+    const lblAfter = _lblAfter;
 
     if (!photo || !photo.width || !photo.height) {
         if (rSize)    rSize.textContent    = '— × —';
@@ -307,7 +319,7 @@ function updateResizeResult() {
         return;
     }
 
-    const { w: newW, h: newH } = _computeResizeDimensions(photo, mode, inpW, inpH);
+    const { w: newW, h: newH } = _computeResizeDimensions(photo, mode, _inpW, _inpH);
 
     // Approximate new file size
     const origPixels = photo.width * photo.height;
@@ -358,15 +370,13 @@ window.__updateResizeResult = updateResizeResult;
  */
 window.__resizeGetParams = function () {
     const photo   = window.__resizeGetPhoto?.();
-    const inpW    = document.getElementById('resize-width');
-    const inpH    = document.getElementById('resize-height');
-    const mode    = window.__resizeMode?.() ?? 'pct';
-    const quality = Number(document.getElementById('resize-quality')?.value ?? 90);
-    const noEnlarge = document.getElementById('resize-no-enlarge')?.checked ?? false;
+    const mode      = window.__resizeMode?.() ?? 'pct';
+    const quality   = Number(_inpQuality?.value ?? 90);
+    const noEnlarge = _noEnlarge?.checked ?? false;
 
     if (!photo || !photo.width || !photo.height) return null;
 
-    let { w: newWidth, h: newHeight } = _computeResizeDimensions(photo, mode, inpW, inpH);
+    let { w: newWidth, h: newHeight } = _computeResizeDimensions(photo, mode, _inpW, _inpH);
 
     // Respect "не увеличивать" checkbox
     if (noEnlarge) {

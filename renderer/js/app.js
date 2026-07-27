@@ -550,9 +550,8 @@ function initKeyboard() {
 async function selectPhoto(index) {
     selectedIndex = index;
 
-    document.querySelectorAll('.gallery-item').forEach((el, i) => {
-        el.classList.toggle('selected', i === index);
-    });
+    document.querySelector('.gallery-item.selected')?.classList.remove('selected');
+    document.querySelector(`.gallery-item[data-index="${index}"]`)?.classList.add('selected');
 
     const photo = photos[index];
     if (!photo) return;
