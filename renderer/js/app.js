@@ -778,6 +778,7 @@ function switchToTool(toolName) {
     const resizeInspector     = document.getElementById('resize-inspector-view');
     const watermarkInspector  = document.getElementById('watermark-inspector-view');
     const exportPage          = document.getElementById('export-page');
+    const appGallery          = document.querySelector('.app-gallery');
     const appEditor           = document.querySelector('.app-editor');
     const appInspector        = document.querySelector('.app-inspector');
 
@@ -788,6 +789,7 @@ function switchToTool(toolName) {
 
     // Show/hide the full export page and toggle editor+inspector panels
     if (exportPage)    exportPage.style.display    = isExport ? 'flex' : 'none';
+    if (appGallery)    appGallery.style.display    = isExport ? 'none' : '';
     if (appEditor)     appEditor.style.display     = isExport ? 'none' : '';
     if (appInspector)  appInspector.style.display  = isExport ? 'none' : '';
 
