@@ -1906,6 +1906,21 @@ function initStraighten() {
 
 // ── History modal ──────────────────────────────────────
 // ── Export Settings page ───────────────────────────────
+function _updateFormatCards(fmt) {
+    const qualityCard = document.getElementById('ep-quality-card');
+    const pngCard     = document.getElementById('ep-png-card');
+    if (fmt === 'png') {
+        if (qualityCard) qualityCard.style.display = 'none';
+        if (pngCard)     pngCard.style.display     = '';
+    } else if (fmt === 'tiff') {
+        if (qualityCard) qualityCard.style.display = 'none';
+        if (pngCard)     pngCard.style.display     = 'none';
+    } else {
+        if (qualityCard) qualityCard.style.display = '';
+        if (pngCard)     pngCard.style.display     = 'none';
+    }
+}
+
 function initExportPage() {
     const page     = document.getElementById('export-page');
     const applyBtn = document.getElementById('ep-apply-btn');
@@ -1923,18 +1938,7 @@ function initExportPage() {
             card.classList.add('active');
             const fmt         = card.dataset.format;
             exportSettings.format = fmt;
-            const qualityCard = document.getElementById('ep-quality-card');
-            const pngCard     = document.getElementById('ep-png-card');
-            if (fmt === 'png') {
-                if (qualityCard) qualityCard.style.display = 'none';
-                if (pngCard)     pngCard.style.display     = '';
-            } else if (fmt === 'tiff') {
-                if (qualityCard) qualityCard.style.display = 'none';
-                if (pngCard)     pngCard.style.display     = 'none';
-            } else {
-                if (qualityCard) qualityCard.style.display = '';
-                if (pngCard)     pngCard.style.display     = 'none';
-            }
+            _updateFormatCards(fmt);
         });
     });
 
@@ -2077,18 +2081,7 @@ function _applyExportSettingsToUI(page) {
     });
 
     // Quality card vs PNG-compression card visibility
-    const qualityCard = document.getElementById('ep-quality-card');
-    const pngCard     = document.getElementById('ep-png-card');
-    if (s.format === 'png') {
-        if (qualityCard) qualityCard.style.display = 'none';
-        if (pngCard)     pngCard.style.display     = '';
-    } else if (s.format === 'tiff') {
-        if (qualityCard) qualityCard.style.display = 'none';
-        if (pngCard)     pngCard.style.display     = 'none';
-    } else {
-        if (qualityCard) qualityCard.style.display = '';
-        if (pngCard)     pngCard.style.display     = 'none';
-    }
+    _updateFormatCards(s.format);
 
     // Quality slider value + active preset
     const qSlider = document.getElementById('export-quality-slider');
