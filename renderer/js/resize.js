@@ -267,6 +267,25 @@ window.__getResizeKernel = getResizeKernel;
     updateFill(); // init
 })();
 
+/* ── Shared dimension calculation ───────────────────── */
+/**
+ * Compute target pixel dimensions from the resize inputs.
+ * @returns {{ w: number, h: number }}
+ */
+function _computeResizeDimensions(photo, mode, inpW, inpH) {
+    let w, h;
+    if (mode === 'pct') {
+        const pctW = Math.max(1, Math.min(10000, Number(inpW?.value) || 70));
+        const pctH = Math.max(1, Math.min(10000, Number(inpH?.value) || 70));
+        w = Math.round(photo.width  * pctW / 100);
+        h = Math.round(photo.height * pctH / 100);
+    } else {
+        w = Math.max(1, Number(inpW?.value) || photo.width);
+        h = Math.max(1, Number(inpH?.value) || photo.height);
+    }
+    return { w, h };
+}
+
 /* ── Result calculation ─────────────────────────────── */
 function updateResizeResult() {
     const photo   = window.__resizeGetPhoto?.();
@@ -288,16 +307,7 @@ function updateResizeResult() {
         return;
     }
 
-    let newW, newH;
-    if (mode === 'pct') {
-        const pctW = Math.max(1, Math.min(10000, Number(inpW?.value) || 70));
-        const pctH = Math.max(1, Math.min(10000, Number(inpH?.value) || 70));
-        newW = Math.round(photo.width  * pctW / 100);
-        newH = Math.round(photo.height * pctH / 100);
-    } else {
-        newW = Math.max(1, Number(inpW?.value) || photo.width);
-        newH = Math.max(1, Number(inpH?.value) || photo.height);
-    }
+    const { w: newW, h: newH } = _computeResizeDimensions(photo, mode, inpW, inpH);
 
     // Approximate new file size
     const origPixels = photo.width * photo.height;
@@ -356,16 +366,7 @@ window.__resizeGetParams = function () {
 
     if (!photo || !photo.width || !photo.height) return null;
 
-    let newWidth, newHeight;
-    if (mode === 'pct') {
-        const pctW = Math.max(1, Math.min(10000, Number(inpW?.value) || 70));
-        const pctH = Math.max(1, Math.min(10000, Number(inpH?.value) || 70));
-        newWidth  = Math.round(photo.width  * pctW / 100);
-        newHeight = Math.round(photo.height * pctH / 100);
-    } else {
-        newWidth  = Math.max(1, Number(inpW?.value)  || photo.width);
-        newHeight = Math.max(1, Number(inpH?.value) || photo.height);
-    }
+    let { w: newWidth, h: newHeight } = _computeResizeDimensions(photo, mode, inpW, inpH);
 
     // Respect "не увеличивать" checkbox
     if (noEnlarge) {
