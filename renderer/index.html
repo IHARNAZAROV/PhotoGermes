@@ -1370,6 +1370,287 @@
 
     </aside><!-- /.app-inspector -->
 
+    <!-- ══ EXPORT SETTINGS PAGE ═══════════════════════════ -->
+    <div class="app-export-page" id="export-page" style="display:none;">
+
+      <!-- Sticky page header -->
+      <div class="ep-header">
+        <div class="ep-header-left">
+          <div class="ep-header-icon">
+            <svg width="18" height="18" viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M15 3H3a1 1 0 00-1 1v3h14V4a1 1 0 00-1-1z"/>
+              <path d="M2 7l2 9h10l2-9"/>
+              <line x1="9" y1="10" x2="9" y2="14"/>
+              <line x1="6.5" y1="10" x2="6.5" y2="14"/>
+              <line x1="11.5" y1="10" x2="11.5" y2="14"/>
+            </svg>
+          </div>
+          <div>
+            <div class="ep-header-title">Настройки экспорта</div>
+            <div class="ep-header-sub">Формат, качество и дополнительные параметры</div>
+          </div>
+        </div>
+        <div class="ep-header-actions">
+          <div class="ep-save-indicator" id="ep-save-indicator">
+            <svg width="13" height="13" viewBox="0 0 13 13" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <polyline points="2,6.5 5,9.5 11,3.5"/>
+            </svg>
+            Сохранено
+          </div>
+          <button class="btn btn-primary" id="ep-apply-btn">
+            <svg width="15" height="15" viewBox="0 0 15 15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <polyline points="2.5,7.5 6,11 12.5,4"/>
+            </svg>
+            Сохранить настройки
+          </button>
+        </div>
+      </div>
+
+      <!-- Scrollable 2-column body -->
+      <div class="ep-body">
+
+        <!-- ── LEFT COLUMN ──────────────────────────── -->
+        <div class="ep-col">
+
+          <!-- Format -->
+          <div class="ep-card">
+            <div class="ep-card-header">
+              <div class="ep-card-icon">
+                <svg width="15" height="15" viewBox="0 0 15 15" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
+                  <rect x="1.5" y="1.5" width="12" height="12" rx="2"/>
+                  <path d="M4 10V6.5A1.5 1.5 0 015.5 5v0A1.5 1.5 0 017 6.5V10"/>
+                  <path d="M4 8.5h3"/>
+                  <path d="M9.5 5v3.5a1.5 1.5 0 001.5 1.5v0"/>
+                </svg>
+              </div>
+              <div class="ep-card-title">Формат файла</div>
+            </div>
+            <div class="export-format-grid ep-format-grid">
+              <label class="export-format-card active" data-format="jpeg">
+                <input type="radio" name="export-format" value="jpeg" checked hidden/>
+                <div class="export-format-icon">
+                  <svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+                    <rect x="2" y="2" width="16" height="16" rx="3"/>
+                    <path d="M6 13V8.5A1.5 1.5 0 017.5 7v0A1.5 1.5 0 019 8.5V13"/>
+                    <path d="M6 11h3"/>
+                    <path d="M12 7v4.5a1.5 1.5 0 001.5 1.5v0"/>
+                  </svg>
+                </div>
+                <div class="export-format-name">JPEG</div>
+                <div class="export-format-desc">Фото, малый размер</div>
+              </label>
+              <label class="export-format-card" data-format="png">
+                <input type="radio" name="export-format" value="png" hidden/>
+                <div class="export-format-icon">
+                  <svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+                    <rect x="2" y="2" width="16" height="16" rx="3"/>
+                    <path d="M6 13V7h2.5a1.5 1.5 0 010 3H6"/>
+                    <path d="M12 7v6"/>
+                    <path d="M12 10h2.5"/>
+                  </svg>
+                </div>
+                <div class="export-format-name">PNG</div>
+                <div class="export-format-desc">Прозрачность, без потерь</div>
+              </label>
+              <label class="export-format-card" data-format="webp">
+                <input type="radio" name="export-format" value="webp" hidden/>
+                <div class="export-format-icon">
+                  <svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+                    <rect x="2" y="2" width="16" height="16" rx="3"/>
+                    <path d="M5 13l2-6 2 4 2-4 2 6"/>
+                  </svg>
+                </div>
+                <div class="export-format-name">WebP</div>
+                <div class="export-format-desc">Современный, компактный</div>
+              </label>
+              <label class="export-format-card" data-format="tiff">
+                <input type="radio" name="export-format" value="tiff" hidden/>
+                <div class="export-format-icon">
+                  <svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+                    <rect x="2" y="2" width="16" height="16" rx="3"/>
+                    <line x1="5" y1="7" x2="15" y2="7"/>
+                    <line x1="10" y1="7" x2="10" y2="15"/>
+                    <line x1="5" y1="5" x2="15" y2="5"/>
+                  </svg>
+                </div>
+                <div class="export-format-name">TIFF</div>
+                <div class="export-format-desc">Полиграфия, архивы</div>
+              </label>
+            </div>
+          </div>
+
+          <!-- Quality (JPEG / WebP) -->
+          <div class="ep-card" id="ep-quality-card">
+            <div class="ep-card-header">
+              <div class="ep-card-icon">
+                <svg width="15" height="15" viewBox="0 0 15 15" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M2 10.5h11"/>
+                  <path d="M2 7.5h7"/>
+                  <path d="M2 4.5h4"/>
+                </svg>
+              </div>
+              <div class="ep-card-title">Качество сжатия</div>
+            </div>
+            <div class="export-quality-row">
+              <div class="export-quality-labels">
+                <span>Меньше размер</span>
+                <span id="export-quality-val">85%</span>
+                <span>Лучше качество</span>
+              </div>
+              <input type="range" class="export-quality-slider" id="export-quality-slider" min="10" max="100" step="1" value="85"/>
+              <div class="export-quality-presets">
+                <button class="export-preset-btn" data-q="60">Веб — 60</button>
+                <button class="export-preset-btn active" data-q="85">Стандарт — 85</button>
+                <button class="export-preset-btn" data-q="95">Высокое — 95</button>
+                <button class="export-preset-btn" data-q="100">Без потерь — 100</button>
+              </div>
+            </div>
+          </div>
+
+          <!-- PNG compression -->
+          <div class="ep-card" id="ep-png-card" style="display:none;">
+            <div class="ep-card-header">
+              <div class="ep-card-icon">
+                <svg width="15" height="15" viewBox="0 0 15 15" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
+                  <circle cx="7.5" cy="7.5" r="6"/>
+                  <line x1="7.5" y1="6" x2="7.5" y2="10"/>
+                  <line x1="7.5" y1="4.5" x2="7.5" y2="4.8"/>
+                </svg>
+              </div>
+              <div class="ep-card-title">Сжатие PNG</div>
+            </div>
+            <div class="ep-png-note">PNG сохраняется без потерь. Уровень сжатия влияет только на скорость записи файла.</div>
+            <div class="export-quality-row" style="margin-top:14px;">
+              <div class="export-quality-labels">
+                <span>Быстрее запись</span>
+                <span id="export-png-val">6</span>
+                <span>Меньше размер</span>
+              </div>
+              <input type="range" class="export-quality-slider" id="export-png-slider" min="0" max="9" step="1" value="6"/>
+            </div>
+          </div>
+
+        </div><!-- /.ep-col left -->
+
+        <!-- ── RIGHT COLUMN ─────────────────────────── -->
+        <div class="ep-col">
+
+          <!-- DPI / Resolution -->
+          <div class="ep-card">
+            <div class="ep-card-header">
+              <div class="ep-card-icon">
+                <svg width="15" height="15" viewBox="0 0 15 15" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
+                  <rect x="1.5" y="1.5" width="12" height="12" rx="2"/>
+                  <path d="M4.5 10.5V5.5l2 3 2-3v5"/>
+                  <line x1="10.5" y1="5.5" x2="10.5" y2="10.5"/>
+                </svg>
+              </div>
+              <div class="ep-card-title">Разрешение (DPI)</div>
+            </div>
+            <div class="export-dpi-row">
+              <label class="export-dpi-card active" data-dpi="72">
+                <input type="radio" name="export-dpi" value="72" checked hidden/>
+                <div class="export-dpi-val">72</div>
+                <div class="export-dpi-lbl">Экран / Веб</div>
+              </label>
+              <label class="export-dpi-card" data-dpi="150">
+                <input type="radio" name="export-dpi" value="150" hidden/>
+                <div class="export-dpi-val">150</div>
+                <div class="export-dpi-lbl">Черновая печать</div>
+              </label>
+              <label class="export-dpi-card" data-dpi="300">
+                <input type="radio" name="export-dpi" value="300" hidden/>
+                <div class="export-dpi-val">300</div>
+                <div class="export-dpi-lbl">Полиграфия</div>
+              </label>
+              <label class="export-dpi-card" data-dpi="custom">
+                <input type="radio" name="export-dpi" value="custom" hidden/>
+                <div class="export-dpi-val">
+                  <input type="number" id="export-dpi-custom" class="export-dpi-input" min="1" max="2400" value="96" placeholder="96" disabled/>
+                </div>
+                <div class="export-dpi-lbl">Своё значение</div>
+              </label>
+            </div>
+          </div>
+
+          <!-- Additional options -->
+          <div class="ep-card">
+            <div class="ep-card-header">
+              <div class="ep-card-icon">
+                <svg width="15" height="15" viewBox="0 0 15 15" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
+                  <circle cx="7.5" cy="4" r="1.5"/>
+                  <circle cx="7.5" cy="11" r="1.5"/>
+                  <line x1="2" y1="4" x2="6" y2="4"/>
+                  <line x1="9" y1="4" x2="13" y2="4"/>
+                  <line x1="2" y1="11" x2="6" y2="11"/>
+                  <line x1="9" y1="11" x2="13" y2="11"/>
+                </svg>
+              </div>
+              <div class="ep-card-title">Дополнительно</div>
+            </div>
+            <div class="export-options-list">
+              <label class="export-option-row">
+                <div class="export-option-info">
+                  <div class="export-option-label">Сохранить EXIF-данные</div>
+                  <div class="export-option-sub">Геолокация, камера, дата съёмки</div>
+                </div>
+                <div class="export-toggle" data-state="on"><div class="export-toggle-thumb"></div></div>
+              </label>
+              <label class="export-option-row">
+                <div class="export-option-info">
+                  <div class="export-option-label">Добавить цветовой профиль</div>
+                  <div class="export-option-sub">Встроить sRGB ICC-профиль</div>
+                </div>
+                <div class="export-toggle" data-state="on"><div class="export-toggle-thumb"></div></div>
+              </label>
+              <label class="export-option-row">
+                <div class="export-option-info">
+                  <div class="export-option-label">Прогрессивная загрузка</div>
+                  <div class="export-option-sub">Для JPEG и WebP — постепенный показ при загрузке</div>
+                </div>
+                <div class="export-toggle" data-state="off"><div class="export-toggle-thumb"></div></div>
+              </label>
+              <label class="export-option-row">
+                <div class="export-option-info">
+                  <div class="export-option-label">Оптимизировать для веба</div>
+                  <div class="export-option-sub">Переместить метаданные в начало файла</div>
+                </div>
+                <div class="export-toggle" data-state="off"><div class="export-toggle-thumb"></div></div>
+              </label>
+            </div>
+          </div>
+
+          <!-- Output path -->
+          <div class="ep-card">
+            <div class="ep-card-header">
+              <div class="ep-card-icon">
+                <svg width="15" height="15" viewBox="0 0 15 15" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M2 4.5h3l1.5-2h5a1 1 0 011 1v7a1 1 0 01-1 1H2a1 1 0 01-1-1v-5a1 1 0 011-1z"/>
+                </svg>
+              </div>
+              <div class="ep-card-title">Папка сохранения</div>
+            </div>
+            <div class="ep-path-row">
+              <div class="ep-path-display" id="ep-path-display">
+                <svg width="13" height="13" viewBox="0 0 13 13" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M1.5 3.5h4l1 -1.5h4.5a.5.5 0 01.5.5v7.5a.5.5 0 01-.5.5h-9.5a.5.5 0 01-.5-.5v-6z"/>
+                </svg>
+                <span id="ep-path-text">Спрашивать при каждом экспорте</span>
+              </div>
+              <button class="btn btn-outline ep-path-btn" id="ep-path-btn">Изменить</button>
+            </div>
+            <div class="ep-suffix-row">
+              <span class="ep-suffix-label">Суффикс имени файла</span>
+              <input type="text" class="ep-suffix-input" id="ep-suffix" placeholder="Нет" maxlength="32"/>
+            </div>
+          </div>
+
+        </div><!-- /.ep-col right -->
+
+      </div><!-- /.ep-body -->
+
+    </div><!-- /.app-export-page -->
+
   </main><!-- /.app-main -->
 
 
@@ -1379,11 +1660,7 @@
   <!-- Hidden file input for browser fallback -->
   <input type="file" id="file-input" accept="image/*,.heic,.heif,.avif" multiple style="display:none;" />
 
-  <!-- ═══════════════════════════════════════════════════
-       EXPORT SETTINGS MODAL
-  ════════════════════════════════════════════════════ -->
-  <div class="export-overlay" id="export-modal" role="dialog" aria-modal="true" aria-label="Настройки экспорта">
-    <div class="export-dialog">
+  <!-- not used --><div style="display:none"><div
 
       <!-- Header -->
       <div class="about-header">
@@ -1595,8 +1872,7 @@
         </div>
       </div>
 
-    </div><!-- /.export-dialog -->
-  </div><!-- /.export-overlay -->
+    </div></div>
 
   <!-- ══════════════════════════════════════════════════
        HISTORY MODAL
