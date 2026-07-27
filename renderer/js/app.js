@@ -1210,7 +1210,7 @@ async function applyResize() {
             photo.preview   = result.dataUrl;
             photo.width     = newWidth;
             photo.height    = newHeight;
-            photo.sizeBytes = Math.round((result.dataUrl.length - 22) * 0.75);
+            photo.sizeBytes = estimateSizeFromDataUrl(result.dataUrl);
 
             // Regenerate thumbnail from resized data
             await new Promise(resolve => {
