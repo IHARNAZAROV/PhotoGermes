@@ -105,17 +105,64 @@ function registerHandlers() {
         }
     });
 
-    // Show native Save-As dialog, then write to the chosen path.
-    // dataUrl: edited state, or null when no edits (originalPath is copied instead).
-    ipcMain.handle("photos:save-as", async (_e, suggestedName, dataUrl, originalPath) => {
+    // Show native folder-picker dialog; returns the selected path or null.
+    ipcMain.handle("dialog:select-folder", async () => {
+        const result = await dialog.showOpenDialog({
+            title: "Выбрать папку для экспорта",
+            properties: ["openDirectory", "createDirectory"]
+        });
+        return result.canceled ? null : result.filePaths[0];
+    });
+
+    // Convert a photo to a target format using sharp and return as base64 data-URL.
+    // source: { filePath } for unmodified originals, or { dataUrl } for edited previews.
+    // options: { format, quality, pngCompression }
+    ipcMain.handle("photos:export", async (_e, { filePath: srcPath, dataUrl: srcDataUrl, format, quality, pngCompression }) => {
+        if (!sharp) return { ok: false, error: 'sharp не установлен' };
         try {
+            let src;
+            if (srcDataUrl) {
+                const base64 = srcDataUrl.replace(/^data:image\/\w+;base64,/, "");
+                src = sharp(Buffer.from(base64, "base64"));
+            } else if (srcPath && fs.existsSync(srcPath)) {
+                src = sharp(srcPath);
+            } else {
+                return { ok: false, error: 'нет источника для конвертации' };
+            }
+
+            let buf;
+            const q = Math.max(1, Math.min(100, quality ?? 85));
+            switch (format) {
+                case 'png':  buf = await src.png({ compressionLevel: Math.max(0, Math.min(9, pngCompression ?? 6)) }).toBuffer(); break;
+                case 'webp': buf = await src.webp({ quality: q }).toBuffer(); break;
+                case 'tiff': buf = await src.tiff({ quality: q }).toBuffer(); break;
+                default:     buf = await src.jpeg({ quality: q }).toBuffer(); break;
+            }
+
+            const mime = format === 'png' ? 'image/png' : format === 'tiff' ? 'image/tiff' : `image/${format}`;
+            return { ok: true, dataUrl: `data:${mime};base64,` + buf.toString("base64") };
+        } catch (e) {
+            return { ok: false, error: e.message };
+        }
+    });
+
+    // Show native Save-As dialog, then write to the chosen path.
+    // dataUrl: edited / converted state.
+    // defaultDir: optional default directory to open the dialog in.
+    ipcMain.handle("photos:save-as", async (_e, suggestedName, dataUrl, originalPath, defaultDir) => {
+        try {
+            const defaultPath = defaultDir
+                ? path.join(defaultDir, suggestedName)
+                : suggestedName;
+
             const result = await dialog.showSaveDialog({
                 title: "Сохранить как",
-                defaultPath: suggestedName,
+                defaultPath,
                 filters: [
-                    { name: "JPEG",  extensions: ["jpg", "jpeg"] },
-                    { name: "PNG",   extensions: ["png"] },
-                    { name: "WebP",  extensions: ["webp"] },
+                    { name: "JPEG",       extensions: ["jpg", "jpeg"] },
+                    { name: "PNG",        extensions: ["png"] },
+                    { name: "WebP",       extensions: ["webp"] },
+                    { name: "TIFF",       extensions: ["tiff", "tif"] },
                     { name: "Все файлы", extensions: ["*"] }
                 ]
             });

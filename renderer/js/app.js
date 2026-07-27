@@ -1270,6 +1270,108 @@ function reencodeAs(dataUrl, mimeType) {
     });
 }
 
+// ── Export Settings persistence ─────────────────────────
+const EXPORT_SETTINGS_KEY = 'pg_export_settings';
+const EXPORT_DEFAULTS = {
+    format:         'jpeg',
+    quality:        85,
+    pngCompression: 6,
+    dpi:            72,
+    dpiCustom:      96,
+    keepExif:       true,
+    colorProfile:   true,
+    progressive:    false,
+    webOptimize:    false,
+    outputPath:     null,
+    suffix:         ''
+};
+
+let exportSettings = { ...EXPORT_DEFAULTS };
+
+function loadExportSettings() {
+    try {
+        const raw = localStorage.getItem(EXPORT_SETTINGS_KEY);
+        if (raw) exportSettings = { ...EXPORT_DEFAULTS, ...JSON.parse(raw) };
+    } catch { exportSettings = { ...EXPORT_DEFAULTS }; }
+}
+
+function saveExportSettingsToStorage() {
+    try { localStorage.setItem(EXPORT_SETTINGS_KEY, JSON.stringify(exportSettings)); }
+    catch { /* quota exceeded or private mode */ }
+}
+
+/**
+ * Re-encode `photo` data-URL using current export settings (format + quality).
+ * Falls back to the raw data-URL on any error.
+ */
+/**
+ * Re-encode photo using canvas and the current export settings.
+ * TIFF is not supported by the browser Canvas API — falls back to PNG bytes
+ * (Electron uses the sharp-based photos:export IPC instead of this function).
+ */
+async function getExportDataUrl(photo) {
+    const raw = await getPhotoDataUrl(photo);
+    if (!raw) return null;
+
+    const fmt = exportSettings.format;
+
+    // TIFF is only handled in Electron via sharp (photos:export IPC).
+    // In the browser we return PNG bytes so the file is at least valid.
+    const browserFmt = fmt === 'tiff' ? 'png' : fmt;
+    const mimeMap    = { jpeg: 'image/jpeg', png: 'image/png', webp: 'image/webp' };
+    const mime       = mimeMap[browserFmt] || 'image/jpeg';
+    const quality    = (browserFmt === 'jpeg' || browserFmt === 'webp')
+        ? exportSettings.quality / 100
+        : undefined;
+
+    return new Promise(resolve => {
+        const img = new Image();
+        img.onload = () => {
+            const canvas = document.createElement('canvas');
+            canvas.width  = img.naturalWidth;
+            canvas.height = img.naturalHeight;
+            canvas.getContext('2d').drawImage(img, 0, 0);
+            resolve(quality !== undefined
+                ? canvas.toDataURL(mime, quality)
+                : canvas.toDataURL(mime));
+        };
+        img.onerror = () => resolve(raw);
+        img.src = raw;
+    });
+}
+
+/**
+ * Apply export suffix and the correct extension to a filename.
+ * e.g. "photo.jpg" → "photo_web.webp" when format=webp and suffix="_web".
+ * In browser mode TIFF is exported as PNG (no native TIFF support in Canvas),
+ * so the extension is corrected to avoid a format/extension mismatch.
+ */
+function applyExportFilename(name) {
+    const fmt = exportSettings.format;
+    // In browser, TIFF falls back to PNG bytes → use .png extension to stay valid.
+    const effectiveFmt = (!isElectron && fmt === 'tiff') ? 'png' : fmt;
+    const extMap = { jpeg: 'jpg', png: 'png', webp: 'webp', tiff: 'tiff' };
+    const newExt = extMap[effectiveFmt] || 'jpg';
+    const base   = name.replace(/\.[^/.]+$/, '');   // strip old extension
+    const suffix = exportSettings.suffix || '';
+    return base + suffix + '.' + newExt;
+}
+
+/** Browser-only Save-As: convert to export format and trigger download. */
+async function browserSaveAs(photo, _rawDataUrl) {
+    try {
+        const exportedUrl = await getExportDataUrl(photo);
+        if (!exportedUrl) { showToast('Нет данных для сохранения'); return; }
+        const filename = applyExportFilename(photo.name);
+        triggerDownload(dataUrlToBlob(exportedUrl), filename);
+        pushHistory('save', 'Сохранено как: ' + filename);
+        showToast('Файл сохранён: ' + filename);
+    } catch (err) {
+        showToast('Ошибка сохранения: ' + err.message);
+        console.error('[browser-save-as]', err);
+    }
+}
+
 /**
  * Save — overwrite the original file (Electron) or download with the
  * same filename (browser). Standard Ctrl+S behaviour.
@@ -1284,10 +1386,24 @@ async function doSave() {
                 showToast('Перезапустите приложение — требуется обновление');
                 return;
             }
-            // Pass edited dataUrl only if the photo was actually modified;
-            // otherwise pass null so the IPC handler leaves the original file intact.
-            const hasEdits = photoUndoStack(photo).length > 0;
-            const dataUrl  = hasEdits ? (photo.preview ?? await getPhotoDataUrl(photo)) : null;
+
+            // Convert to the configured export format+quality using sharp (Electron).
+            // If sharp is unavailable, fall back to the raw preview bytes.
+            const hasEdits   = photoUndoStack(photo).length > 0;
+            const srcDataUrl = hasEdits ? (photo.preview ?? await getPhotoDataUrl(photo)) : null;
+            let dataUrl      = srcDataUrl;
+
+            if (typeof window.api?.exportPhoto === 'function') {
+                const conv = await window.api.exportPhoto({
+                    filePath: srcDataUrl ? null : photo.filePath,
+                    dataUrl:  srcDataUrl,
+                    format:   exportSettings.format,
+                    quality:  exportSettings.quality,
+                    pngCompression: exportSettings.pngCompression,
+                });
+                if (conv?.ok) dataUrl = conv.dataUrl;
+                // On conversion failure keep the original dataUrl so save still proceeds
+            }
 
             const result = await window.api.savePhoto(photo.filePath, dataUrl);
             if (result?.ok) {
@@ -1301,12 +1417,13 @@ async function doSave() {
                 showToast('Ошибка: ' + (result?.error ?? 'не удалось сохранить'));
             }
         } else {
-            // Browser: download with the same filename
-            const dataUrl = await getPhotoDataUrl(photo);
-            if (!dataUrl) { showToast('Нет данных для сохранения'); return; }
-            triggerDownload(dataUrlToBlob(dataUrl), photo.name);
-            pushHistory('save', 'Сохранено: ' + photo.name);
-            showToast('Файл сохранён');
+            // Browser: convert to export format and download
+            const exportedUrl = await getExportDataUrl(photo);
+            if (!exportedUrl) { showToast('Нет данных для сохранения'); return; }
+            const filename = applyExportFilename(photo.name);
+            triggerDownload(dataUrlToBlob(exportedUrl), filename);
+            pushHistory('save', 'Сохранено: ' + filename);
+            showToast('Файл сохранён: ' + filename);
         }
     } catch (err) {
         showToast('Ошибка сохранения: ' + err.message);
@@ -1328,12 +1445,32 @@ async function doSaveAs() {
                 showToast('Перезапустите приложение — требуется обновление');
                 return;
             }
-            // If edits exist, send the edited preview; otherwise send null so
-            // the main process copies the original file at full resolution.
-            const hasEdits = photoUndoStack(photo).length > 0;
-            const dataUrl  = hasEdits ? (photo.preview ?? await getPhotoDataUrl(photo)) : null;
 
-            const result = await window.api.savePhotoAs(photo.name, dataUrl, photo.filePath);
+            // Convert to the configured format+quality using sharp.
+            const hasEdits   = photoUndoStack(photo).length > 0;
+            const srcDataUrl = hasEdits ? (photo.preview ?? await getPhotoDataUrl(photo)) : null;
+            let exportedUrl  = srcDataUrl;
+
+            if (typeof window.api?.exportPhoto === 'function') {
+                const conv = await window.api.exportPhoto({
+                    filePath: srcDataUrl ? null : photo.filePath,
+                    dataUrl:  srcDataUrl,
+                    format:   exportSettings.format,
+                    quality:  exportSettings.quality,
+                    pngCompression: exportSettings.pngCompression,
+                });
+                if (conv?.ok) exportedUrl = conv.dataUrl;
+            }
+
+            // Apply suffix + correct extension to the suggested filename.
+            const suggestedName = applyExportFilename(photo.name);
+
+            const result = await window.api.savePhotoAs(
+                suggestedName,
+                exportedUrl,
+                exportedUrl ? null : photo.filePath,   // pass original only if no converted data
+                exportSettings.outputPath ?? null       // pre-select the configured output folder
+            );
             if (!result) return; // user cancelled dialog
             if (result.ok === false) { showToast('Ошибка: ' + result.error); return; }
 
@@ -1669,25 +1806,22 @@ function initStraighten() {
 // ── History modal ──────────────────────────────────────
 // ── Export Settings page ───────────────────────────────
 function initExportPage() {
-    const page    = document.getElementById('export-page');
+    const page     = document.getElementById('export-page');
     const applyBtn = document.getElementById('ep-apply-btn');
     const saveInd  = document.getElementById('ep-save-indicator');
     if (!page) return;
 
-    // Apply / save indicator
-    if (applyBtn && saveInd) {
-        applyBtn.addEventListener('click', () => {
-            saveInd.classList.add('visible');
-            setTimeout(() => saveInd.classList.remove('visible'), 2000);
-        });
-    }
+    // Load persisted settings and populate the UI
+    loadExportSettings();
+    _applyExportSettingsToUI(page);
 
-    // Format card selection
+    // ── Format card selection ───────────────────────────
     page.querySelectorAll('.export-format-card').forEach(card => {
         card.addEventListener('click', () => {
             page.querySelectorAll('.export-format-card').forEach(c => c.classList.remove('active'));
             card.classList.add('active');
-            const fmt = card.dataset.format;
+            const fmt         = card.dataset.format;
+            exportSettings.format = fmt;
             const qualityCard = document.getElementById('ep-quality-card');
             const pngCard     = document.getElementById('ep-png-card');
             if (fmt === 'png') {
@@ -1703,58 +1837,211 @@ function initExportPage() {
         });
     });
 
-    // Quality slider — live label + gradient fill
+    // ── Quality slider (JPEG / WebP) ────────────────────
     const qSlider = document.getElementById('export-quality-slider');
     const qVal    = document.getElementById('export-quality-val');
-    if (qSlider && qVal) {
-        function updateQSlider(v) {
-            qVal.textContent = v + '%';
-            qSlider.style.background =
-                `linear-gradient(to right, var(--color-primary) ${v}%, var(--color-border) ${v}%)`;
-        }
-        qSlider.addEventListener('input', () => {
-            updateQSlider(qSlider.value);
-            page.querySelectorAll('.export-preset-btn').forEach(b => {
-                b.classList.toggle('active', parseInt(b.dataset.q) === parseInt(qSlider.value));
-            });
-        });
-        updateQSlider(qSlider.value);
+
+    function _updateQSlider(v) {
+        if (qVal)    qVal.textContent = v + '%';
+        if (qSlider) qSlider.style.background =
+            `linear-gradient(to right, var(--color-primary) ${v}%, var(--color-border) ${v}%)`;
     }
 
-    // Quality preset buttons
+    if (qSlider) {
+        qSlider.addEventListener('input', () => {
+            const v = parseInt(qSlider.value);
+            exportSettings.quality = v;
+            _updateQSlider(v);
+            page.querySelectorAll('.export-preset-btn').forEach(b => {
+                b.classList.toggle('active', parseInt(b.dataset.q) === v);
+            });
+        });
+        _updateQSlider(exportSettings.quality);
+    }
+
+    // ── Quality preset buttons ──────────────────────────
     page.querySelectorAll('.export-preset-btn').forEach(btn => {
         btn.addEventListener('click', () => {
+            const q = parseInt(btn.dataset.q);
+            exportSettings.quality = q;
             page.querySelectorAll('.export-preset-btn').forEach(b => b.classList.remove('active'));
             btn.classList.add('active');
-            if (qSlider) { qSlider.value = btn.dataset.q; qSlider.dispatchEvent(new Event('input')); }
+            if (qSlider) { qSlider.value = q; _updateQSlider(q); }
         });
     });
 
-    // PNG compression slider
+    // ── PNG compression slider ──────────────────────────
     const pngSlider = document.getElementById('export-png-slider');
     const pngVal    = document.getElementById('export-png-val');
-    if (pngSlider && pngVal) {
-        pngSlider.addEventListener('input', () => { pngVal.textContent = pngSlider.value; });
+
+    function _updatePngSlider(v) {
+        if (pngVal)    pngVal.textContent = v;
+        if (pngSlider) pngSlider.style.background =
+            `linear-gradient(to right, var(--color-primary) ${v / 9 * 100}%, var(--color-border) ${v / 9 * 100}%)`;
     }
 
-    // DPI card selection
+    if (pngSlider) {
+        pngSlider.addEventListener('input', () => {
+            const v = parseInt(pngSlider.value);
+            exportSettings.pngCompression = v;
+            _updatePngSlider(v);
+        });
+        _updatePngSlider(exportSettings.pngCompression);
+    }
+
+    // ── DPI card selection ──────────────────────────────
     page.querySelectorAll('.export-dpi-card').forEach(card => {
         card.addEventListener('click', () => {
             page.querySelectorAll('.export-dpi-card').forEach(c => c.classList.remove('active'));
             card.classList.add('active');
+            const dpiVal = card.dataset.dpi;
+            exportSettings.dpi = dpiVal === 'custom' ? 'custom' : parseInt(dpiVal);
             const customInput = document.getElementById('export-dpi-custom');
-            if (customInput) customInput.disabled = card.dataset.dpi !== 'custom';
+            if (customInput) customInput.disabled = dpiVal !== 'custom';
         });
-        const input = card.querySelector('.export-dpi-input');
-        if (input) input.addEventListener('click', e => e.stopPropagation());
+        // Prevent clicking the number-input from bubbling up and toggling the card
+        const numInput = card.querySelector('.export-dpi-input');
+        if (numInput) {
+            numInput.addEventListener('click', e => e.stopPropagation());
+            numInput.addEventListener('input', () => {
+                exportSettings.dpiCustom = parseInt(numInput.value) || 96;
+            });
+        }
     });
 
-    // Options toggles
-    page.querySelectorAll('.export-toggle').forEach(toggle => {
+    // ── Options toggles ─────────────────────────────────
+    // Order must match the DOM order in the "Дополнительно" card
+    const TOGGLE_KEYS = ['keepExif', 'colorProfile', 'progressive', 'webOptimize'];
+    page.querySelectorAll('.export-toggle').forEach((toggle, i) => {
         toggle.addEventListener('click', () => {
-            toggle.dataset.state = toggle.dataset.state === 'on' ? 'off' : 'on';
+            const newState = toggle.dataset.state === 'on' ? 'off' : 'on';
+            toggle.dataset.state = newState;
+            if (TOGGLE_KEYS[i] !== undefined) exportSettings[TOGGLE_KEYS[i]] = newState === 'on';
         });
     });
+
+    // ── Output path button ──────────────────────────────
+    const pathBtn  = document.getElementById('ep-path-btn');
+    const pathText = document.getElementById('ep-path-text');
+    if (pathBtn) {
+        pathBtn.addEventListener('click', async () => {
+            if (isElectron && typeof window.api?.selectFolder === 'function') {
+                const folder = await window.api.selectFolder();
+                if (folder) {
+                    exportSettings.outputPath = folder;
+                    if (pathText) pathText.textContent = folder;
+                }
+            } else {
+                // In a browser context the download folder is managed by the browser
+                exportSettings.outputPath = null;
+                if (pathText) pathText.textContent = 'Спрашивать при каждом экспорте';
+                showToast('В браузере файлы сохраняются в папку загрузок');
+            }
+        });
+    }
+
+    // ── Suffix input ────────────────────────────────────
+    const suffixInput = document.getElementById('ep-suffix');
+    if (suffixInput) {
+        suffixInput.addEventListener('input', () => {
+            exportSettings.suffix = suffixInput.value;
+        });
+    }
+
+    // ── Save / apply button ─────────────────────────────
+    if (applyBtn && saveInd) {
+        applyBtn.addEventListener('click', () => {
+            saveExportSettingsToStorage();
+            saveInd.classList.add('visible');
+            setTimeout(() => saveInd.classList.remove('visible'), 2000);
+            showToast('Настройки экспорта сохранены');
+        });
+    }
+}
+
+/**
+ * Populate every UI control on the export page from `exportSettings`.
+ * Called once on init (after loading from localStorage) and never again
+ * (individual listeners keep the state in sync from that point on).
+ */
+function _applyExportSettingsToUI(page) {
+    const s = exportSettings;
+
+    // Format
+    page.querySelectorAll('.export-format-card').forEach(card => {
+        const active = card.dataset.format === s.format;
+        card.classList.toggle('active', active);
+        const radio = card.querySelector('input[type=radio]');
+        if (radio) radio.checked = active;
+    });
+
+    // Quality card vs PNG-compression card visibility
+    const qualityCard = document.getElementById('ep-quality-card');
+    const pngCard     = document.getElementById('ep-png-card');
+    if (s.format === 'png') {
+        if (qualityCard) qualityCard.style.display = 'none';
+        if (pngCard)     pngCard.style.display     = '';
+    } else if (s.format === 'tiff') {
+        if (qualityCard) qualityCard.style.display = 'none';
+        if (pngCard)     pngCard.style.display     = 'none';
+    } else {
+        if (qualityCard) qualityCard.style.display = '';
+        if (pngCard)     pngCard.style.display     = 'none';
+    }
+
+    // Quality slider value + active preset
+    const qSlider = document.getElementById('export-quality-slider');
+    const qVal    = document.getElementById('export-quality-val');
+    if (qSlider) {
+        qSlider.value = s.quality;
+        if (qVal) qVal.textContent = s.quality + '%';
+        qSlider.style.background =
+            `linear-gradient(to right, var(--color-primary) ${s.quality}%, var(--color-border) ${s.quality}%)`;
+    }
+    page.querySelectorAll('.export-preset-btn').forEach(b => {
+        b.classList.toggle('active', parseInt(b.dataset.q) === s.quality);
+    });
+
+    // PNG slider
+    const pngSlider = document.getElementById('export-png-slider');
+    const pngVal    = document.getElementById('export-png-val');
+    if (pngSlider) {
+        pngSlider.value = s.pngCompression;
+        pngSlider.style.background =
+            `linear-gradient(to right, var(--color-primary) ${s.pngCompression / 9 * 100}%, var(--color-border) ${s.pngCompression / 9 * 100}%)`;
+    }
+    if (pngVal) pngVal.textContent = s.pngCompression;
+
+    // DPI cards
+    page.querySelectorAll('.export-dpi-card').forEach(card => {
+        const dpiVal = card.dataset.dpi;
+        const active = dpiVal === 'custom'
+            ? s.dpi === 'custom'
+            : parseInt(dpiVal) === s.dpi;
+        card.classList.toggle('active', active);
+        const radio = card.querySelector('input[type=radio]');
+        if (radio) radio.checked = active;
+    });
+    const customInput = document.getElementById('export-dpi-custom');
+    if (customInput) {
+        customInput.value    = s.dpiCustom;
+        customInput.disabled = s.dpi !== 'custom';
+    }
+
+    // Toggles (order must match DOM order)
+    const TOGGLE_KEYS = ['keepExif', 'colorProfile', 'progressive', 'webOptimize'];
+    page.querySelectorAll('.export-toggle').forEach((toggle, i) => {
+        if (TOGGLE_KEYS[i] !== undefined)
+            toggle.dataset.state = s[TOGGLE_KEYS[i]] ? 'on' : 'off';
+    });
+
+    // Output path
+    const pathText = document.getElementById('ep-path-text');
+    if (pathText) pathText.textContent = s.outputPath || 'Спрашивать при каждом экспорте';
+
+    // Suffix
+    const suffixInput = document.getElementById('ep-suffix');
+    if (suffixInput) suffixInput.value = s.suffix || '';
 }
 
 function initHistoryModal() {

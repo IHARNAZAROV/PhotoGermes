@@ -16,9 +16,15 @@ contextBridge.exposeInMainWorld("api", {
     /** Overwrite file at filePath. dataUrl=null means no edits (original already saved). */
     savePhoto:     (filePath, dataUrl)              => ipcRenderer.invoke("photos:save",    filePath, dataUrl),
 
-    /** Show native Save-As dialog. dataUrl=null → copy original file at full quality. */
-    savePhotoAs:   (name, dataUrl, originalPath)    => ipcRenderer.invoke("photos:save-as", name, dataUrl, originalPath),
+    /** Show native Save-As dialog. defaultDir: optional initial directory for dialog. */
+    savePhotoAs:   (name, dataUrl, originalPath, defaultDir) => ipcRenderer.invoke("photos:save-as", name, dataUrl, originalPath, defaultDir),
 
     /** Resize photo using Sharp. Returns Promise<{ok, dataUrl}|{ok, error}>. */
     resizePhoto:   (params)                         => ipcRenderer.invoke("photos:resize", params),
+
+    /** Show native folder-picker dialog. Returns Promise<string|null>. */
+    selectFolder:  ()                               => ipcRenderer.invoke("dialog:select-folder"),
+
+    /** Convert a photo to the target format/quality using Sharp. Returns Promise<{ok,dataUrl}|{ok,error}>. */
+    exportPhoto:   (params)                         => ipcRenderer.invoke("photos:export", params),
 });
