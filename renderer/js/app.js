@@ -33,6 +33,15 @@ function formatHistoryTime(date) {
     return date.toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
 }
 
+function escapeHtml(str) {
+    return String(str)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;');
+}
+
 function renderHistoryPanel() {
     const list = document.getElementById('history-list');
     if (!list) return;
@@ -61,7 +70,7 @@ function renderHistoryPanel() {
               </svg>
             </div>
             <div class="history-entry-body">
-              <div class="history-entry-label">${entry.label}</div>
+              <div class="history-entry-label">${escapeHtml(entry.label)}</div>
               <div class="history-entry-time">${formatHistoryTime(entry.time)}</div>
             </div>
           </div>`;
@@ -449,7 +458,7 @@ function deleteChecked() {
     }
 
     updateCounts();
-    showToast(`${deletedCount} ${pluralPhoto(deletedCount)} удалено`);
+    showToast(`${deletedCount} фото удалено`);
 }
 
 function findNearestSurvivingIndex(sortedDeleted) {
@@ -463,12 +472,6 @@ function findNearestSurvivingIndex(sortedDeleted) {
         if (!deletedSet.has(i)) return i;
     }
     return -1;
-}
-
-function pluralPhoto(n) {
-    if (n % 10 === 1 && n % 100 !== 11) return 'фото';
-    if ([2,3,4].includes(n % 10) && ![12,13,14].includes(n % 100)) return 'фото';
-    return 'фото';
 }
 
 // ── Toast notification ─────────────────────────────────
@@ -1113,6 +1116,17 @@ async function applyToChecked() {
     if (btn) btn.disabled = true;
 
     const targets = [...checkedIndices].map(i => photos[i]).filter(Boolean);
+
+    // Push undo snapshot for every target before mutating — mirrors pushUndo() logic
+    targets.forEach(p => {
+        const stack = photoUndoStack(p);
+        stack.push(snapshotPhoto(p));
+        if (stack.length > MAX_UNDO_STEPS)
+            stack.splice(0, stack.length - MAX_UNDO_STEPS).forEach(freeSnapshot);
+        if (p._redoStack) p._redoStack.forEach(freeSnapshot);
+        p._redoStack = [];
+    });
+
     await Promise.all(targets.map(p => applyCropToPhotoCanvas(p, norm)));
 
     rebuildGallery();
@@ -1260,7 +1274,9 @@ function initResizeButtons() {
 /** Convert a data-URL to a Blob. */
 function dataUrlToBlob(dataUrl) {
     const [header, data] = dataUrl.split(',');
-    const mime  = header.match(/:(.*?);/)[1];
+    const match = header?.match(/:(.*?);/);
+    if (!match) throw new Error('Невалидный data-URL');
+    const mime  = match[1];
     const bytes = atob(data);
     const arr   = new Uint8Array(bytes.length);
     for (let i = 0; i < bytes.length; i++) arr[i] = bytes.charCodeAt(i);
@@ -1299,19 +1315,6 @@ async function getPhotoDataUrl(photo) {
 }
 
 /** Re-encode a data-URL as a different MIME type using Canvas. */
-function reencodeAs(dataUrl, mimeType) {
-    return new Promise(resolve => {
-        const img = new Image();
-        img.onload = () => {
-            const canvas = document.createElement('canvas');
-            canvas.width  = img.naturalWidth;
-            canvas.height = img.naturalHeight;
-            canvas.getContext('2d').drawImage(img, 0, 0);
-            resolve(canvas.toDataURL(mimeType, 0.92));
-        };
-        img.src = dataUrl;
-    });
-}
 
 // ── Export Settings persistence ─────────────────────────
 const EXPORT_SETTINGS_KEY = 'pg_export_settings';
