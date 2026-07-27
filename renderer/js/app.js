@@ -1416,6 +1416,30 @@ async function browserSaveAs(photo, _rawDataUrl) {
 }
 
 /**
+ * Convert photo to the configured export format+quality using sharp (Electron).
+ * Returns the resulting data-URL, or the raw preview data-URL if sharp is
+ * unavailable. Returns null when there are no edits and no Electron API.
+ */
+async function prepareExportDataUrl(photo) {
+    const hasEdits   = photoUndoStack(photo).length > 0;
+    const srcDataUrl = hasEdits ? (photo.preview ?? await getPhotoDataUrl(photo)) : null;
+    let result       = srcDataUrl;
+
+    if (typeof window.api?.exportPhoto === 'function') {
+        const conv = await window.api.exportPhoto({
+            filePath: srcDataUrl ? null : photo.filePath,
+            dataUrl:  srcDataUrl,
+            format:   exportSettings.format,
+            quality:  exportSettings.quality,
+            pngCompression: exportSettings.pngCompression,
+        });
+        if (conv?.ok) result = conv.dataUrl;
+    }
+
+    return result;
+}
+
+/**
  * Save — overwrite the original file (Electron) or download with the
  * same filename (browser). Standard Ctrl+S behaviour.
  */
@@ -1432,21 +1456,7 @@ async function doSave() {
 
             // Convert to the configured export format+quality using sharp (Electron).
             // If sharp is unavailable, fall back to the raw preview bytes.
-            const hasEdits   = photoUndoStack(photo).length > 0;
-            const srcDataUrl = hasEdits ? (photo.preview ?? await getPhotoDataUrl(photo)) : null;
-            let dataUrl      = srcDataUrl;
-
-            if (typeof window.api?.exportPhoto === 'function') {
-                const conv = await window.api.exportPhoto({
-                    filePath: srcDataUrl ? null : photo.filePath,
-                    dataUrl:  srcDataUrl,
-                    format:   exportSettings.format,
-                    quality:  exportSettings.quality,
-                    pngCompression: exportSettings.pngCompression,
-                });
-                if (conv?.ok) dataUrl = conv.dataUrl;
-                // On conversion failure keep the original dataUrl so save still proceeds
-            }
+            const dataUrl = await prepareExportDataUrl(photo);
 
             const result = await window.api.savePhoto(photo.filePath, dataUrl);
             if (result?.ok) {
@@ -1490,20 +1500,7 @@ async function doSaveAs() {
             }
 
             // Convert to the configured format+quality using sharp.
-            const hasEdits   = photoUndoStack(photo).length > 0;
-            const srcDataUrl = hasEdits ? (photo.preview ?? await getPhotoDataUrl(photo)) : null;
-            let exportedUrl  = srcDataUrl;
-
-            if (typeof window.api?.exportPhoto === 'function') {
-                const conv = await window.api.exportPhoto({
-                    filePath: srcDataUrl ? null : photo.filePath,
-                    dataUrl:  srcDataUrl,
-                    format:   exportSettings.format,
-                    quality:  exportSettings.quality,
-                    pngCompression: exportSettings.pngCompression,
-                });
-                if (conv?.ok) exportedUrl = conv.dataUrl;
-            }
+            const exportedUrl = await prepareExportDataUrl(photo);
 
             // Apply suffix + correct extension to the suggested filename.
             const suggestedName = applyExportFilename(photo.name);
