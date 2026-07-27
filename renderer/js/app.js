@@ -802,6 +802,25 @@ function switchToTool(toolName) {
         if (cropInspector)       cropInspector.style.display       = isCrop      ? 'contents' : 'none';
         if (resizeInspector)     resizeInspector.style.display     = isResize    ? 'flex'     : 'none';
         if (watermarkInspector)  watermarkInspector.style.display  = isWatermark ? 'flex'     : 'none';
+
+        // Перенаправить ползунок масштаба на активный вид
+        if (window.zoom?.setTarget) {
+            if (isCrop) {
+                window.zoom.setTarget(
+                    document.querySelector('#crop-editor-view .editor-canvas-wrap'),
+                    document.querySelector('#crop-editor-view .editor-canvas-area')
+                );
+            } else if (isWatermark) {
+                window.zoom.setTarget(
+                    document.querySelector('#watermark-editor-view .editor-canvas-wrap'),
+                    document.querySelector('#watermark-editor-view .editor-canvas-area')
+                );
+            } else if (isResize) {
+                // В resize-виде зумируем split-контейнер целиком
+                const splitContainer = document.getElementById('resize-split-container');
+                window.zoom.setTarget(splitContainer, splitContainer);
+            }
+        }
     }
 
     // Photos are stored in the shared global `photos[]` array and are always
