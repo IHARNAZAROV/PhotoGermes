@@ -204,6 +204,16 @@ let _wmOriginalSvgText = null;
 let _wmIsSvg           = false;
 let _wmSizeUnit        = 'px';  // 'px' | '%'
 
+// ── Object URL lifecycle ───────────────────────────────
+// Tracks the current blob URL so it can be revoked before creating a new one,
+// preventing memory leaks when the user replaces or removes the watermark image.
+let _wmCurrentObjectUrl = null;
+
+function _wmSetObjectUrl(url) {
+    if (_wmCurrentObjectUrl) URL.revokeObjectURL(_wmCurrentObjectUrl);
+    _wmCurrentObjectUrl = url || null;
+}
+
 
 /** Replace all non-transparent fill/stroke/stop-color values with newColor */
 function recolorSvg(svgText, newColor) {
@@ -333,8 +343,8 @@ function initWmImageControls() {
             _wmOriginalSvgText = null;
             _wmIsSvg = false;
             showWmSvgColorBlock(false);
-            const url = URL.createObjectURL(file);
-            showImagePreview(url);
+            _wmSetObjectUrl(URL.createObjectURL(file));
+            showImagePreview(_wmCurrentObjectUrl);
         }
     });
 
@@ -364,8 +374,8 @@ function initWmImageControls() {
             _wmOriginalSvgText = null;
             _wmIsSvg = false;
             showWmSvgColorBlock(false);
-            const url = URL.createObjectURL(file);
-            showImagePreview(url);
+            _wmSetObjectUrl(URL.createObjectURL(file));
+            showImagePreview(_wmCurrentObjectUrl);
         }
     });
 
@@ -402,6 +412,7 @@ function initWmImageControls() {
         if (fileInput)    fileInput.value = '';
         _wmOriginalSvgText = null;
         _wmIsSvg = false;
+        _wmSetObjectUrl(null); // освобождаем blob URL
         showWmSvgColorBlock(false);
         updateWmOverlay();
     });
