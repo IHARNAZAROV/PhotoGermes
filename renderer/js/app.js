@@ -376,10 +376,13 @@ function deleteChecked() {
 
     const deletedCount = checkedIndices.size;
 
-    // Revoke objectURLs for browser mode
+    // Revoke objectURLs and free undo/redo snapshot Blob URLs for deleted photos
     checkedIndices.forEach(i => {
         const p = photos[i];
-        if (p && p.objectUrl) URL.revokeObjectURL(p.objectUrl);
+        if (!p) return;
+        if (p.objectUrl) URL.revokeObjectURL(p.objectUrl);
+        if (p._undoStack) p._undoStack.forEach(freeSnapshot);
+        if (p._redoStack) p._redoStack.forEach(freeSnapshot);
     });
 
     // Remove photos (highest index first to keep indices stable)
@@ -1527,20 +1530,63 @@ function initSaveButtons() {
 }
 
 // ── Undo / Redo core (per-photo) ───────────────────────
+
+// ── Snapshot blob-URL helpers ──────────────────────────
+// Snapshots store `preview` as a Blob URL instead of a raw base64 string.
+// A 12 MP JPEG preview can be 3–5 MB as base64; as a Blob it stays binary
+// and is released immediately when the snapshot is discarded.
+
+/** Convert a base64 data-URL to a Blob synchronously. */
+function _base64ToBlob(dataUrl) {
+    if (!dataUrl) return null;
+    try {
+        const [header, b64] = dataUrl.split(',');
+        const mime = (header.match(/:(.*?);/) || [])[1] || 'image/jpeg';
+        const raw  = atob(b64);
+        const arr  = new Uint8Array(raw.length);
+        for (let i = 0; i < raw.length; i++) arr[i] = raw.charCodeAt(i);
+        return new Blob([arr], { type: mime });
+    } catch { return null; }
+}
+
+/** Fetch a Blob URL and resolve to a base64 data-URL. */
+function _blobUrlToBase64(blobUrl) {
+    if (!blobUrl) return Promise.resolve(null);
+    return fetch(blobUrl)
+        .then(r => r.blob())
+        .then(blob => new Promise(resolve => {
+            const reader = new FileReader();
+            reader.onload  = () => resolve(reader.result);
+            reader.onerror = () => resolve(null);
+            reader.readAsDataURL(blob);
+        }))
+        .catch(() => null);
+}
+
+/** Revoke the Blob URL stored in a snapshot, then null it out. */
+function freeSnapshot(snap) {
+    if (snap && snap.previewBlobUrl) {
+        URL.revokeObjectURL(snap.previewBlobUrl);
+        snap.previewBlobUrl = null;
+    }
+}
+
 /**
  * Snapshot the current state of `photo` plus the current editor transforms.
+ * preview is stored as a Blob URL (not base64) to minimise heap usage.
  * The snapshot belongs entirely to that photo and is restored against it.
  */
 function snapshotPhoto(photo) {
+    const blob = _base64ToBlob(photo.preview);
     return {
-        rotation:  editorRotation,
-        flipH:     editorFlipH,
-        straighten: straightenAngle,
-        preview:   photo.preview,
-        width:     photo.width,
-        height:    photo.height,
-        sizeBytes: photo.sizeBytes,
-        thumbnail: photo.thumbnail,
+        rotation:      editorRotation,
+        flipH:         editorFlipH,
+        straighten:    straightenAngle,
+        previewBlobUrl: blob ? URL.createObjectURL(blob) : null,
+        width:         photo.width,
+        height:        photo.height,
+        sizeBytes:     photo.sizeBytes,
+        thumbnail:     photo.thumbnail,
     };
 }
 
@@ -1553,9 +1599,12 @@ function pushUndo() {
     if (!photo) return;
     const stack = photoUndoStack(photo);
     stack.push(snapshotPhoto(photo));
-    // Trim oldest entries to cap memory usage
-    if (stack.length > MAX_UNDO_STEPS) stack.splice(0, stack.length - MAX_UNDO_STEPS);
-    // Any new action clears the redo branch for this photo
+    // Trim oldest entries, releasing their Blob URLs to free memory
+    if (stack.length > MAX_UNDO_STEPS) {
+        stack.splice(0, stack.length - MAX_UNDO_STEPS).forEach(freeSnapshot);
+    }
+    // Any new action clears the redo branch — release those Blob URLs too
+    if (photo._redoStack) photo._redoStack.forEach(freeSnapshot);
     photo._redoStack = [];
     updateUndoRedoBtns();
 }
@@ -1592,7 +1641,9 @@ async function restorePhotoSnapshot(photo, snap) {
     editorFlipH     = snap.flipH;
     straightenAngle = snap.straighten ?? 0;
     syncStraightenUI();
-    photo.preview   = snap.preview;
+    // Convert the stored Blob URL back to a base64 data-URL that the rest of
+    // the app (canvas operations, Electron IPC, export) can use directly.
+    photo.preview   = await _blobUrlToBase64(snap.previewBlobUrl);
     photo.width     = snap.width;
     photo.height    = snap.height;
     photo.sizeBytes = snap.sizeBytes;
