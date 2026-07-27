@@ -125,7 +125,7 @@ function formatRes(w, h) {
  * @returns {string} JPEG data-URL at 0.75 quality
  */
 function generateThumbnail(source, w, h) {
-    const ratio = Math.max(160 / w, 120 / h);
+    const ratio = Math.min(160 / w, 120 / h);
     const tc = document.createElement('canvas');
     tc.width  = Math.round(w * ratio);
     tc.height = Math.round(h * ratio);
@@ -742,7 +742,7 @@ function readFileThumbnail(file) {
         const url = URL.createObjectURL(file);
         img.onload = () => {
             const canvas = document.createElement('canvas');
-            const ratio  = Math.max(160 / img.width, 120 / img.height);
+            const ratio  = Math.min(160 / img.width, 120 / img.height);
             canvas.width  = Math.round(img.width  * ratio);
             canvas.height = Math.round(img.height * ratio);
             canvas.getContext('2d').drawImage(img, 0, 0, canvas.width, canvas.height);
