@@ -855,21 +855,24 @@ function initWmDrag() {
         label.style.cursor = 'grabbing';
     });
 
-    document.addEventListener('mousemove', e => {
+    // Named functions so the listeners can be removed later via removeEventListener
+    function _onDragMove(e) {
         if (!dragging) return;
         const dx = e.clientX - startX;
         const dy = e.clientY - startY;
         label.style.left = (origX + dx) + 'px';
         label.style.top  = (origY + dy) + 'px';
-    });
+    }
 
-    document.addEventListener('mouseup', () => {
-        if (dragging) {
-            dragging = false;
-            const l = document.getElementById('wm-label');
-            if (l) l.style.cursor = 'move';
-        }
-    });
+    function _onDragUp() {
+        if (!dragging) return;
+        dragging = false;
+        const l = document.getElementById('wm-label');
+        if (l) l.style.cursor = 'move';
+    }
+
+    document.addEventListener('mousemove', _onDragMove);
+    document.addEventListener('mouseup',   _onDragUp);
 }
 
 // ── Apply watermark to image data ──────────────────────

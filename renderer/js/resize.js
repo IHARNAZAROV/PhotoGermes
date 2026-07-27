@@ -66,7 +66,8 @@ window.__getResizeKernel = getResizeKernel;
         e.preventDefault();
     });
 
-    document.addEventListener('mousemove', e => {
+    // Named functions so the listeners can be removed later via removeEventListener
+    function _onMouseMove(e) {
         if (!dragging) return;
         const rect = container.getBoundingClientRect();
         const delta = e.clientX - startX;
@@ -74,14 +75,28 @@ window.__getResizeKernel = getResizeKernel;
         const min = rect.width * 0.2;
         const max = rect.width * 0.8;
         setPosition(Math.max(min, Math.min(max, newW)));
-    });
+    }
 
-    document.addEventListener('mouseup', () => {
+    function _onMouseUp() {
         if (!dragging) return;
         dragging = false;
         document.body.style.cursor     = '';
         document.body.style.userSelect = '';
-    });
+    }
+
+    function _onTouchMove(e) {
+        if (!dragging) return;
+        const rect = container.getBoundingClientRect();
+        let newW = startW + (e.touches[0].clientX - startX);
+        const min = rect.width * 0.2;
+        const max = rect.width * 0.8;
+        setPosition(Math.max(min, Math.min(max, newW)));
+    }
+
+    function _onTouchEnd() { dragging = false; }
+
+    document.addEventListener('mousemove', _onMouseMove);
+    document.addEventListener('mouseup',   _onMouseUp);
 
     // Touch support
     divider.addEventListener('touchstart', e => {
@@ -90,15 +105,8 @@ window.__getResizeKernel = getResizeKernel;
         startW   = leftPanel.offsetWidth;
         e.preventDefault();
     }, { passive: false });
-    document.addEventListener('touchmove', e => {
-        if (!dragging) return;
-        const rect = container.getBoundingClientRect();
-        let newW = startW + (e.touches[0].clientX - startX);
-        const min = rect.width * 0.2;
-        const max = rect.width * 0.8;
-        setPosition(Math.max(min, Math.min(max, newW)));
-    }, { passive: true });
-    document.addEventListener('touchend', () => { dragging = false; });
+    document.addEventListener('touchmove', _onTouchMove, { passive: true });
+    document.addEventListener('touchend',  _onTouchEnd);
 
     // Keep divider in sync whenever the container resizes
     if (typeof ResizeObserver !== 'undefined') {

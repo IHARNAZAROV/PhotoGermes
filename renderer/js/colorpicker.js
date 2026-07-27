@@ -130,11 +130,15 @@
         svCanvas.addEventListener('mousedown', e => { dragSv=true; applySv(e); e.preventDefault(); });
         // Hue canvas
         hueCanvas.addEventListener('mousedown', e => { dragHue=true; applyHue(e); e.preventDefault(); });
-        document.addEventListener('mousemove', e => {
+        // Named functions so the listeners can be removed later via removeEventListener
+        function _onCpMove(e) {
             if (dragSv)  applySv(e);
             if (dragHue) applyHue(e);
-        });
-        document.addEventListener('mouseup', () => { dragSv=dragHue=false; });
+        }
+        function _onCpUp() { dragSv = dragHue = false; }
+
+        document.addEventListener('mousemove', _onCpMove);
+        document.addEventListener('mouseup',   _onCpUp);
 
         // RGB inputs
         [rInp,gInp,bInp].forEach(inp => {
