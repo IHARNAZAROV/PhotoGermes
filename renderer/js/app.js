@@ -1498,6 +1498,11 @@ function initSaveButtons() {
         ?.addEventListener('click', doSave);
     document.querySelector('[data-action="save-as"]')
         ?.addEventListener('click', doSaveAs);
+
+    // "Экспортировать" buttons in every inspector panel — use export settings
+    ['btn-export-crop', 'btn-export-watermark', 'btn-export-resize'].forEach(id => {
+        document.getElementById(id)?.addEventListener('click', doSaveAs);
+    });
 }
 
 // ── Undo / Redo core (per-photo) ───────────────────────
