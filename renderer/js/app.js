@@ -320,24 +320,22 @@ function toggleCheck(index) {
 function checkRange(from, to) {
     const lo = Math.min(from, to);
     const hi = Math.max(from, to);
-    for (let i = lo; i <= hi; i++) checkedIndices.add(i);
+    for (let i = lo; i <= hi; i++) { checkedIndices.add(i); syncItemCheckedClass(i); }
     lastCheckedIndex = to;
-    // Rebuild DOM to reflect new checked state efficiently
-    rebuildGallery();
     updateSelectionUI();
 }
 
 function checkAll() {
-    photos.forEach((_, i) => checkedIndices.add(i));
+    photos.forEach((_, i) => { checkedIndices.add(i); syncItemCheckedClass(i); });
     lastCheckedIndex = photos.length - 1;
-    rebuildGallery();
     updateSelectionUI();
 }
 
 function clearChecks() {
+    const prev = [...checkedIndices];
     checkedIndices.clear();
     lastCheckedIndex = -1;
-    rebuildGallery();
+    prev.forEach(i => syncItemCheckedClass(i));
     updateSelectionUI();
 }
 
