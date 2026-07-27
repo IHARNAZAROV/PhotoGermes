@@ -105,6 +105,40 @@ function formatRes(w, h) {
     return (w && h) ? `${w} × ${h}` : '— × —';
 }
 
+/**
+ * Generate a cover-fit thumbnail (160×120 target) from any CanvasImageSource.
+ * Uses Math.max so the shorter side fills the target — same cover behaviour
+ * as the Electron sharp thumbnail.
+ *
+ * @param {CanvasImageSource} source - canvas, img, or video element
+ * @param {number} w - natural width of source (px)
+ * @param {number} h - natural height of source (px)
+ * @returns {string} JPEG data-URL at 0.75 quality
+ */
+function generateThumbnail(source, w, h) {
+    const ratio = Math.max(160 / w, 120 / h);
+    const tc = document.createElement('canvas');
+    tc.width  = Math.round(w * ratio);
+    tc.height = Math.round(h * ratio);
+    tc.getContext('2d').drawImage(source, 0, 0, tc.width, tc.height);
+    return tc.toDataURL('image/jpeg', 0.75);
+}
+// Expose for modules loaded after app.js (e.g. watermark.js)
+window.generateThumbnail = generateThumbnail;
+
+/**
+ * Approximate the byte size of an image encoded as a base64 data-URL.
+ * The formula accounts for base64 overhead (~4/3) and the data: header prefix.
+ * Result is an estimate — suitable for display, not cryptographic accuracy.
+ *
+ * @param {string} dataUrl - base64 data-URL string
+ * @returns {number} estimated size in bytes
+ */
+function estimateSizeFromDataUrl(dataUrl) {
+    return Math.round((dataUrl.length - 22) * 0.75);
+}
+window.estimateSizeFromDataUrl = estimateSizeFromDataUrl;
+
 // ── Empty state ────────────────────────────────────────
 function renderEmptyState() {
     const list = document.querySelector('.gallery-list');
@@ -1013,15 +1047,10 @@ function applyCropToPhotoCanvas(photo, norm) {
             photo.width     = srcW;
             photo.height    = srcH;
             // Approximate byte size from base64 length
-            photo.sizeBytes = Math.round((photo.preview.length - 22) * 0.75);
+            photo.sizeBytes = estimateSizeFromDataUrl(photo.preview);
 
             // Thumbnail
-            const tc    = document.createElement('canvas');
-            const ratio = Math.max(160 / srcW, 120 / srcH);
-            tc.width    = Math.round(srcW * ratio);
-            tc.height   = Math.round(srcH * ratio);
-            tc.getContext('2d').drawImage(canvas, 0, 0, tc.width, tc.height);
-            photo.thumbnail = tc.toDataURL('image/jpeg', 0.75);
+            photo.thumbnail = generateThumbnail(canvas, srcW, srcH);
 
             resolve(true);
         };
@@ -1137,15 +1166,10 @@ function applyResizeCanvas(photo, newWidth, newHeight, mode, quality) {
             photo.preview   = canvas.toDataURL('image/jpeg', quality / 100);
             photo.width     = newWidth;
             photo.height    = newHeight;
-            photo.sizeBytes = Math.round((photo.preview.length - 22) * 0.75);
+            photo.sizeBytes = estimateSizeFromDataUrl(photo.preview);
 
             // Regenerate thumbnail
-            const tc    = document.createElement('canvas');
-            const ratio = Math.max(160 / newWidth, 120 / newHeight);
-            tc.width    = Math.round(newWidth  * ratio);
-            tc.height   = Math.round(newHeight * ratio);
-            tc.getContext('2d').drawImage(canvas, 0, 0, tc.width, tc.height);
-            photo.thumbnail = tc.toDataURL('image/jpeg', 0.75);
+            photo.thumbnail = generateThumbnail(canvas, newWidth, newHeight);
 
             resolve(true);
         };
@@ -1192,12 +1216,7 @@ async function applyResize() {
             await new Promise(resolve => {
                 const img = new Image();
                 img.onload = () => {
-                    const tc    = document.createElement('canvas');
-                    const ratio = Math.max(160 / newWidth, 120 / newHeight);
-                    tc.width    = Math.round(newWidth  * ratio);
-                    tc.height   = Math.round(newHeight * ratio);
-                    tc.getContext('2d').drawImage(img, 0, 0, tc.width, tc.height);
-                    photo.thumbnail = tc.toDataURL('image/jpeg', 0.75);
+                    photo.thumbnail = generateThumbnail(img, newWidth, newHeight);
                     resolve();
                 };
                 img.onerror = resolve;

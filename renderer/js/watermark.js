@@ -985,13 +985,8 @@ async function applyWatermarkToPhotoCanvas(photo, settings, cachedLogo) {
     photo.preview = canvas.toDataURL('image/jpeg', 0.92);
     photo.width = canvas.width;
     photo.height = canvas.height;
-    photo.sizeBytes = Math.round((photo.preview.length - 22) * 0.75);
-    const tc = document.createElement('canvas');
-    const ratio = Math.max(160 / canvas.width, 120 / canvas.height);
-    tc.width = Math.round(canvas.width * ratio);
-    tc.height = Math.round(canvas.height * ratio);
-    tc.getContext('2d').drawImage(canvas, 0, 0, tc.width, tc.height);
-    photo.thumbnail = tc.toDataURL('image/jpeg', 0.75);
+    photo.sizeBytes = window.estimateSizeFromDataUrl(photo.preview);
+    photo.thumbnail = window.generateThumbnail(canvas, canvas.width, canvas.height);
     return true;
 }
 
