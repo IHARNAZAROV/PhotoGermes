@@ -10,6 +10,10 @@ const crop = { x: 8, y: 10, w: 84, h: 80 };
 let cropAspect  = null;   // null = free, number = real-pixel W/H ratio
 let frameLocked = false;  // frame lock button state
 let dragCtx     = null;   // active drag context
+// Current photo dimensions (set by app.js via cropSetPhoto) — needed to
+// convert between container-% and real image pixels in the pixel inputs.
+let _cropPhotoW = 0;
+let _cropPhotoH = 0;
 
 // ── Cursor per handle ─────────────────────────────────────
 const HANDLE_CURSORS = {
@@ -47,18 +51,29 @@ function applyCrop() {
     updatePixelInputs();
 }
 
+// ── Pixel / scale helpers ─────────────────────────────────
+// Returns the object-fit:contain scale for the current container + photo.
+// Falls back to 1 (container-pixel mode) when photo dims are unknown.
+function _getScale(c) {
+    if (!_cropPhotoW || !_cropPhotoH) return null;
+    return Math.min(c.offsetWidth / _cropPhotoW, c.offsetHeight / _cropPhotoH);
+}
+
 // ── Pixel inputs sync ──────────────────────────────────────
 function updatePixelInputs() {
     const c = getContainer();
     if (!c) return;
-    const cw = c.offsetWidth;
-    const ch = c.offsetHeight;
     const wInput = document.getElementById('frame-width');
     const hInput = document.getElementById('frame-height');
+    const scale  = _getScale(c);
     if (wInput && document.activeElement !== wInput)
-        wInput.value = Math.round(crop.w / 100 * cw);
+        wInput.value = scale
+            ? Math.round(crop.w / 100 * c.offsetWidth  / scale)
+            : Math.round(crop.w / 100 * c.offsetWidth);
     if (hInput && document.activeElement !== hInput)
-        hInput.value = Math.round(crop.h / 100 * ch);
+        hInput.value = scale
+            ? Math.round(crop.h / 100 * c.offsetHeight / scale)
+            : Math.round(crop.h / 100 * c.offsetHeight);
 }
 
 function initPixelInputs() {
@@ -80,7 +95,9 @@ function initPixelInputs() {
         if (!c) return;
         const px = parseInt(wInput.value);
         if (isNaN(px) || px < 1) { updatePixelInputs(); return; }
-        let newW = Math.max(MIN_PCT, Math.min(100 - crop.x, px / c.offsetWidth * 100));
+        const scale = _getScale(c);
+        const pct   = scale ? px * scale / c.offsetWidth * 100 : px / c.offsetWidth * 100;
+        let newW = Math.max(MIN_PCT, Math.min(100 - crop.x, pct));
         let newH = crop.h;
 
         const pctAspect = getPctAspect();
@@ -100,7 +117,9 @@ function initPixelInputs() {
         if (!c) return;
         const px = parseInt(hInput.value);
         if (isNaN(px) || px < 1) { updatePixelInputs(); return; }
-        let newH = Math.max(MIN_PCT, Math.min(100 - crop.y, px / c.offsetHeight * 100));
+        const scale = _getScale(c);
+        const pct   = scale ? px * scale / c.offsetHeight * 100 : px / c.offsetHeight * 100;
+        let newH = Math.max(MIN_PCT, Math.min(100 - crop.y, pct));
         let newW = crop.w;
 
         const pctAspect = getPctAspect();
@@ -364,6 +383,14 @@ function initCrop() {
 document.addEventListener('DOMContentLoaded', initCrop);
 
 // ── Public: set crop frame directly in % coordinates ──────
+// Called by app.js whenever the active photo changes so pixel inputs
+// can convert correctly between container-% and real image pixels.
+window.cropSetPhoto = function(photoW, photoH) {
+    _cropPhotoW = photoW || 0;
+    _cropPhotoH = photoH || 0;
+    updatePixelInputs();
+};
+
 window.cropSetPct = function(x, y, w, h) {
     Object.assign(crop, clampCrop(x, y, w, h));
     applyCrop();

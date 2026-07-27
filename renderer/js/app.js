@@ -628,6 +628,7 @@ async function loadEditorPreview(photo) {
     }
 
     placeholder.classList.remove('loading');
+    window.cropSetPhoto?.(photo.width, photo.height);
 
     if (src) {
         img.src = src;
