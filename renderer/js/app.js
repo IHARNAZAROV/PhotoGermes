@@ -820,14 +820,22 @@ let activeTool = 'crop';
 
 function initToolCards() {
     const toolCards = document.querySelectorAll('.tool-card');
-    const toolNames = ['crop', 'resize', 'watermark', 'batch', 'export'];
+    const toolNames = ['crop', 'resize', 'watermark', 'export'];
 
     toolCards.forEach((card, idx) => {
         card.addEventListener('click', () => {
+            const tool = toolNames[idx] ?? 'crop';
+
+            // Export opens a modal — don't change the active tool view
+            if (tool === 'export') {
+                window.openExportModal?.();
+                return;
+            }
+
             toolCards.forEach(c => c.classList.remove('active'));
             card.classList.add('active');
 
-            activeTool = toolNames[idx] ?? 'crop';
+            activeTool = tool;
             switchToTool(activeTool);
         });
     });
@@ -1655,6 +1663,103 @@ function initStraighten() {
 }
 
 // ── History modal ──────────────────────────────────────
+// ── Export Settings modal ──────────────────────────────
+function initExportModal() {
+    const modal     = document.getElementById('export-modal');
+    const closeBtn  = document.getElementById('export-close');
+    const cancelBtn = document.getElementById('export-cancel-btn');
+    const applyBtn  = document.getElementById('export-apply-btn');
+    if (!modal) return;
+
+    function open()  { modal.classList.add('open'); document.body.style.overflow = 'hidden'; }
+    function close() { modal.classList.remove('open'); document.body.style.overflow = ''; }
+
+    window.openExportModal = open;
+
+    if (closeBtn)  closeBtn.addEventListener('click', close);
+    if (cancelBtn) cancelBtn.addEventListener('click', close);
+    if (applyBtn)  applyBtn.addEventListener('click', close); // placeholder — wire to export logic later
+    modal.addEventListener('click', e => { if (e.target === modal) close(); });
+    document.addEventListener('keydown', e => {
+        if (e.key === 'Escape' && modal.classList.contains('open')) close();
+    });
+
+    // Format card selection
+    modal.querySelectorAll('.export-format-card').forEach(card => {
+        card.addEventListener('click', () => {
+            modal.querySelectorAll('.export-format-card').forEach(c => c.classList.remove('active'));
+            card.classList.add('active');
+            const fmt = card.dataset.format;
+            const qualitySection = document.getElementById('export-quality-section');
+            const pngNote        = document.getElementById('export-png-note');
+            if (fmt === 'png' || fmt === 'tiff') {
+                if (qualitySection) qualitySection.style.display = 'none';
+                if (pngNote && fmt === 'png') pngNote.style.display = '';
+                else if (pngNote) pngNote.style.display = 'none';
+            } else {
+                if (qualitySection) qualitySection.style.display = '';
+                if (pngNote) pngNote.style.display = 'none';
+            }
+        });
+    });
+
+    // Quality slider — live label + gradient update
+    const qSlider = document.getElementById('export-quality-slider');
+    const qVal    = document.getElementById('export-quality-val');
+    if (qSlider && qVal) {
+        function updateSlider(v) {
+            qVal.textContent = v + '%';
+            qSlider.style.background =
+                `linear-gradient(to right, var(--color-primary) ${v}%, var(--color-border) ${v}%)`;
+        }
+        qSlider.addEventListener('input', () => {
+            updateSlider(qSlider.value);
+            // Deactivate presets if user drags manually
+            modal.querySelectorAll('.export-preset-btn').forEach(b => {
+                b.classList.toggle('active', parseInt(b.dataset.q) === parseInt(qSlider.value));
+            });
+        });
+        updateSlider(qSlider.value);
+    }
+
+    // Quality preset buttons
+    modal.querySelectorAll('.export-preset-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+            modal.querySelectorAll('.export-preset-btn').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            const q = btn.dataset.q;
+            if (qSlider) { qSlider.value = q; qSlider.dispatchEvent(new Event('input')); }
+        });
+    });
+
+    // PNG compression slider — live label
+    const pngSlider = document.getElementById('export-png-slider');
+    const pngVal    = document.getElementById('export-png-val');
+    if (pngSlider && pngVal) {
+        pngSlider.addEventListener('input', () => { pngVal.textContent = pngSlider.value; });
+    }
+
+    // DPI card selection
+    modal.querySelectorAll('.export-dpi-card').forEach(card => {
+        card.addEventListener('click', () => {
+            modal.querySelectorAll('.export-dpi-card').forEach(c => c.classList.remove('active'));
+            card.classList.add('active');
+            const customInput = document.getElementById('export-dpi-custom');
+            if (customInput) customInput.disabled = card.dataset.dpi !== 'custom';
+        });
+        // Clicking the custom input shouldn't bubble and deselect
+        const input = card.querySelector('.export-dpi-input');
+        if (input) input.addEventListener('click', e => e.stopPropagation());
+    });
+
+    // Options toggles
+    modal.querySelectorAll('.export-toggle').forEach(toggle => {
+        toggle.addEventListener('click', () => {
+            toggle.dataset.state = toggle.dataset.state === 'on' ? 'off' : 'on';
+        });
+    });
+}
+
 function initHistoryModal() {
     const modal    = document.getElementById('history-modal');
     const openBtn  = document.querySelector('[data-action="history"]');
@@ -1735,5 +1840,6 @@ document.addEventListener('DOMContentLoaded', () => {
     updateUndoRedoBtns();
     initHistoryModal();
     initAboutModal();
+    initExportModal();
     initStraighten();
 });
