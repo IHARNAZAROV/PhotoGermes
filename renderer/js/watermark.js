@@ -319,19 +319,15 @@ function initWmImageControls() {
     let aspectRatio = 1; // natural W/H ratio of the uploaded image
     let isLinked    = true;
 
-    // File pick
-    fileInput?.addEventListener('change', () => {
-        const file = fileInput.files[0];
-        if (!file) return;
+    // ── Helper: load a watermark image file (SVG or raster) ──
+    function _readWatermarkFile(file) {
         const isSvg = file.type === 'image/svg+xml' || file.name.toLowerCase().endsWith('.svg');
         if (isSvg) {
-            // Read SVG text, store it, then show preview from data URL
             const reader = new FileReader();
             reader.onload = () => {
                 _wmOriginalSvgText = reader.result;
                 _wmIsSvg = true;
                 showWmSvgColorBlock(true);
-                // Reset color state
                 const preview = document.getElementById('wm-svg-color-preview');
                 const picker  = document.getElementById('wm-svg-color-input');
                 if (preview) preview.style.background = '#ffffff';
@@ -346,6 +342,13 @@ function initWmImageControls() {
             _wmSetObjectUrl(URL.createObjectURL(file));
             showImagePreview(_wmCurrentObjectUrl);
         }
+    }
+
+    // File pick
+    fileInput?.addEventListener('change', () => {
+        const file = fileInput.files[0];
+        if (!file) return;
+        _readWatermarkFile(file);
     });
 
     // Drag-over on upload zone
@@ -356,27 +359,7 @@ function initWmImageControls() {
         uploadZone.classList.remove('drag-active');
         const file = e.dataTransfer.files[0];
         if (!file || !file.type.startsWith('image/')) return;
-        const isSvg = file.type === 'image/svg+xml' || file.name.toLowerCase().endsWith('.svg');
-        if (isSvg) {
-            const reader = new FileReader();
-            reader.onload = () => {
-                _wmOriginalSvgText = reader.result;
-                _wmIsSvg = true;
-                showWmSvgColorBlock(true);
-                const preview = document.getElementById('wm-svg-color-preview');
-                const picker  = document.getElementById('wm-svg-color-input');
-                if (preview) preview.style.background = '#ffffff';
-                if (picker)  picker.value = '#ffffff';
-                showImagePreview(svgTextToDataUrl(_wmOriginalSvgText));
-            };
-            reader.readAsText(file);
-        } else {
-            _wmOriginalSvgText = null;
-            _wmIsSvg = false;
-            showWmSvgColorBlock(false);
-            _wmSetObjectUrl(URL.createObjectURL(file));
-            showImagePreview(_wmCurrentObjectUrl);
-        }
+        _readWatermarkFile(file);
     });
 
     function showImagePreview(url) {
