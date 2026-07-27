@@ -95,13 +95,13 @@ function initWmTextControls() {
     if (!textInput) return;
 
     // Sync text
-    textInput.addEventListener('input', updateWmOverlay);
+    textInput.addEventListener('input', scheduleWmOverlay);
 
     // Sync font family
     fontFamily?.addEventListener('change', updateWmOverlay);
 
     // Sync font size
-    fontSize?.addEventListener('input', updateWmOverlay);
+    fontSize?.addEventListener('input', scheduleWmOverlay);
 
     // Bold
     boldBtn?.addEventListener('click', () => {
@@ -129,7 +129,7 @@ function initWmTextControls() {
         const v = opacitySlider.value;
         if (opacityFill) opacityFill.style.width = v + '%';
         if (opacityVal)  opacityVal.textContent  = v + '%';
-        updateWmOverlay();
+        scheduleWmOverlay();
     });
 
     // Angle: numeric input ↔ slider sync
@@ -139,11 +139,11 @@ function initWmTextControls() {
 
     angleInput?.addEventListener('input', () => {
         if (angleSlider) angleSlider.value = angleInput.value;
-        updateWmOverlay();
+        scheduleWmOverlay();
     });
     angleSlider?.addEventListener('input', () => {
         if (angleInput) angleInput.value = angleSlider.value;
-        updateWmOverlay();
+        scheduleWmOverlay();
     });
     angleReset?.addEventListener('click', () => {
         if (angleInput)  angleInput.value  = '0';
@@ -158,7 +158,7 @@ function initWmTextControls() {
     });
 
     ['wm-text-offset-x', 'wm-text-offset-y'].forEach(id => {
-        document.getElementById(id)?.addEventListener('input', updateWmOverlay);
+        document.getElementById(id)?.addEventListener('input', scheduleWmOverlay);
     });
 
     // По диагонали: diagonal toggle — lock angle to 45°, update overlay
@@ -419,7 +419,7 @@ function initWmImageControls() {
                 ? widthInput.value   // одинаковый % — равномерное масштабирование
                 : Math.round(+widthInput.value / aspectRatio) || '';
         }
-        updateWmOverlay();
+        scheduleWmOverlay();
     });
     heightInput?.addEventListener('input', () => {
         if (isLinked && aspectRatio && widthInput) {
@@ -427,7 +427,7 @@ function initWmImageControls() {
                 ? heightInput.value
                 : Math.round(+heightInput.value * aspectRatio) || '';
         }
-        updateWmOverlay();
+        scheduleWmOverlay();
     });
 
     // Unit toggle px / %
@@ -472,17 +472,17 @@ function initWmImageControls() {
         const v = opacitySlider.value;
         if (opacityFill) opacityFill.style.width = v + '%';
         if (opacityVal)  opacityVal.textContent  = v + '%';
-        updateWmOverlay();
+        scheduleWmOverlay();
     });
 
     // Angle
     angleInput?.addEventListener('input', () => {
         if (angleSlider) angleSlider.value = angleInput.value;
-        updateWmOverlay();
+        scheduleWmOverlay();
     });
     angleSlider?.addEventListener('input', () => {
         if (angleInput) angleInput.value = angleSlider.value;
-        updateWmOverlay();
+        scheduleWmOverlay();
     });
     angleReset?.addEventListener('click', () => {
         if (angleInput)  angleInput.value  = '0';
@@ -497,7 +497,7 @@ function initWmImageControls() {
     });
 
     ['wm-img-offset-x', 'wm-img-offset-y'].forEach(id => {
-        document.getElementById(id)?.addEventListener('input', updateWmOverlay);
+        document.getElementById(id)?.addEventListener('input', scheduleWmOverlay);
     });
 }
 
@@ -545,6 +545,18 @@ function syncWmOverlayBounds() {
     overlay.style.bottom = 'auto';
     overlay.style.width = `${visibleW}px`;
     overlay.style.height = `${visibleH}px`;
+}
+
+// ── Debounced overlay scheduler (RAF-based) ────────────
+// High-frequency input events (sliders, text) use this instead of calling
+// updateWmOverlay() directly, so the DOM is updated at most once per frame.
+let _wmRafId = null;
+function scheduleWmOverlay() {
+    if (_wmRafId !== null) return;           // already queued for this frame
+    _wmRafId = requestAnimationFrame(() => {
+        _wmRafId = null;
+        updateWmOverlay();
+    });
 }
 
 // ── Overlay update (live preview) ─────────────────────

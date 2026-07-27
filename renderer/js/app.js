@@ -99,6 +99,8 @@ function formatSize(bytes) {
     if (bytes >= 1024)        return (bytes / 1024).toFixed(0) + ' КБ';
     return bytes + ' Б';
 }
+// Expose so resize.js and other modules can reuse without duplicating
+window.formatSize = formatSize;
 function formatRes(w, h) {
     return (w && h) ? `${w} × ${h}` : '— × —';
 }
@@ -1524,11 +1526,16 @@ function snapshotPhoto(photo) {
 }
 
 /** Push a snapshot for the currently selected photo onto its undo stack. */
+const MAX_UNDO_STEPS = 20;
+
 function pushUndo() {
     if (selectedIndex < 0) return;
     const photo = photos[selectedIndex];
     if (!photo) return;
-    photoUndoStack(photo).push(snapshotPhoto(photo));
+    const stack = photoUndoStack(photo);
+    stack.push(snapshotPhoto(photo));
+    // Trim oldest entries to cap memory usage
+    if (stack.length > MAX_UNDO_STEPS) stack.splice(0, stack.length - MAX_UNDO_STEPS);
     // Any new action clears the redo branch for this photo
     photo._redoStack = [];
     updateUndoRedoBtns();
@@ -1648,7 +1655,7 @@ function initTooltips() {
         if (e.target.closest('[data-tooltip]')) hide();
     });
     document.addEventListener('click', hide);
-    document.addEventListener('scroll', hide, true);
+    document.addEventListener('scroll', hide, { passive: true, capture: true });
 }
 
 // ── Editor transform ────────────────────────────────────

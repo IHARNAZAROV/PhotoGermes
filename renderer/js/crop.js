@@ -393,9 +393,11 @@ window.cropGetNormalized = function(photoW, photoH) {
 
     const cW = c.offsetWidth;
     const cH = c.offsetHeight;
+    if (!cW || !cH) return null;    // container not yet rendered / hidden
 
     // How object-fit:contain scales the image inside the container
     const scale     = Math.min(cW / photoW, cH / photoH);
+    if (!scale) return null;
     const renderedW = photoW * scale;
     const renderedH = photoH * scale;
     const offX      = (cW - renderedW) / 2;   // horizontal letterbox

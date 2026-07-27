@@ -11,6 +11,7 @@
     let _triggerEl = null;
     let _open      = false;
     let _hueReady  = false;
+    let _lastSvH   = -1;   // track last hue used to draw the SV gradient
 
     // ── DOM-ссылки ────────────────────────────────────
     let popup, svCanvas, svCtx, svCursor,
@@ -56,6 +57,9 @@
 
     // ── Рендер SV-градиента ────────────────────────────
     function drawSv() {
+        // Skip redraw if hue hasn't changed — gradient is identical
+        if (_lastSvH === H) return;
+        _lastSvH = H;
         const w = svCanvas.width, h = svCanvas.height;
         svCtx.fillStyle = `hsl(${H},100%,50%)`;
         svCtx.fillRect(0,0,w,h);
