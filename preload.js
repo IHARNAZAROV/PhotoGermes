@@ -27,4 +27,12 @@ contextBridge.exposeInMainWorld("api", {
 
     /** Convert a photo to the target format/quality using Sharp. Returns Promise<{ok,dataUrl}|{ok,error}>. */
     exportPhoto:   (params)                         => ipcRenderer.invoke("photos:export", params),
+
+    /**
+     * Full-resolution non-destructive pipeline.
+     * Applies ops (crop, resize) to the original file via Sharp and encodes
+     * the result in the requested format, preserving EXIF/ICC metadata.
+     * Returns Promise<{ok, dataUrl}|{ok, error}>.
+     */
+    processAndExport: (params) => ipcRenderer.invoke("photos:process-and-export", params),
 });

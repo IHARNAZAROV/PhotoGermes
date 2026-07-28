@@ -97,6 +97,7 @@ function registerHandlers() {
                     fit: 'fill',
                     kernel: sharpKernel,
                 })
+                .withMetadata()
                 .jpeg({ quality: Math.max(1, Math.min(100, quality)) })
                 .toBuffer();
             return { ok: true, dataUrl: "data:image/jpeg;base64," + buf.toString("base64") };
@@ -123,9 +124,9 @@ function registerHandlers() {
             let src;
             if (srcDataUrl) {
                 const base64 = srcDataUrl.replace(/^data:image\/\w+;base64,/, "");
-                src = sharp(Buffer.from(base64, "base64"));
+                src = sharp(Buffer.from(base64, "base64")).withMetadata();
             } else if (srcPath && fs.existsSync(srcPath)) {
-                src = sharp(srcPath);
+                src = sharp(srcPath).withMetadata();
             } else {
                 return { ok: false, error: 'нет источника для конвертации' };
             }
@@ -141,6 +142,88 @@ function registerHandlers() {
 
             const mime = format === 'png' ? 'image/png' : format === 'tiff' ? 'image/tiff' : `image/${format}`;
             return { ok: true, dataUrl: `data:${mime};base64,` + buf.toString("base64") };
+        } catch (e) {
+            return { ok: false, error: e.message };
+        }
+    });
+
+    // Full-resolution non-destructive processing pipeline.
+    // Applies a list of ops (crop, resize) to the original file via Sharp,
+    // then encodes the result in the requested format.
+    // Preserves EXIF/ICC metadata throughout.
+    ipcMain.handle("photos:process-and-export", async (_e, { originalFilePath, ops, format, quality, pngCompression }) => {
+        if (!sharp) return { ok: false, error: 'sharp не установлен' };
+        if (!originalFilePath || !fs.existsSync(originalFilePath))
+            return { ok: false, error: 'исходный файл не найден: ' + originalFilePath };
+        try {
+            let buf = fs.readFileSync(originalFilePath);
+
+            for (const op of (ops || [])) {
+                if (op.type === 'crop') {
+                    const meta   = await sharp(buf).metadata();
+                    const curW   = meta.width;
+                    const curH   = meta.height;
+                    let workBuf  = buf;
+                    let workW    = curW;
+                    let workH    = curH;
+
+                    if (op.angle && op.angle !== 0) {
+                        // Rotate then center-clip to original size — mirrors canvas rotate+clip behavior
+                        workBuf = await sharp(buf)
+                            .rotate(op.angle, { background: { r: 0, g: 0, b: 0, alpha: 0 } })
+                            .withMetadata()
+                            .toBuffer();
+                        const rotMeta = await sharp(workBuf).metadata();
+                        const clipLeft = Math.max(0, Math.round((rotMeta.width  - curW) / 2));
+                        const clipTop  = Math.max(0, Math.round((rotMeta.height - curH) / 2));
+                        const clipW    = Math.min(curW,  rotMeta.width  - clipLeft);
+                        const clipH    = Math.min(curH, rotMeta.height - clipTop);
+                        workBuf = await sharp(workBuf)
+                            .extract({ left: clipLeft, top: clipTop, width: clipW, height: clipH })
+                            .withMetadata()
+                            .toBuffer();
+                        workW = clipW;
+                        workH = clipH;
+                    }
+
+                    // Apply normalized crop rect to full-resolution image
+                    const left   = Math.round(op.norm.x  * workW);
+                    const top    = Math.round(op.norm.y  * workH);
+                    const width  = Math.max(1, Math.round((op.norm.x2 - op.norm.x) * workW));
+                    const height = Math.max(1, Math.round((op.norm.y2 - op.norm.y) * workH));
+                    const safeL  = Math.min(left, workW - 1);
+                    const safeT  = Math.min(top,  workH - 1);
+                    const safeW  = Math.min(width,  workW - safeL);
+                    const safeH  = Math.min(height, workH - safeT);
+                    buf = await sharp(workBuf)
+                        .extract({ left: safeL, top: safeT, width: safeW, height: safeH })
+                        .withMetadata()
+                        .toBuffer();
+
+                } else if (op.type === 'resize') {
+                    const kernelMap = sharp.kernel || {};
+                    const kernel    = kernelMap[op.kernel] ?? kernelMap.lanczos3;
+                    const opts      = { fit: 'fill' };
+                    if (kernel !== undefined) opts.kernel = kernel;
+                    buf = await sharp(buf)
+                        .resize(op.width, op.height, opts)
+                        .withMetadata()
+                        .toBuffer();
+                }
+            }
+
+            // Final format output
+            const q    = Math.max(1, Math.min(100, quality ?? 85));
+            let outBuf;
+            switch (format) {
+                case 'png':  outBuf = await sharp(buf).withMetadata().png({ compressionLevel: Math.max(0, Math.min(9, pngCompression ?? 6)) }).toBuffer(); break;
+                case 'webp': outBuf = await sharp(buf).withMetadata().webp({ quality: q }).toBuffer(); break;
+                case 'tiff': outBuf = await sharp(buf).withMetadata().tiff({ quality: q }).toBuffer(); break;
+                default:     outBuf = await sharp(buf).withMetadata().jpeg({ quality: q }).toBuffer(); break;
+            }
+
+            const mime = format === 'png' ? 'image/png' : format === 'tiff' ? 'image/tiff' : `image/${format}`;
+            return { ok: true, dataUrl: `data:${mime};base64,` + outBuf.toString('base64') };
         } catch (e) {
             return { ok: false, error: e.message };
         }

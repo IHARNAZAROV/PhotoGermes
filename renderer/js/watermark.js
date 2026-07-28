@@ -970,6 +970,10 @@ async function applyWatermarkToPhotoCanvas(photo, settings, cachedLogo) {
     photo.height = canvas.height;
     photo.sizeBytes = window.estimateSizeFromDataUrl(photo.preview);
     photo.thumbnail = window.generateThumbnail(canvas, canvas.width, canvas.height);
+    // Mark that a canvas-level (bitmap) op has been baked into photo.preview.
+    // The full-resolution pipeline will fall back to photo.preview for this photo
+    // because the watermark cannot be replayed from the original via Sharp alone.
+    photo._hasBitmapOp = true;
     return true;
 }
 

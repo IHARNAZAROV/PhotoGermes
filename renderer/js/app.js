@@ -660,7 +660,14 @@ async function addPhotosByPath(filePaths) {
     const startIndex = photos.length;
     newPaths.forEach(filePath => photos.push({
         name: filePath.split(/[\\/]/).pop(),
-        filePath, width: 0, height: 0, sizeBytes: 0,
+        filePath,
+        // originalFilePath is set once and never changed — used by the
+        // full-resolution processing pipeline to replay ops from the source.
+        originalFilePath: filePath,
+        // ops: list of non-destructive operations applied in order.
+        // Each op is { type:'crop', norm, angle } or { type:'resize', width, height, kernel }.
+        ops: [],
+        width: 0, height: 0, sizeBytes: 0,
         thumbnail: null, preview: null, objectUrl: null
     }));
 
@@ -1053,6 +1060,12 @@ function applyCropToPhotoCanvas(photo, norm) {
             // Thumbnail
             photo.thumbnail = generateThumbnail(canvas, srcW, srcH);
 
+            // Record op for full-resolution replay at save/export time.
+            // norm coords are fractions of the image at the time of this op,
+            // so they stay valid relative to the current pipeline position.
+            if (!photo.ops) photo.ops = [];
+            photo.ops.push({ type: 'crop', norm: { ...norm }, angle: straightenAngle });
+
             resolve(true);
         };
         img.onerror = () => resolve(false);
@@ -1213,9 +1226,12 @@ async function applyResize() {
     let ok = false;
 
     if (isElectron && photo.filePath && typeof window.api?.resizePhoto === 'function') {
-        // Electron: Sharp-based resize with the selected kernel
+        // Electron: Sharp-based resize with the selected kernel.
+        // Use the original file as the source so the display preview is accurate
+        // (avoids cascading JPEG degradation from applying resize to the screen preview).
+        const srcPath = photo.originalFilePath || photo.filePath;
         const result = await window.api.resizePhoto({
-            filePath: photo.filePath,
+            filePath: srcPath,
             newWidth, newHeight, kernel, quality
         });
         if (result?.ok) {
@@ -1223,6 +1239,10 @@ async function applyResize() {
             photo.width     = newWidth;
             photo.height    = newHeight;
             photo.sizeBytes = estimateSizeFromDataUrl(result.dataUrl);
+
+            // Record op for the full-resolution pipeline at save/export time.
+            if (!photo.ops) photo.ops = [];
+            photo.ops.push({ type: 'resize', width: newWidth, height: newHeight, kernel });
 
             // Regenerate thumbnail from resized data
             await new Promise(resolve => {
@@ -1418,11 +1438,42 @@ async function browserSaveAs(photo, _rawDataUrl) {
 
 /**
  * Convert photo to the configured export format+quality using sharp (Electron).
- * Returns the resulting data-URL, or the raw preview data-URL if sharp is
- * unavailable. Returns null when there are no edits and no Electron API.
+ *
+ * Strategy (Electron only):
+ *   1. If the photo has non-destructive ops recorded AND an originalFilePath AND
+ *      no bitmap-level op (watermark baked in), replay the ops on the full-resolution
+ *      original via photos:process-and-export — preserves quality and EXIF metadata.
+ *   2. Otherwise fall back to the legacy path: pass photo.preview (the display-res
+ *      JPEG) to photos:export. This covers watermark or any state that can't be
+ *      replayed cleanly from the original.
+ *
+ * Returns the resulting data-URL, or null when there are no edits and no Electron API.
  */
 async function prepareExportDataUrl(photo) {
-    const hasEdits   = photoUndoStack(photo).length > 0;
+    const hasEdits = photoUndoStack(photo).length > 0;
+    const ops      = photo.ops || [];
+
+    // ── Path 1: full-resolution pipeline (preferred) ──────────────────────
+    if (
+        isElectron &&
+        photo.originalFilePath &&
+        ops.length > 0 &&
+        !photo._hasBitmapOp &&
+        typeof window.api?.processAndExport === 'function'
+    ) {
+        const conv = await window.api.processAndExport({
+            originalFilePath: photo.originalFilePath,
+            ops,
+            format:         exportSettings.format,
+            quality:        exportSettings.quality,
+            pngCompression: exportSettings.pngCompression,
+        });
+        if (conv?.ok) return conv.dataUrl;
+        // Log the error but fall through to the legacy path rather than failing silently
+        console.warn('[prepareExportDataUrl] process-and-export failed:', conv?.error);
+    }
+
+    // ── Path 2: legacy path (display-res preview → sharp re-encode) ───────
     const srcDataUrl = hasEdits ? (photo.preview ?? await getPhotoDataUrl(photo)) : null;
     let result       = srcDataUrl;
 
@@ -1604,6 +1655,10 @@ function snapshotPhoto(photo) {
         height:        photo.height,
         sizeBytes:     photo.sizeBytes,
         thumbnail:     photo.thumbnail,
+        // Deep-copy ops and bitmap-op flag so undo/redo correctly restores the
+        // full-resolution pipeline state alongside the display preview.
+        ops:           (photo.ops || []).map(o => o.norm ? { ...o, norm: { ...o.norm } } : { ...o }),
+        hasBitmapOp:   !!photo._hasBitmapOp,
     };
 }
 
@@ -1665,6 +1720,9 @@ async function restorePhotoSnapshot(photo, snap) {
     photo.height    = snap.height;
     photo.sizeBytes = snap.sizeBytes;
     photo.thumbnail = snap.thumbnail;
+    // Restore full-resolution pipeline state so undo/redo keeps save correct.
+    photo.ops          = snap.ops ? snap.ops.map(o => o.norm ? { ...o, norm: { ...o.norm } } : { ...o }) : [];
+    photo._hasBitmapOp = !!snap.hasBitmapOp;
 
     patchThumbnail(selectedIndex);
     await loadEditorPreview(photo);
