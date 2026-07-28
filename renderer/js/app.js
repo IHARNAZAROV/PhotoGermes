@@ -2276,4 +2276,55 @@ document.addEventListener('DOMContentLoaded', () => {
     initAboutModal();
     initExportPage();
     initStraighten();
+    initInfoCarousel();
 });
+
+// ── Info card carousel ──────────────────────────────────
+function initInfoCarousel() {
+    const slides = Array.from(document.querySelectorAll('.app-info-slide'));
+    const dots   = Array.from(document.querySelectorAll('#app-info-dots .app-info-dot'));
+    if (!slides.length) return;
+
+    let current = 0;
+    let timer   = null;
+
+    function goTo(next) {
+        if (next === current) return;
+        const prev = current;
+        current = next;
+
+        // animate out
+        slides[prev].classList.add('exit');
+        slides[prev].classList.remove('active');
+
+        // animate in
+        slides[current].classList.add('active');
+
+        // clean up exit class after transition
+        slides[prev].addEventListener('transitionend', function handler() {
+            slides[prev].classList.remove('exit');
+            slides[prev].removeEventListener('transitionend', handler);
+        });
+
+        dots.forEach((d, i) => d.classList.toggle('active', i === current));
+    }
+
+    function next() { goTo((current + 1) % slides.length); }
+
+    function startTimer() { timer = setInterval(next, 4000); }
+    function resetTimer()  { clearInterval(timer); startTimer(); }
+
+    dots.forEach(dot => {
+        dot.addEventListener('click', () => {
+            goTo(Number(dot.dataset.slide));
+            resetTimer();
+        });
+    });
+
+    // pause on hover
+    const card = document.getElementById('app-info-card');
+    card.addEventListener('mouseenter', () => clearInterval(timer));
+    card.addEventListener('mouseleave', startTimer);
+
+    startTimer();
+}

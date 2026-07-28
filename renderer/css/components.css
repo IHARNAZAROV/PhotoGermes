@@ -252,9 +252,44 @@
   background: var(--color-primary-muted);
   border-radius: var(--radius-lg);
   border: 1px solid rgba(22,98,76,.15);
+  overflow: hidden;
+}
+
+/* Slides container */
+.app-info-slides {
+  position: relative;
+  min-height: 88px;
+}
+
+.app-info-slide {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  transform: translateX(18px);
+  transition: opacity 0.35s ease, transform 0.35s ease;
+  pointer-events: none;
+}
+.app-info-slide.active {
+  opacity: 1;
+  transform: translateX(0);
+  pointer-events: auto;
+  position: relative;
+}
+.app-info-slide.exit {
+  opacity: 0;
+  transform: translateX(-18px);
+  position: absolute;
+}
+
+.app-info-card-icon {
+  font-size: 18px;
+  line-height: 1;
+  margin-bottom: 5px;
 }
 .app-info-card-title { font-weight: 600; color: var(--color-primary); font-size: var(--text-md); margin-bottom: 4px; }
 .app-info-card-desc  { font-size: var(--text-sm); color: var(--color-muted); line-height: 1.5; }
+
+/* Dots */
 .app-info-dots {
   display: flex;
   gap: 5px;
@@ -265,8 +300,16 @@
   height: 6px;
   border-radius: 50%;
   background: var(--color-border2);
+  cursor: pointer;
+  transition: background 0.2s, transform 0.2s;
 }
-.app-info-dot.active { background: var(--color-primary); }
+.app-info-dot:hover { transform: scale(1.4); }
+.app-info-dot.active {
+  background: var(--color-primary);
+  width: 16px;
+  border-radius: 3px;
+  transition: background 0.2s, width 0.25s ease, border-radius 0.25s ease;
+}
 
 /* ─────────────────────────────────────
    Gallery Panel

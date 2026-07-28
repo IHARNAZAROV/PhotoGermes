@@ -228,15 +228,40 @@
       <!-- Spacer pushes card to bottom -->
       <div class="sidebar-spacer"></div>
 
-      <!-- App info card -->
-      <div class="app-info-card">
-        <div class="app-info-card-title">Фотоцентр ГермесГарант</div>
-        <div class="app-info-card-desc">Быстрое редактирование фотографий: обрезка, изменение размера и добавление водяных знаков</div>
-        <div class="app-info-dots">
-          <div class="app-info-dot active"></div>
-          <div class="app-info-dot"></div>
-          <div class="app-info-dot"></div>
-          <div class="app-info-dot"></div>
+      <!-- App info card / carousel -->
+      <div class="app-info-card" id="app-info-card">
+        <div class="app-info-slides">
+
+          <div class="app-info-slide active">
+            <div class="app-info-card-icon">✂️</div>
+            <div class="app-info-card-title">Обрезка</div>
+            <div class="app-info-card-desc">Выберите соотношение сторон или задайте произвольную рамку — перетащите края прямо на холсте.</div>
+          </div>
+
+          <div class="app-info-slide">
+            <div class="app-info-card-icon">📐</div>
+            <div class="app-info-card-title">Изменение размера</div>
+            <div class="app-info-card-desc">Введите точные размеры в пикселях или процентах. Пропорции сохраняются автоматически.</div>
+          </div>
+
+          <div class="app-info-slide">
+            <div class="app-info-card-icon">🔏</div>
+            <div class="app-info-card-title">Ватермарк</div>
+            <div class="app-info-card-desc">Добавьте текст или логотип, настройте прозрачность, угол и позицию одним перетаскиванием.</div>
+          </div>
+
+          <div class="app-info-slide">
+            <div class="app-info-card-icon">💾</div>
+            <div class="app-info-card-title">Экспорт</div>
+            <div class="app-info-card-desc">Выберите формат JPEG, PNG или WebP и задайте качество перед сохранением пакета фото.</div>
+          </div>
+
+        </div>
+        <div class="app-info-dots" id="app-info-dots">
+          <div class="app-info-dot active" data-slide="0"></div>
+          <div class="app-info-dot" data-slide="1"></div>
+          <div class="app-info-dot" data-slide="2"></div>
+          <div class="app-info-dot" data-slide="3"></div>
         </div>
       </div>
 
