@@ -57,7 +57,7 @@ renderer/
 - `--color-bg: #f6f8f9` — app background
 - `--color-panel: #ffffff` — panel surfaces
 - `--color-border: #e7ebef` — subtle borders
-- Font: **Inter** (Google Fonts CDN)
+- Font: **Inter** (локальные woff2-файлы в `renderer/fonts/`, без сетевого запроса)
 
 ## User preferences
 
