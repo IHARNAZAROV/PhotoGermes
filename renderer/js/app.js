@@ -389,6 +389,9 @@ function updateSelectionUI() {
         else                  deleteLbl.textContent = 'Удалить';
     }
 
+    // Nav arrows
+    updateNavBtns();
+
     // Apply button label
     updateApplyBtn();
 
@@ -991,6 +994,26 @@ function initDeleteButton() {
     btn.addEventListener('click', () => {
         if (checkedIndices.size > 0 || selectedIndex >= 0) deleteChecked();
     });
+}
+
+function initNavBtns() {
+    const btnPrev = document.getElementById('btn-nav-prev');
+    const btnNext = document.getElementById('btn-nav-next');
+    if (!btnPrev || !btnNext) return;
+    btnPrev.addEventListener('click', () => {
+        if (selectedIndex > 0) selectPhoto(selectedIndex - 1);
+    });
+    btnNext.addEventListener('click', () => {
+        if (selectedIndex < photos.length - 1) selectPhoto(selectedIndex + 1);
+    });
+}
+
+function updateNavBtns() {
+    const btnPrev = document.getElementById('btn-nav-prev');
+    const btnNext = document.getElementById('btn-nav-next');
+    if (!btnPrev || !btnNext) return;
+    btnPrev.disabled = selectedIndex <= 0;
+    btnNext.disabled = selectedIndex < 0 || selectedIndex >= photos.length - 1;
 }
 
 function initSelectAllCheckbox() {
@@ -2253,6 +2276,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     initAddPhotoButtons();
     initDeleteButton();
+    initNavBtns();
     initSelectAllCheckbox();
     initClearSelectionBtn();
     initDragDrop();
