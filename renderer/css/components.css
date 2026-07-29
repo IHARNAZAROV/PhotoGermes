@@ -2801,45 +2801,11 @@
 ═══════════════════════════════════════ */
 
 /* ── Sub-tab bar ────────────────────────────────────── */
-.wm-subtab-bar {
-  display: flex;
-  gap: 0;
+.wm-mode-wrap {
   padding: 8px 12px;
   border-bottom: 1px solid var(--color-border);
   background: var(--color-panel);
   flex-shrink: 0;
-}
-
-.wm-subtab {
-  flex: 1;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 6px;
-  height: 34px;
-  border: 1.5px solid var(--color-border);
-  border-radius: var(--radius-sm);
-  background: transparent;
-  font-family: var(--font-family);
-  font-size: var(--text-sm);
-  font-weight: 500;
-  color: var(--color-muted);
-  cursor: pointer;
-  transition: background var(--transition), color var(--transition),
-              border-color var(--transition);
-}
-
-.wm-subtab:first-child { border-right: none; border-radius: var(--radius-sm) 0 0 var(--radius-sm); }
-.wm-subtab:last-child  { border-left: none; border-radius: 0 var(--radius-sm) var(--radius-sm) 0; }
-
-.wm-subtab.active {
-  background: var(--color-primary);
-  border-color: var(--color-primary);
-  color: #fff;
-}
-.wm-subtab:not(.active):hover {
-  background: var(--color-bg);
-  color: var(--color-text);
 }
 
 /* ── Panel (scrollable body) ────────────────────────── */

@@ -62,12 +62,14 @@ function initWmSubTabs() {
     const tabImage = document.getElementById('wm-tab-image');
     const panelText  = document.getElementById('wm-panel-text');
     const panelImage = document.getElementById('wm-panel-image');
+    const indicator  = document.getElementById('wm-pill-indicator');
     if (!tabText || !tabImage) return;
 
     function activate(panel) {
         const isText = panel === 'text';
         tabText.classList.toggle('active', isText);
         tabImage.classList.toggle('active', !isText);
+        if (indicator) indicator.classList.toggle('right', !isText);
         panelText.style.display  = isText  ? 'flex' : 'none';
         panelImage.style.display = !isText ? 'flex' : 'none';
         updateWmOverlay();
