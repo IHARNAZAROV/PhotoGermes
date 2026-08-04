@@ -19,7 +19,6 @@ let _activeArea = null;   // элемент, на котором слушает�
 function getSlider()     { return document.getElementById('zoom-slider'); }
 function getLabel()      { return document.getElementById('zoom-label'); }
 function getWrap()       { return _activeWrap; }
-function getCanvasArea() { return _activeArea; }
 
 // ── Применить масштаб ─────────────────────────────────────
 function setZoom(val) {
