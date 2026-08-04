@@ -2167,19 +2167,19 @@ function _applyExportSettingsToUI(page) {
     if (suffixInput) suffixInput.value = s.suffix || '';
 }
 
-function initHistoryModal() {
-    const modal    = document.getElementById('history-modal');
-    const openBtn  = document.querySelector('[data-action="history"]');
-    const closeBtn = document.getElementById('history-close');
-    const closeFtr = document.getElementById('history-close-btn');
+function initModal(modalId, openActionSelector, closeBtnIds = []) {
+    const modal   = document.getElementById(modalId);
+    const openBtn = openActionSelector ? document.querySelector(openActionSelector) : null;
     if (!modal) return;
 
     function open()  { modal.classList.add('open'); document.body.style.overflow = 'hidden'; }
     function close() { modal.classList.remove('open'); document.body.style.overflow = ''; }
 
-    if (openBtn)  openBtn.addEventListener('click', open);
-    if (closeBtn) closeBtn.addEventListener('click', close);
-    if (closeFtr) closeFtr.addEventListener('click', close);
+    if (openBtn) openBtn.addEventListener('click', open);
+    closeBtnIds.forEach(id => {
+        const btn = document.getElementById(id);
+        if (btn) btn.addEventListener('click', close);
+    });
 
     modal.addEventListener('click', e => { if (e.target === modal) close(); });
 
@@ -2188,28 +2188,13 @@ function initHistoryModal() {
     });
 }
 
+function initHistoryModal() {
+    initModal('history-modal', '[data-action="history"]', ['history-close', 'history-close-btn']);
+}
+
 // ── About modal ────────────────────────────────────────
 function initAboutModal() {
-    const modal    = document.getElementById('about-modal');
-    const openBtn  = document.querySelector('[data-action="about"]');
-    const closeBtn = document.getElementById('about-close');
-    const closeFtr = document.getElementById('about-close-btn');
-    if (!modal) return;
-
-    function open()  { modal.classList.add('open'); document.body.style.overflow = 'hidden'; }
-    function close() { modal.classList.remove('open'); document.body.style.overflow = ''; }
-
-    if (openBtn)  openBtn.addEventListener('click', open);
-    if (closeBtn) closeBtn.addEventListener('click', close);
-    if (closeFtr) closeFtr.addEventListener('click', close);
-
-    // Close on backdrop click
-    modal.addEventListener('click', e => { if (e.target === modal) close(); });
-
-    // Close on Escape
-    document.addEventListener('keydown', e => {
-        if (e.key === 'Escape' && modal.classList.contains('open')) close();
-    });
+    initModal('about-modal', '[data-action="about"]', ['about-close', 'about-close-btn']);
 }
 
 // ── Expose current photo for resize.js ─────────────────
