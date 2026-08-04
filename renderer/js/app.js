@@ -1072,7 +1072,7 @@ async function applyCropCurrent() {
 
     pushUndo();
     const ok = await applyCropToPhotoCanvas(photo, norm);
-    if (!ok) { photoUndoStack(photo).pop(); updateUndoRedoBtns(); showToast('Не удалось применить обрезку'); return; }
+    if (!ok) { const snap = photoUndoStack(photo).pop(); freeSnapshot(snap); updateUndoRedoBtns(); showToast('Не удалось применить обрезку'); return; }
 
     patchThumbnail(selectedIndex);
     await loadEditorPreview(photo);
@@ -1243,7 +1243,8 @@ async function applyResize() {
     if (btn) btn.disabled = false;
 
     if (!ok) {
-        photoUndoStack(photo).pop();
+        const snap = photoUndoStack(photo).pop();
+        freeSnapshot(snap);
         updateUndoRedoBtns();
         showToast('Не удалось применить изменение размера');
         return;
