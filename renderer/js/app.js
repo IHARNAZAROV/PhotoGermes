@@ -890,7 +890,6 @@ function switchToTool(toolName) {
                         wmPlaceholder.classList.add('has-photo');
                     }
                 }
-                window.wmActivate?.();
             } else {
                 loadEditorPreview(photo);
             }
@@ -1136,9 +1135,6 @@ async function applyToChecked() {
 }
 
 function initCropButtons() {
-    const applyOne = document.getElementById('btn-apply-crop');
-    if (applyOne) applyOne.addEventListener('click', applyCropCurrent);
-
     const applyAll = document.getElementById('btn-apply-all');
     if (applyAll) applyAll.addEventListener('click', applyMain);
 }
