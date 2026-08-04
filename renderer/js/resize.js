@@ -348,14 +348,7 @@ function updateResizeResult() {
     }
 }
 
-// Reuse the shared helper exposed by app.js (same logic, avoids duplication).
-// Fall back to a local copy in case of unexpected load order.
-function formatResizeSize(bytes) {
-    if (window.formatSize) return window.formatSize(bytes);
-    if (bytes >= 1024 * 1024) return (bytes / (1024 * 1024)).toFixed(1) + ' МБ';
-    if (bytes >= 1024)        return Math.round(bytes / 1024) + ' КБ';
-    return bytes + ' Б';
-}
+function formatResizeSize(bytes) { return window.formatSize(bytes); }
 
 window.__updateResizeResult = updateResizeResult;
 
