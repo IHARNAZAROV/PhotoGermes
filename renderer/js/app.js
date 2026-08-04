@@ -2172,8 +2172,8 @@ function initModal(modalId, openActionSelector, closeBtnIds = []) {
     const openBtn = openActionSelector ? document.querySelector(openActionSelector) : null;
     if (!modal) return;
 
-    function open()  { modal.classList.add('open'); document.body.style.overflow = 'hidden'; }
-    function close() { modal.classList.remove('open'); document.body.style.overflow = ''; }
+    function open()  { modal.classList.add('open'); }
+    function close() { modal.classList.remove('open'); }
 
     if (openBtn) openBtn.addEventListener('click', open);
     closeBtnIds.forEach(id => {
