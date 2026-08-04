@@ -700,6 +700,7 @@
 ───────────────────────────────────── */
 .inspector-crop-panel {
   flex: 1;
+  min-height: 0;
   overflow-y: auto;
   display: flex;
   flex-direction: column;
@@ -1723,6 +1724,7 @@
 /* ── Body ───────────────────────────────────────────── */
 .resize-inspector-body {
   flex: 1;
+  min-height: 0;
   overflow-y: auto;
   padding: 16px;
   display: flex;
@@ -2483,6 +2485,7 @@
 /* ── Panel (scrollable body) ────────────────────────── */
 .wm-panel {
   flex: 1;
+  min-height: 0;
   overflow-y: auto;
   display: flex;
   flex-direction: column;
