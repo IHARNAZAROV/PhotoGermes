@@ -25,8 +25,8 @@ html, body {
   grid-template-rows: var(--header-h) 1fr var(--footer-h);
   grid-template-columns: 1fr;
   height: 100vh;
-  min-width: 1360px;
-  min-height: 820px;
+  min-width: 900px;
+  min-height: 700px;
 }
 
 /* ── Header ── */
@@ -48,7 +48,7 @@ html, body {
   grid-row: 2;
   grid-column: 1;
   display: grid;
-  grid-template-columns: var(--sidebar-w) var(--gallery-w) 1fr var(--inspector-w);
+  grid-template-columns: minmax(160px, var(--sidebar-w)) minmax(190px, var(--gallery-w)) 1fr var(--inspector-w);
   grid-template-rows: 1fr;
   overflow: hidden;
   padding: 10px;

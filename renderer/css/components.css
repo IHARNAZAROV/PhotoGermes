@@ -91,6 +91,22 @@
   flex-shrink: 0;
 }
 
+/* ── Compact header at narrow window widths ─────────────────
+   Hide text labels on secondary buttons when there isn't enough
+   room so the header never clips. "Добавить фото" and the primary
+   "Сохранить" button always keep their labels (they have no
+   .btn-label span — their text is a direct text node).
+   ─────────────────────────────────────────────────────────── */
+@media (max-width: 1280px) {
+  .app-header .btn-label {
+    display: none;
+  }
+  /* Tighten padding so icon-only buttons aren't too wide */
+  .app-header .btn:not(.btn-primary):not([data-action="add-photos"]) {
+    padding: 0 8px;
+  }
+}
+
 /* ── Header brand block ───────────────────────────────── */
 .header-brand {
   display: flex;
