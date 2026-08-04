@@ -1133,28 +1133,6 @@
   font-style: normal;
 }
 
-/* ── Legacy/compat aliases ──────────────────────────── */
-.icp-straighten { display: flex; flex-direction: column; gap: 8px; }
-.icp-straighten-labels { display: flex; justify-content: space-between; font-size: var(--text-xs); color: var(--color-faint); padding: 0 2px; }
-.icp-slider { width: 100%; height: 4px; -webkit-appearance: none; appearance: none; background: var(--color-border); border-radius: 2px; cursor: pointer; outline: none; }
-.icp-slider::-webkit-slider-thumb { -webkit-appearance: none; width: 16px; height: 16px; border-radius: 50%; background: var(--color-primary); border: 2px solid #fff; box-shadow: var(--shadow-xs); cursor: pointer; }
-.icp-slider::-moz-range-thumb { width: 16px; height: 16px; border-radius: 50%; background: var(--color-primary); border: 2px solid #fff; cursor: pointer; }
-.icp-reset-btn { flex-shrink: 0; width: 28px; height: 28px; display: flex; align-items: center; justify-content: center; border: 1px solid var(--color-border); border-radius: var(--radius-sm); background: var(--color-panel); color: var(--color-muted); cursor: pointer; }
-.icp-reset-btn:hover { background: var(--color-bg); color: var(--color-text); }
-.icp-angle-wrap { flex: 1; }
-.icp-size-row { display: flex; align-items: center; gap: 8px; margin-bottom: 12px; }
-.icp-dim-group { display: flex; align-items: center; gap: 6px; flex: 1; }
-.icp-dim-label { font-size: var(--text-sm); font-weight: 600; color: var(--color-muted); white-space: nowrap; width: 14px; text-align: center; flex-shrink: 0; }
-.icp-dim-group .frame-input { flex: 1; }
-.icp-aspect-row { display: flex; align-items: center; gap: 10px; }
-.icp-aspect-label { font-size: var(--text-sm); color: var(--color-muted); white-space: nowrap; flex-shrink: 0; }
-.icp-select-wrap { flex: 1; }
-.icp-select-wrap .frame-select-btn { width: 100%; }
-.icp-select-wrap .frame-select-dropdown { bottom: auto; top: calc(100% + 5px); }
-.icp-straighten-row { display: flex; align-items: center; gap: 8px; }
-.frame-params-row { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
-.frame-hint--block { font-size: var(--text-sm); color: var(--color-muted); font-style: italic; line-height: 1.5; margin: 0; }
-.frame-hint--block kbd { background: var(--color-bg); border: 1px solid var(--color-border); border-radius: 3px; padding: 1px 4px; font-size: 11px; font-style: normal; }
 
 /* ─────────────────────────────────────
    Inspector / Right Sidebar
