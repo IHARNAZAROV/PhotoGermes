@@ -23,7 +23,7 @@ function registerHandlers() {
     // Return { name, filePath, width, height, sizeBytes }
     ipcMain.handle("photos:get-info", async (_e, filePath) => {
         try {
-            const stat = fs.statSync(filePath);
+            const stat = await fs.promises.stat(filePath);
             const info = { name: path.basename(filePath), filePath, sizeBytes: stat.size, width: 0, height: 0 };
             if (sharp) {
                 const meta = await sharp(filePath).metadata();
@@ -72,7 +72,7 @@ function registerHandlers() {
             // Write to a temp file first, then replace the original atomically
             const tmpPath = filePath + ".~saving";
             const base64  = dataUrl.replace(/^data:image\/\w+;base64,/, "");
-            fs.writeFileSync(tmpPath, Buffer.from(base64, "base64"));
+            await fs.promises.writeFile(tmpPath, Buffer.from(base64, "base64"));
             try {
                 fs.renameSync(tmpPath, filePath);
             } catch {
@@ -156,7 +156,7 @@ function registerHandlers() {
         if (!originalFilePath || !fs.existsSync(originalFilePath))
             return { ok: false, error: 'исходный файл не найден: ' + originalFilePath };
         try {
-            let buf = fs.readFileSync(originalFilePath);
+            let buf = await fs.promises.readFile(originalFilePath);
 
             for (const op of (ops || [])) {
                 if (op.type === 'crop') {
