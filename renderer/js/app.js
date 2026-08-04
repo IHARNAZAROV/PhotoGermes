@@ -7,6 +7,13 @@
 /** @type {Array<Photo>} */
 let photos = [];
 
+// ── Cached DOM refs (initialised in DOMContentLoaded) ──
+let elGalleryList = null;
+let elFooterInfo  = null;
+let elFooterFile  = null;
+let elBtnNavPrev  = null;
+let elBtnNavNext  = null;
+
 // ── Action history (last 10 entries) ───────────────────
 /** @type {Array<{type:string, label:string, time:Date}>} */
 let actionHistory = [];
@@ -150,7 +157,7 @@ window.estimateSizeFromDataUrl = estimateSizeFromDataUrl;
 
 // ── Empty state ────────────────────────────────────────
 function renderEmptyState() {
-    const list = document.querySelector('.gallery-list');
+    const list = elGalleryList;
     list.innerHTML = `
       <div class="gallery-empty">
         <div class="gallery-empty-icon">
@@ -176,8 +183,8 @@ function renderEditorEmpty() {
     if (placeholder) placeholder.classList.remove('has-photo');
     const title = document.querySelector('.editor-title');
     if (title) title.textContent = 'Редактирование';
-    const footerFile = document.querySelector('.footer-file');
-    const footerInfo = document.querySelector('.footer-info');
+    const footerFile = elFooterFile;
+    const footerInfo = elFooterInfo;
     if (footerFile) footerFile.textContent = '—';
     if (footerInfo) footerInfo.textContent = '';
     updateSelectionUI();
@@ -265,7 +272,7 @@ function renderGalleryItem(photo, index) {
 }
 
 function rebuildGallery() {
-    const list = document.querySelector('.gallery-list');
+    const list = elGalleryList;
     if (!list) return;
 
     if (photos.length === 0) {
@@ -285,7 +292,7 @@ function rebuildGallery() {
 
 /** Patch thumbnail of one item in-place */
 function patchThumbnail(index) {
-    const list = document.querySelector('.gallery-list');
+    const list = elGalleryList;
     if (!list) return;
     const item = list.querySelector(`[data-index="${index}"]`);
     if (!item) return;
@@ -341,7 +348,7 @@ function clearChecks() {
 
 /** Sync checked CSS class + checkbox input for a single item without full rebuild */
 function syncItemCheckedClass(index) {
-    const list = document.querySelector('.gallery-list');
+    const list = elGalleryList;
     if (!list) return;
     const item = list.querySelector(`[data-index="${index}"]`);
     if (!item) return;
@@ -560,8 +567,8 @@ async function selectPhoto(index) {
     if (!photo) return;
 
     const titleEl    = document.querySelector('.editor-title');
-    const footerFile = document.querySelector('.footer-file');
-    const footerInfo = document.querySelector('.footer-info');
+    const footerFile = elFooterFile;
+    const footerInfo = elFooterInfo;
     const footerSel  = document.querySelector('.footer-selected');
 
     if (titleEl)    titleEl.textContent    = `Редактирование: ${photo.name}`;
@@ -607,7 +614,7 @@ async function selectPhoto(index) {
         }
     }
 
-    const list = document.querySelector('.gallery-list');
+    const list = elGalleryList;
     const item = list && list.querySelector(`[data-index="${index}"]`);
     if (item) item.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
 }
@@ -693,8 +700,7 @@ async function addPhotosByPath(filePaths) {
         if (thumbnail) photos[idx].thumbnail = thumbnail;
         patchThumbnail(idx);
         if (idx === selectedIndex) {
-            const footerInfo = document.querySelector('.footer-info');
-            if (footerInfo) footerInfo.textContent = `${formatRes(photos[idx].width, photos[idx].height)}  ·  ${formatSize(photos[idx].sizeBytes)}`;
+            if (elFooterInfo) elFooterInfo.textContent = `${formatRes(photos[idx].width, photos[idx].height)}  ·  ${formatSize(photos[idx].sizeBytes)}`;
             await loadEditorPreview(photos[idx]);
             if (activeTool === 'resize') window.resizeLoadPhoto?.(photos[idx]);
         }
@@ -734,8 +740,7 @@ async function handleFileInput(files) {
         }
         patchThumbnail(idx);
         if (idx === selectedIndex) {
-            const footerInfo = document.querySelector('.footer-info');
-            if (footerInfo) footerInfo.textContent = `${formatRes(photo.width, photo.height)}  ·  ${formatSize(photo.sizeBytes)}`;
+            if (elFooterInfo) elFooterInfo.textContent = `${formatRes(photo.width, photo.height)}  ·  ${formatSize(photo.sizeBytes)}`;
             await loadEditorPreview(photo);
             // Now that real dimensions are known, refresh resize split-view
             if (activeTool === 'resize') window.resizeLoadPhoto?.(photo);
@@ -950,8 +955,8 @@ function initDeleteButton() {
 }
 
 function initNavBtns() {
-    const btnPrev = document.getElementById('btn-nav-prev');
-    const btnNext = document.getElementById('btn-nav-next');
+    const btnPrev = elBtnNavPrev;
+    const btnNext = elBtnNavNext;
     if (!btnPrev || !btnNext) return;
     btnPrev.addEventListener('click', () => {
         if (selectedIndex > 0) selectPhoto(selectedIndex - 1);
@@ -962,8 +967,8 @@ function initNavBtns() {
 }
 
 function updateNavBtns() {
-    const btnPrev = document.getElementById('btn-nav-prev');
-    const btnNext = document.getElementById('btn-nav-next');
+    const btnPrev = elBtnNavPrev;
+    const btnNext = elBtnNavNext;
     if (!btnPrev || !btnNext) return;
     btnPrev.disabled = selectedIndex <= 0;
     btnNext.disabled = selectedIndex < 0 || selectedIndex >= photos.length - 1;
@@ -1068,8 +1073,7 @@ async function applyCropCurrent() {
 
     patchThumbnail(selectedIndex);
     await loadEditorPreview(photo);
-    const footerInfo = document.querySelector('.footer-info');
-    if (footerInfo) footerInfo.textContent =
+    if (elFooterInfo) elFooterInfo.textContent =
         `${formatRes(photo.width, photo.height)}\u00a0·\u00a0${formatSize(photo.sizeBytes)}`;
     pushHistory('crop', 'Обрезка применена: ' + photo.name);
     showToast('Обрезка применена');
@@ -1119,9 +1123,8 @@ async function applyToChecked() {
     rebuildGallery();
     if (selectedIndex >= 0) {
         await loadEditorPreview(photos[selectedIndex]);
-        const footerInfo = document.querySelector('.footer-info');
         const p = photos[selectedIndex];
-        if (footerInfo) footerInfo.textContent =
+        if (elFooterInfo) elFooterInfo.textContent =
             `${formatRes(p.width, p.height)}\u00a0·\u00a0${formatSize(p.sizeBytes)}`;
     }
     updateCounts();
@@ -1247,8 +1250,7 @@ async function applyResize() {
     await loadEditorPreview(photo);
     window.resizeLoadPhoto?.(photo);
 
-    const footerInfo = document.querySelector('.footer-info');
-    if (footerInfo) footerInfo.textContent =
+    if (elFooterInfo) elFooterInfo.textContent =
         `${formatRes(photo.width, photo.height)}\u00a0·\u00a0${formatSize(photo.sizeBytes)}`;
 
     pushHistory('resize', `Размер изменён: ${newWidth} × ${newHeight} px`);
@@ -1701,9 +1703,8 @@ async function restorePhotoSnapshot(photo, snap) {
     await loadEditorPreview(photo);
     applyEditorTransform();
 
-    const footerInfo = document.querySelector('.footer-info');
-    if (footerInfo)
-        footerInfo.textContent =
+    if (elFooterInfo)
+        elFooterInfo.textContent =
             `${formatRes(photo.width, photo.height)}\u00a0·\u00a0${formatSize(photo.sizeBytes)}`;
 }
 
@@ -2204,6 +2205,12 @@ window.__resizeGetPhoto = function() {
 
 // ── Init ───────────────────────────────────────────────
 document.addEventListener('DOMContentLoaded', () => {
+    elGalleryList = document.querySelector('.gallery-list');
+    elFooterInfo  = document.querySelector('.footer-info');
+    elFooterFile  = document.querySelector('.footer-file');
+    elBtnNavPrev  = document.getElementById('btn-nav-prev');
+    elBtnNavNext  = document.getElementById('btn-nav-next');
+
     renderEmptyState();
     renderEditorEmpty();
     updateCounts();
