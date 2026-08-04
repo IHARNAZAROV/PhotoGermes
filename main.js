@@ -293,8 +293,8 @@ function createWindow() {
         show: false,
         width: 1600,
         height: 950,
-        minWidth: 1050,
-        minHeight: 700,
+        minWidth: 1360,
+        minHeight: 820,
         title: "Фотоцентр ГермесГарант",
         autoHideMenuBar: true,
         webPreferences: {
