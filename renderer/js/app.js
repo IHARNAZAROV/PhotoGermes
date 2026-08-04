@@ -932,48 +932,6 @@ function initPresets() {
     });
 }
 
-function initInspectorTabs() {
-    const tabs   = document.querySelectorAll('.inspector-tab');
-    const panels = document.querySelectorAll('.inspector-panel');
-    tabs.forEach(tab => {
-        tab.addEventListener('click', () => {
-            tabs.forEach(t => t.classList.remove('active'));
-            tab.classList.add('active');
-            const target = tab.dataset.tab;
-            panels.forEach(p => { p.style.display = p.dataset.panel === target ? '' : 'none'; });
-        });
-    });
-}
-
-function initSubTabs() {
-    document.querySelectorAll('.sub-tabs').forEach(group => {
-        group.querySelectorAll('.sub-tab').forEach(tab => {
-            tab.addEventListener('click', () => {
-                group.querySelectorAll('.sub-tab').forEach(t => t.classList.remove('active'));
-                tab.classList.add('active');
-            });
-        });
-    });
-}
-
-function initToggles() {
-    document.querySelectorAll('.toggle').forEach(t => t.addEventListener('click', () => t.classList.toggle('on')));
-}
-
-function initPositionGrid() {
-    document.querySelectorAll('.pos-cell').forEach(cell => {
-        cell.addEventListener('click', () => {
-            cell.closest('.position-grid').querySelectorAll('.pos-cell').forEach(c => c.classList.remove('active'));
-            cell.classList.add('active');
-        });
-    });
-}
-
-function initOpacity() {
-    const slider = document.getElementById('opacity-slider');
-    const label  = document.getElementById('opacity-value');
-    if (slider && label) slider.addEventListener('input', () => { label.textContent = slider.value + '%'; });
-}
 
 function initAddPhotoButtons() {
     document.querySelectorAll('[data-action="add-photos"]').forEach(btn => {
@@ -2284,11 +2242,6 @@ document.addEventListener('DOMContentLoaded', () => {
     initToolCards();
     initGalleryNav();
     initPresets();
-    initInspectorTabs();
-    initSubTabs();
-    initToggles();
-    initPositionGrid();
-    initOpacity();
     initEditorTransformButtons();
     initCropButtons();
     initResizeButtons();
