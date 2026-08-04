@@ -968,10 +968,11 @@ async function applyWatermarkToPhotoCanvas(photo, settings, cachedLogo) {
         }
     }
     ctx.globalAlpha = 1;
-    photo.preview = canvas.toDataURL('image/jpeg', 0.92);
+    const _wmDataUrl = canvas.toDataURL('image/jpeg', 0.92);
     photo.width = canvas.width;
     photo.height = canvas.height;
-    photo.sizeBytes = window.estimateSizeFromDataUrl(photo.preview);
+    photo.sizeBytes = window.estimateSizeFromDataUrl(_wmDataUrl);
+    window.setPhotoPreview(photo, _wmDataUrl);
     photo.thumbnail = window.generateThumbnail(canvas, canvas.width, canvas.height);
     // Mark that a canvas-level (bitmap) op has been baked into photo.preview.
     // The full-resolution pipeline will fall back to photo.preview for this photo

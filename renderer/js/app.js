@@ -635,7 +635,7 @@ async function loadEditorPreview(photo) {
 
     let src = null;
     if (isElectron && photo.filePath) {
-        if (!photo.preview) photo.preview = await window.api.getPreview(photo.filePath);
+        if (!photo.preview) setPhotoPreview(photo, await window.api.getPreview(photo.filePath));
         src = photo.preview;
     } else {
         // In browser mode prefer photo.preview (updated after crop) over the
@@ -742,7 +742,7 @@ async function handleFileInput(files) {
             photo.thumbnail = dataUrl;
             photo.width     = w;
             photo.height    = h;
-            photo.preview   = photo.objectUrl;
+            setPhotoPreview(photo, photo.objectUrl);
         }
         patchThumbnail(idx);
         if (idx === selectedIndex) {
@@ -826,8 +826,35 @@ function initDragDrop() {
     });
 }
 
+// ── Lazy panel init ────────────────────────────────────
+// Panels for 'watermark' and 'resize' are kept as inert <template> elements
+// in index.html until their tool is first activated.  This keeps ~600 lines of
+// DOM (with no layout cost) out of the live document on startup.
+const _readyPanels = new Set();
+
+function ensurePanelReady(toolName) {
+    if (_readyPanels.has(toolName)) return;
+    _readyPanels.add(toolName);
+
+    // Stamp each template into its container div
+    for (const part of ['editor', 'inspector']) {
+        const tpl  = document.getElementById(`tpl-${toolName}-${part}`);
+        const cont = document.getElementById(`${toolName}-${part}-view`);
+        if (tpl && cont) {
+            cont.appendChild(tpl.content);
+            tpl.remove();
+        }
+    }
+
+    // One-time JS init for the tool (now that DOM elements exist)
+    if (toolName === 'resize')    initResizeButtons();
+    if (toolName === 'watermark') window.initWatermark?.();
+}
+
 // ── UI init helpers ────────────────────────────────────
 function switchToTool(toolName) {
+    // Stamp the panel HTML from its <template> on first visit
+    if (toolName === 'resize' || toolName === 'watermark') ensurePanelReady(toolName);
     const cropEditorView      = document.getElementById('crop-editor-view');
     const resizeEditorView    = document.getElementById('resize-editor-view');
     const watermarkEditorView = document.getElementById('watermark-editor-view');
@@ -1038,11 +1065,12 @@ function applyCropToPhotoCanvas(photo, norm) {
             canvas.height   = srcH;
             canvas.getContext('2d').drawImage(sourceImg, srcX, srcY, srcW, srcH, 0, 0, srcW, srcH);
 
-            photo.preview   = canvas.toDataURL('image/jpeg', 0.92);
+            const _cropDataUrl = canvas.toDataURL('image/jpeg', 0.92);
             photo.width     = srcW;
             photo.height    = srcH;
-            // Approximate byte size from base64 length
-            photo.sizeBytes = estimateSizeFromDataUrl(photo.preview);
+            // Approximate byte size from base64 length (before converting to Blob URL)
+            photo.sizeBytes = estimateSizeFromDataUrl(_cropDataUrl);
+            setPhotoPreview(photo, _cropDataUrl);
 
             // Thumbnail
             photo.thumbnail = generateThumbnail(canvas, srcW, srcH);
@@ -1170,10 +1198,11 @@ function applyResizeCanvas(photo, newWidth, newHeight, mode, quality) {
             }
             ctx.drawImage(img, 0, 0, newWidth, newHeight);
 
-            photo.preview   = canvas.toDataURL('image/jpeg', quality / 100);
+            const _resDataUrl = canvas.toDataURL('image/jpeg', quality / 100);
             photo.width     = newWidth;
             photo.height    = newHeight;
-            photo.sizeBytes = estimateSizeFromDataUrl(photo.preview);
+            photo.sizeBytes = estimateSizeFromDataUrl(_resDataUrl);
+            setPhotoPreview(photo, _resDataUrl);
 
             // Regenerate thumbnail
             photo.thumbnail = generateThumbnail(canvas, newWidth, newHeight);
@@ -1217,10 +1246,10 @@ async function applyResize() {
             newWidth, newHeight, kernel, quality
         });
         if (result?.ok) {
-            photo.preview   = result.dataUrl;
             photo.width     = newWidth;
             photo.height    = newHeight;
             photo.sizeBytes = estimateSizeFromDataUrl(result.dataUrl);
+            setPhotoPreview(photo, result.dataUrl);
 
             // Record op for the full-resolution pipeline at save/export time.
             if (!photo.ops) photo.ops = [];
@@ -1299,7 +1328,12 @@ function triggerDownload(blob, filename) {
  * original File / objectUrl.
  */
 async function getPhotoDataUrl(photo) {
-    if (photo.preview) return photo.preview;
+    if (photo.preview) {
+        // photo.preview is stored as a Blob URL; fetch back to base64 for IPC
+        // handlers and canvas operations that need a data-URL string.
+        if (photo.preview.startsWith('blob:')) return _blobUrlToBase64(photo.preview);
+        return photo.preview; // safety fallback for any legacy data-URL
+    }
     if (photo.objectUrl) {
         const response = await fetch(photo.objectUrl);
         const blob     = await response.blob();
@@ -1454,7 +1488,9 @@ async function prepareExportDataUrl(photo) {
     }
 
     // ── Path 2: legacy path (display-res preview → sharp re-encode) ───────
-    const srcDataUrl = hasEdits ? (photo.preview ?? await getPhotoDataUrl(photo)) : null;
+    // Always go through getPhotoDataUrl so it can resolve Blob URLs to base64
+    // before passing to IPC handlers.
+    const srcDataUrl = hasEdits ? await getPhotoDataUrl(photo) : null;
     let result       = srcDataUrl;
 
     if (typeof window.api?.exportPhoto === 'function') {
@@ -1611,6 +1647,48 @@ function _blobUrlToBase64(blobUrl) {
         .catch(() => null);
 }
 
+/**
+ * Store a new preview on a photo as a Blob URL, releasing the previous owned
+ * one. Keeps photo._previewBlob so snapshotPhoto() can create an independent
+ * Blob URL synchronously (no fetch needed) when taking an undo snapshot.
+ *
+ * @param {object}            photo  - photo object from photos[]
+ * @param {string|Blob|null}  source - base64 data-URL, Blob, existing blob:/
+ *                                     objectURL (non-owned), or null to clear
+ */
+function setPhotoPreview(photo, source) {
+    // Release the previously owned Blob URL, if any
+    if (photo._previewOwned && photo.preview) {
+        URL.revokeObjectURL(photo.preview);
+    }
+    if (!source) {
+        photo.preview       = null;
+        photo._previewBlob  = null;
+        photo._previewOwned = false;
+        return;
+    }
+    if (source instanceof Blob) {
+        photo._previewBlob  = source;
+        photo.preview       = URL.createObjectURL(source);
+        photo._previewOwned = true;
+        return;
+    }
+    if (typeof source === 'string' && source.startsWith('data:')) {
+        const blob = _base64ToBlob(source);
+        if (blob) {
+            photo._previewBlob  = blob;
+            photo.preview       = URL.createObjectURL(blob);
+            photo._previewOwned = true;
+            return;
+        }
+    }
+    // Already a blob: or object: URL we did not create (e.g. photo.objectUrl)
+    photo.preview       = source;
+    photo._previewBlob  = null;
+    photo._previewOwned = false;
+}
+window.setPhotoPreview = setPhotoPreview;
+
 /** Revoke the Blob URL stored in a snapshot, then null it out. */
 function freeSnapshot(snap) {
     if (snap && snap.previewBlobUrl) {
@@ -1625,12 +1703,14 @@ function freeSnapshot(snap) {
  * The snapshot belongs entirely to that photo and is restored against it.
  */
 function snapshotPhoto(photo) {
-    const blob = _base64ToBlob(photo.preview);
+    // photo.preview is now a Blob URL. If we own the backing blob we can create
+    // a second independent Blob URL from it synchronously — no fetch needed.
+    const snapBlob = photo._previewOwned ? photo._previewBlob : null;
     return {
         rotation:      editorRotation,
         flipH:         editorFlipH,
         straighten:    straightenAngle,
-        previewBlobUrl: blob ? URL.createObjectURL(blob) : null,
+        previewBlobUrl: snapBlob ? URL.createObjectURL(snapBlob) : null,
         width:         photo.width,
         height:        photo.height,
         sizeBytes:     photo.sizeBytes,
@@ -1693,9 +1773,16 @@ async function restorePhotoSnapshot(photo, snap) {
     editorFlipH     = snap.flipH;
     straightenAngle = snap.straighten ?? 0;
     syncStraightenUI();
-    // Convert the stored Blob URL back to a base64 data-URL that the rest of
-    // the app (canvas operations, Electron IPC, export) can use directly.
-    photo.preview   = await _blobUrlToBase64(snap.previewBlobUrl);
+    // Restore preview: fetch the blob from the snapshot's Blob URL, create a
+    // new owned Blob URL on the photo, then release the snapshot's URL.
+    if (snap.previewBlobUrl) {
+        const blob = await fetch(snap.previewBlobUrl).then(r => r.blob()).catch(() => null);
+        URL.revokeObjectURL(snap.previewBlobUrl);
+        snap.previewBlobUrl = null;
+        setPhotoPreview(photo, blob);
+    } else {
+        setPhotoPreview(photo, null);
+    }
     photo.width     = snap.width;
     photo.height    = snap.height;
     photo.sizeBytes = snap.sizeBytes;
@@ -2230,7 +2317,8 @@ document.addEventListener('DOMContentLoaded', () => {
     initPresets();
     initEditorTransformButtons();
     initCropButtons();
-    initResizeButtons();
+    // initResizeButtons() is called lazily inside ensurePanelReady('resize')
+    // when the resize tool is first activated.
     initSaveButtons();
     initUndoRedo();
     initTooltips();
