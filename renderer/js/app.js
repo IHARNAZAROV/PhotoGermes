@@ -7,6 +7,9 @@
 /** @type {Array<Photo>} */
 let photos = [];
 
+// ── Export toggle keys (order must match DOM order in "Дополнительно" card) ──
+const TOGGLE_KEYS = ['keepExif', 'colorProfile', 'progressive', 'webOptimize'];
+
 // ── Cached DOM refs (initialised in DOMContentLoaded) ──
 let elGalleryList = null;
 let elFooterInfo  = null;
@@ -2045,8 +2048,6 @@ function initExportPage() {
     });
 
     // ── Options toggles ─────────────────────────────────
-    // Order must match the DOM order in the "Дополнительно" card
-    const TOGGLE_KEYS = ['keepExif', 'colorProfile', 'progressive', 'webOptimize'];
     page.querySelectorAll('.export-toggle').forEach((toggle, i) => {
         toggle.addEventListener('click', () => {
             const newState = toggle.dataset.state === 'on' ? 'off' : 'on';
@@ -2153,7 +2154,6 @@ function _applyExportSettingsToUI(page) {
     }
 
     // Toggles (order must match DOM order)
-    const TOGGLE_KEYS = ['keepExif', 'colorProfile', 'progressive', 'webOptimize'];
     page.querySelectorAll('.export-toggle').forEach((toggle, i) => {
         if (TOGGLE_KEYS[i] !== undefined)
             toggle.dataset.state = s[TOGGLE_KEYS[i]] ? 'on' : 'off';
