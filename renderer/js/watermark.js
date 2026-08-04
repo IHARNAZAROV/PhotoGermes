@@ -82,7 +82,6 @@ function initWmSubTabs() {
 // ── Live text preview ──────────────────────────────────
 function initWmTextControls() {
     const textInput   = document.getElementById('wm-text-input');
-    const fontFamily  = document.getElementById('wm-font-family');
     const fontSize    = document.getElementById('wm-font-size');
     const boldBtn     = document.getElementById('wm-bold');
     const italicBtn   = document.getElementById('wm-italic');
@@ -98,9 +97,6 @@ function initWmTextControls() {
 
     // Sync text
     textInput.addEventListener('input', scheduleWmOverlay);
-
-    // Sync font family
-    fontFamily?.addEventListener('change', updateWmOverlay);
 
     // Sync font size
     fontSize?.addEventListener('input', scheduleWmOverlay);
