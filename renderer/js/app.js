@@ -749,13 +749,9 @@ function readFileThumbnail(file) {
         const img = new Image();
         const url = URL.createObjectURL(file);
         img.onload = () => {
-            const canvas = document.createElement('canvas');
-            const ratio  = Math.min(160 / img.width, 120 / img.height);
-            canvas.width  = Math.round(img.width  * ratio);
-            canvas.height = Math.round(img.height * ratio);
-            canvas.getContext('2d').drawImage(img, 0, 0, canvas.width, canvas.height);
+            const thumb = generateThumbnail(img, img.naturalWidth, img.naturalHeight);
             URL.revokeObjectURL(url);
-            resolve(canvas.toDataURL('image/jpeg', 0.75));
+            resolve(thumb);
         };
         img.onerror = () => { URL.revokeObjectURL(url); resolve(null); };
         img.src = url;
