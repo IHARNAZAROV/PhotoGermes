@@ -83,7 +83,13 @@
   flex-shrink: 0;
 }
 
-.header-spacer { flex: 1; }
+.header-spacer { flex: 1; min-width: 0; }
+
+/* Header buttons must never compress — only the spacer gives way */
+.app-header .btn,
+.app-header .btn-icon {
+  flex-shrink: 0;
+}
 
 /* ── Header brand block ───────────────────────────────── */
 .header-brand {
