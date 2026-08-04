@@ -5,6 +5,20 @@ const fs   = require("fs");
 let sharp;
 try { sharp = require("sharp"); } catch (e) { sharp = null; }
 
+// ── Path validation ────────────────────────────────────
+// Rejects paths that are not absolute or contain traversal sequences.
+// IMPORTANT: we inspect the raw segments BEFORE normalization because
+// path.normalize() already collapses ".." — checking the normalized string
+// for ".." would always return false and never block anything.
+function validateFilePath(filePath) {
+    if (typeof filePath !== "string") return false;
+    if (!path.isAbsolute(filePath))   return false;
+    // Split on both POSIX and Windows separators and reject any ".." component.
+    const segments = filePath.split(/[\\/]/);
+    if (segments.some(seg => seg === "..")) return false;
+    return true;
+}
+
 // ── IPC handlers ───────────────────────────────────────
 function registerHandlers() {
 
@@ -22,6 +36,7 @@ function registerHandlers() {
 
     // Return { name, filePath, width, height, sizeBytes }
     ipcMain.handle("photos:get-info", async (_e, filePath) => {
+        if (!validateFilePath(filePath)) return null;
         try {
             const stat = await fs.promises.stat(filePath);
             const info = { name: path.basename(filePath), filePath, sizeBytes: stat.size, width: 0, height: 0 };
@@ -37,6 +52,7 @@ function registerHandlers() {
     // Return base64 JPEG data-URL thumbnail (160×120 cover)
     ipcMain.handle("photos:get-thumbnail", async (_e, filePath) => {
         if (!sharp) return null;
+        if (!validateFilePath(filePath)) return null;
         try {
             const buf = await sharp(filePath)
                 .resize(160, 120, { fit: "cover", position: "centre" })
@@ -49,6 +65,7 @@ function registerHandlers() {
     // Return base64 JPEG data-URL editor preview (max 1200×900)
     ipcMain.handle("photos:get-preview", async (_e, filePath) => {
         if (!sharp) return null;
+        if (!validateFilePath(filePath)) return null;
         try {
             const buf = await sharp(filePath)
                 .resize(1200, 900, { fit: "inside", withoutEnlargement: true })
@@ -62,6 +79,7 @@ function registerHandlers() {
     // dataUrl: edited state as base64 data-URL, or null if no edits (original already on disk).
     // Returns { ok, readonly } — readonly=true means the file can't be overwritten (trigger Save As).
     ipcMain.handle("photos:save", async (_e, filePath, dataUrl) => {
+        if (!validateFilePath(filePath)) return { ok: false, error: 'недопустимый путь к файлу' };
         try {
             if (!dataUrl) return { ok: true }; // no edits, nothing to write
 
@@ -90,6 +108,7 @@ function registerHandlers() {
     // kernel: one of sharp.kernel keys ('lanczos3' | 'cubic' | 'nearest' | …)
     ipcMain.handle("photos:resize", async (_e, { filePath, newWidth, newHeight, kernel, quality }) => {
         if (!sharp) return { ok: false, error: 'sharp не установлен' };
+        if (!validateFilePath(filePath)) return { ok: false, error: 'недопустимый путь к файлу' };
         try {
             const sharpKernel = sharp.kernel[kernel] ?? sharp.kernel.lanczos3;
             const buf = await sharp(filePath)
@@ -125,7 +144,7 @@ function registerHandlers() {
             if (srcDataUrl) {
                 const base64 = srcDataUrl.replace(/^data:image\/\w+;base64,/, "");
                 src = sharp(Buffer.from(base64, "base64")).withMetadata();
-            } else if (srcPath && fs.existsSync(srcPath)) {
+            } else if (srcPath && validateFilePath(srcPath) && fs.existsSync(srcPath)) {
                 src = sharp(srcPath).withMetadata();
             } else {
                 return { ok: false, error: 'нет источника для конвертации' };
@@ -153,7 +172,9 @@ function registerHandlers() {
     // Preserves EXIF/ICC metadata throughout.
     ipcMain.handle("photos:process-and-export", async (_e, { originalFilePath, ops, format, quality, pngCompression }) => {
         if (!sharp) return { ok: false, error: 'sharp не установлен' };
-        if (!originalFilePath || !fs.existsSync(originalFilePath))
+        if (!originalFilePath || !validateFilePath(originalFilePath))
+            return { ok: false, error: 'недопустимый путь к файлу' };
+        if (!fs.existsSync(originalFilePath))
             return { ok: false, error: 'исходный файл не найден: ' + originalFilePath };
         try {
             let buf = await fs.promises.readFile(originalFilePath);
@@ -254,7 +275,7 @@ function registerHandlers() {
             if (dataUrl) {
                 const base64 = dataUrl.replace(/^data:image\/\w+;base64,/, "");
                 fs.writeFileSync(result.filePath, Buffer.from(base64, "base64"));
-            } else if (originalPath && fs.existsSync(originalPath)) {
+            } else if (originalPath && validateFilePath(originalPath) && fs.existsSync(originalPath)) {
                 // No edits — copy original at full quality
                 fs.copyFileSync(originalPath, result.filePath);
             }
@@ -269,6 +290,7 @@ function registerHandlers() {
 // ── Window ─────────────────────────────────────────────
 function createWindow() {
     const win = new BrowserWindow({
+        show: false,
         width: 1600,
         height: 950,
         minWidth: 1200,
@@ -278,17 +300,31 @@ function createWindow() {
         webPreferences: {
             preload: path.join(__dirname, "preload.js"),
             contextIsolation: true,
-            nodeIntegration: false
+            nodeIntegration: false,
+            sandbox: true
         }
     });
 
+    win.once("ready-to-show", () => win.show());
     win.loadFile(path.join(__dirname, "renderer", "index.html"));
 }
 
 registerHandlers();
 
-app.whenReady().then(createWindow);
+// ── Single-instance lock ────────────────────────────────
+const gotLock = app.requestSingleInstanceLock();
+if (!gotLock) {
+    app.quit();
+} else {
+    app.on("second-instance", () => {
+        // If a second instance is launched, focus the existing window
+        const [win] = BrowserWindow.getAllWindows();
+        if (win) { if (win.isMinimized()) win.restore(); win.focus(); }
+    });
 
-app.on("window-all-closed", () => {
-    if (process.platform !== "darwin") app.quit();
-});
+    app.whenReady().then(createWindow);
+
+    app.on("window-all-closed", () => {
+        if (process.platform !== "darwin") app.quit();
+    });
+}
