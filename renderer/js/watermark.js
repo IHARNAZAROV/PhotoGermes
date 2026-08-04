@@ -159,7 +159,7 @@ function initWmTextControls() {
         updateWmOverlay();
     });
 
-    ['wm-text-offset-x', 'wm-text-offset-y'].forEach(id => {
+    ['wm-offset-x', 'wm-offset-y'].forEach(id => {
         document.getElementById(id)?.addEventListener('input', scheduleWmOverlay);
     });
 
@@ -793,8 +793,8 @@ const POS_MAP = {
 function applyFlexPosition(overlay, pos) {
     const [jc, ai] = POS_MAP[pos] || ['center','center'];
     const isText = document.getElementById('wm-tab-text')?.classList.contains('active');
-    const ox = Math.max(0, +(document.getElementById(isText ? 'wm-text-offset-x' : 'wm-img-offset-x')?.value || 18));
-    const oy = Math.max(0, +(document.getElementById(isText ? 'wm-text-offset-y' : 'wm-img-offset-y')?.value || 18));
+    const ox = Math.max(0, +(document.getElementById(isText ? 'wm-offset-x' : 'wm-img-offset-x')?.value || 18));
+    const oy = Math.max(0, +(document.getElementById(isText ? 'wm-offset-y' : 'wm-img-offset-y')?.value || 18));
     overlay.style.display        = 'flex';
     overlay.style.justifyContent = jc;
     overlay.style.alignItems     = ai;
@@ -892,8 +892,8 @@ function getWmSettings() {
         imageHeight: +(document.getElementById('wm-img-height')?.value || 200),
         imageTile: document.getElementById('wm-img-tile')?.checked,
         imageAngle: +(document.getElementById('wm-img-angle')?.value || 0),
-        offsetX: Math.max(0, +(document.getElementById(isText ? 'wm-text-offset-x' : 'wm-img-offset-x')?.value || 18)),
-        offsetY: Math.max(0, +(document.getElementById(isText ? 'wm-text-offset-y' : 'wm-img-offset-y')?.value || 18)),
+        offsetX: Math.max(0, +(document.getElementById(isText ? 'wm-offset-x' : 'wm-img-offset-x')?.value || 18)),
+        offsetY: Math.max(0, +(document.getElementById(isText ? 'wm-offset-y' : 'wm-img-offset-y')?.value || 18)),
     };
 }
 
