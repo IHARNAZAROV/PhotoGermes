@@ -16,6 +16,7 @@ function initWmFontDropdown() {
         e.stopPropagation();
         const isOpen = dropdown.classList.toggle('open');
         btn.classList.toggle('open', isOpen);
+        btn.setAttribute('aria-expanded', isOpen ? 'true' : 'false');
     });
 
     // Option click
@@ -36,6 +37,7 @@ function initWmFontDropdown() {
             // Close
             dropdown.classList.remove('open');
             btn.classList.remove('open');
+            btn.setAttribute('aria-expanded', 'false');
 
             updateWmOverlay();
         });
@@ -46,6 +48,7 @@ function initWmFontDropdown() {
         if (!btn.contains(e.target) && !dropdown.contains(e.target)) {
             dropdown.classList.remove('open');
             btn.classList.remove('open');
+            btn.setAttribute('aria-expanded', 'false');
         }
     });
 }
@@ -104,12 +107,14 @@ function initWmTextControls() {
     // Bold
     boldBtn?.addEventListener('click', () => {
         boldBtn.classList.toggle('active');
+        boldBtn.setAttribute('aria-pressed', boldBtn.classList.contains('active') ? 'true' : 'false');
         updateWmOverlay();
     });
 
     // Italic
     italicBtn?.addEventListener('click', () => {
         italicBtn.classList.toggle('active');
+        italicBtn.setAttribute('aria-pressed', italicBtn.classList.contains('active') ? 'true' : 'false');
         updateWmOverlay();
     });
 

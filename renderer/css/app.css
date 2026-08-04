@@ -2,7 +2,12 @@
    app.css — overrides, animations, utility classes
    ======================================================== */
 
-/* Inter — локальные шрифты (без сетевого запроса) */
+/* Inter — локальные шрифты (без сетевого запроса).
+   Загружены только прямые начертания (normal): 400, 500, 600, 700.
+   Italic-варианты не подключены намеренно — браузер применяет
+   font-synthesis: style, что даёт синтетический наклон.
+   Для текста ватермарка (watermark.js, italic: true) это приемлемо.
+   Если понадобится настоящий italic — добавить inter-*-italic.woff2. */
 @font-face {
   font-family: 'Inter';
   font-style: normal;
@@ -53,9 +58,9 @@
 
 /* Animate selected item glow */
 @keyframes selectedPulse {
-  0%   { box-shadow: 0 0 0 0 rgba(22,98,76,.25); }
-  70%  { box-shadow: 0 0 0 5px rgba(22,98,76,0); }
-  100% { box-shadow: 0 0 0 0 rgba(22,98,76,0); }
+  0%   { box-shadow: 0 0 0 0 rgba(var(--color-primary-rgb), .25); }
+  70%  { box-shadow: 0 0 0 5px rgba(var(--color-primary-rgb), 0); }
+  100% { box-shadow: 0 0 0 0 rgba(var(--color-primary-rgb), 0); }
 }
 
 .gallery-item.selected {
@@ -282,7 +287,7 @@
   height: 36px;
   border-radius: 8px;
   background: var(--color-primary-muted);
-  border: 1.5px solid rgba(22,98,76,.2);
+  border: 1.5px solid rgba(var(--color-primary-rgb), .2);
   color: var(--color-primary);
   font-size: var(--text-sm);
   font-weight: 700;
@@ -449,7 +454,7 @@
   height: 36px;
   border-radius: var(--radius-md);
   background: var(--color-primary-light);
-  border: 1px solid rgba(22,98,76,.18);
+  border: 1px solid rgba(var(--color-primary-rgb), .18);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -544,7 +549,7 @@
   line-height: 1.55;
   padding: 10px 12px;
   background: var(--color-primary-light);
-  border: 1px solid rgba(22,98,76,.15);
+  border: 1px solid rgba(var(--color-primary-rgb), .15);
   border-radius: var(--radius-md);
 }
 
@@ -648,7 +653,7 @@
 .export-format-card.active .export-format-icon,
 .export-format-card:hover .export-format-icon {
   color: var(--color-primary);
-  border-color: rgba(22,98,76,.3);
+  border-color: rgba(var(--color-primary-rgb), .3);
 }
 .export-format-name {
   font-size: var(--text-sm);
@@ -738,7 +743,7 @@
   padding: 10px 12px;
   border-radius: var(--radius-md);
   background: var(--color-primary-light);
-  border: 1px solid rgba(22,98,76,.18);
+  border: 1px solid rgba(var(--color-primary-rgb), .18);
   font-size: var(--text-sm);
   color: var(--color-text);
   line-height: 1.5;

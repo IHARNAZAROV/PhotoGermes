@@ -223,7 +223,7 @@
   padding: 14px;
   background: var(--color-primary-muted);
   border-radius: var(--radius-lg);
-  border: 1px solid rgba(22,98,76,.15);
+  border: 1px solid rgba(var(--color-primary-rgb), .15);
   overflow: hidden;
 }
 
@@ -442,7 +442,7 @@
     radial-gradient(ellipse 85% 65% at 12% 22%, rgba(30, 145, 104, 0.80) 0%, transparent 58%),
     radial-gradient(ellipse 60% 70% at 88% 82%, rgba(8,  44,  33, 0.90) 0%, transparent 54%),
     radial-gradient(ellipse 52% 42% at 62%  8%, rgba(68, 196, 142, 0.30) 0%, transparent 62%),
-    radial-gradient(ellipse 70% 55% at 45% 70%, rgba(22,  98,  76, 0.45) 0%, transparent 65%),
+    radial-gradient(ellipse 70% 55% at 45% 70%, rgba(var(--color-primary-rgb), 0.45) 0%, transparent 65%),
     linear-gradient(152deg, #060e0b 0%, #0d2e22 32%, #16624c 64%, #1d8060 100%);
   border-radius: var(--radius-xl);
   position: relative;
@@ -518,7 +518,7 @@
   height: 14px;
   border: 2.5px solid #fff;
   border-radius: 3px;
-  background: rgba(22,98,76,.8);
+  background: rgba(var(--color-primary-rgb), .8);
   /* Компенсация масштаба: ручки всегда одного размера на экране */
   scale: var(--crop-handle-scale, 1);
 }
@@ -767,7 +767,7 @@
 .icp-presets .preset-btn.active {
   border-color: var(--color-primary);
   background: var(--color-primary-muted);
-  box-shadow: 0 0 0 3px rgba(22,98,76,.08);
+  box-shadow: 0 0 0 3px rgba(var(--color-primary-rgb), .08);
 }
 
 .icp-presets .preset-icon {
@@ -808,8 +808,8 @@
 }
 .icp-lock-btn.locked {
   color: var(--color-primary);
-  background: rgba(22,98,76,.06);
-  border-color: rgba(22,98,76,.20);
+  background: rgba(var(--color-primary-rgb), .06);
+  border-color: rgba(var(--color-primary-rgb), .20);
 }
 
 /* ── Text variant of ri-dim-input (for frame-width/height) */
@@ -1007,14 +1007,14 @@
   border-radius: 50%;
   background: #fff;
   border: 2.5px solid var(--color-primary);
-  box-shadow: 0 2px 8px rgba(22,98,76,.30);
+  box-shadow: 0 2px 8px rgba(var(--color-primary-rgb), .30);
   cursor: pointer;
   margin-top: -6px;
   transition: transform .1s ease, box-shadow .1s ease;
 }
 .icp-align-slider::-webkit-slider-thumb:hover {
   transform: scale(1.15);
-  box-shadow: 0 3px 12px rgba(22,98,76,.45);
+  box-shadow: 0 3px 12px rgba(var(--color-primary-rgb), .45);
 }
 .icp-align-slider::-moz-range-thumb {
   width: 18px;
@@ -1022,9 +1022,8 @@
   border-radius: 50%;
   background: #fff;
   border: 2.5px solid var(--color-primary);
-  box-shadow: 0 2px 8px rgba(22,98,76,.30);
+  box-shadow: 0 2px 8px rgba(var(--color-primary-rgb), .30);
   cursor: pointer;
-  border: none;
 }
 .icp-align-slider::-moz-range-track {
   height: 6px;
@@ -1211,7 +1210,7 @@
   gap: 7px;
   padding: 7px 16px;
   background: var(--color-primary-muted);
-  border-bottom: 1px solid rgba(22,98,76,.15);
+  border-bottom: 1px solid rgba(var(--color-primary-rgb), .15);
   font-size: var(--text-sm);
   font-weight: 500;
   color: var(--color-primary);
@@ -1234,7 +1233,7 @@
   color: var(--color-primary);
   transition: background var(--transition);
 }
-.gallery-sel-clear:hover { background: rgba(22,98,76,.15); }
+.gallery-sel-clear:hover { background: rgba(var(--color-primary-rgb), .15); }
 
 /* ─────────────────────────────────────
    Gallery item — checkbox overlay
@@ -1516,7 +1515,7 @@
     radial-gradient(ellipse 85% 65% at 12% 22%, rgba(30,145,104,.80) 0%, transparent 58%),
     radial-gradient(ellipse 60% 70% at 88% 82%, rgba(8,44,33,.90) 0%, transparent 54%),
     radial-gradient(ellipse 52% 42% at 62%  8%, rgba(68,196,142,.30) 0%, transparent 62%),
-    radial-gradient(ellipse 70% 55% at 45% 70%, rgba(22,98,76,.45) 0%, transparent 65%),
+    radial-gradient(ellipse 70% 55% at 45% 70%, rgba(var(--color-primary-rgb), .45) 0%, transparent 65%),
     linear-gradient(152deg, #060e0b 0%, #0d2e22 32%, #16624c 64%, #1d8060 100%);
   box-shadow: var(--shadow-md);
   min-height: 0;
@@ -1566,7 +1565,7 @@
 .resize-split-badge--after {
   left: auto;
   right: 12px;
-  background: rgba(22,98,76,.85);
+  background: rgba(var(--color-primary-rgb), .85);
 }
 
 .resize-split-badge span:first-child {
@@ -1586,7 +1585,7 @@
   position: absolute;
   top: 0;
   bottom: 0;
-  /* JS sets left via the left panel width */
+  left: 50%; /* initial default; JS overrides via inline style */
   width: 2px;
   background: rgba(255,255,255,.6);
   z-index: 10;
@@ -1597,12 +1596,6 @@
 /* Position the divider at the right edge of the left panel */
 #resize-split-left {
   /* JS reads and sets this via offsetWidth + style.width */
-}
-
-/* The divider floats absolutely — its left is updated by JS via
-   a ResizeObserver or inline; simpler: attach it after left panel */
-.resize-split-divider {
-  left: 50%;
 }
 
 .resize-divider-handle {
@@ -1706,7 +1699,7 @@
   height: 32px;
   border-radius: var(--radius-md);
   background: var(--color-primary-muted);
-  border: 1px solid rgba(22,98,76,.18);
+  border: 1px solid rgba(var(--color-primary-rgb), .18);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -1757,8 +1750,6 @@
 }
 
 /* ── Pill mode toggle ───────────────────────────────── */
-.ri-pill-group { }
-
 .ri-pill-track {
   position: relative;
   display: flex;
@@ -1778,7 +1769,7 @@
   background: var(--color-primary);
   border-radius: calc(var(--radius-md) - 2px);
   transition: transform 200ms cubic-bezier(.4,0,.2,1);
-  box-shadow: 0 2px 8px rgba(22,98,76,.35);
+  box-shadow: 0 2px 8px rgba(var(--color-primary-rgb), .35);
   pointer-events: none;
 }
 
@@ -1831,7 +1822,7 @@
 }
 
 .ri-dim-field:focus-within {
-  background: rgba(22,98,76,.04);
+  background: rgba(var(--color-primary-rgb), .04);
 }
 
 .ri-dim-axis {
@@ -1890,8 +1881,8 @@
 .ri-chain-btn:hover { background: var(--color-bg); color: var(--color-text); }
 .ri-chain-btn.active {
   color: var(--color-primary);
-  background: rgba(22,98,76,.06);
-  border-color: rgba(22,98,76,.20);
+  background: rgba(var(--color-primary-rgb), .06);
+  border-color: rgba(var(--color-primary-rgb), .20);
 }
 
 .ri-chain-lines {
@@ -1989,7 +1980,7 @@
 }
 .ri-switch-input:checked ~ .ri-switch-track .ri-switch-thumb {
   transform: translateX(16px);
-  box-shadow: 0 2px 6px rgba(22,98,76,.40);
+  box-shadow: 0 2px 6px rgba(var(--color-primary-rgb), .40);
 }
 
 /* ── Select dropdown ────────────────────────────────── */
@@ -2154,14 +2145,14 @@
   border-radius: 50%;
   background: #fff;
   border: 2.5px solid var(--color-primary);
-  box-shadow: 0 2px 8px rgba(22,98,76,.30);
+  box-shadow: 0 2px 8px rgba(var(--color-primary-rgb), .30);
   cursor: pointer;
   margin-top: -6px;
   transition: transform .1s ease, box-shadow .1s ease;
 }
 .ri-quality-slider::-webkit-slider-thumb:hover {
   transform: scale(1.15);
-  box-shadow: 0 3px 12px rgba(22,98,76,.45);
+  box-shadow: 0 3px 12px rgba(var(--color-primary-rgb), .45);
 }
 .ri-quality-slider::-moz-range-thumb {
   width: 18px;
@@ -2169,7 +2160,7 @@
   border-radius: 50%;
   background: #fff;
   border: 2.5px solid var(--color-primary);
-  box-shadow: 0 2px 8px rgba(22,98,76,.30);
+  box-shadow: 0 2px 8px rgba(var(--color-primary-rgb), .30);
   cursor: pointer;
   border: none;
 }
@@ -2449,7 +2440,7 @@
 /* Result box */
 .ri-result-box {
   background: var(--color-primary-muted);
-  border: 1px solid rgba(22,98,76,.18);
+  border: 1px solid rgba(var(--color-primary-rgb), .18);
   border-radius: var(--radius-md);
   padding: 14px;
   margin-top: auto;
@@ -2684,18 +2675,18 @@
   border-radius: 50%;
   background: #fff;
   border: 2.5px solid var(--color-primary);
-  box-shadow: 0 2px 8px rgba(22,98,76,.30);
+  box-shadow: 0 2px 8px rgba(var(--color-primary-rgb), .30);
   cursor: pointer;
   margin-top: -6px;
   transition: transform .1s ease, box-shadow .1s ease;
 }
-.wm-slider::-webkit-slider-thumb:hover { transform: scale(1.15); box-shadow: 0 3px 12px rgba(22,98,76,.45); }
+.wm-slider::-webkit-slider-thumb:hover { transform: scale(1.15); box-shadow: 0 3px 12px rgba(var(--color-primary-rgb), .45); }
 .wm-slider::-moz-range-thumb {
   width: 18px; height: 18px;
   border-radius: 50%;
   background: #fff;
   border: 2.5px solid var(--color-primary);
-  box-shadow: 0 2px 8px rgba(22,98,76,.30);
+  box-shadow: 0 2px 8px rgba(var(--color-primary-rgb), .30);
   cursor: pointer;
 }
 .wm-slider::-moz-range-track { height: 6px; background: transparent; border-radius: 3px; }

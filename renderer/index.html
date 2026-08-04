@@ -11,7 +11,7 @@
   <link rel="stylesheet" href="css/app.css" />
 </head>
 <body>
-<div class="app-root">
+<div class="app-root" role="application" aria-label="Фотоцентр ГермесГарант">
 
   <!-- ═══════════════════════════════════════════════════
        HEADER
@@ -58,12 +58,12 @@
     </button>
 
     <!-- Nav arrows -->
-    <button class="btn-icon" id="btn-nav-prev" data-tooltip="Предыдущее фото (←)" disabled>
+    <button class="btn-icon" id="btn-nav-prev" data-tooltip="Предыдущее фото (←)" aria-label="Предыдущее фото" disabled>
       <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
         <polyline points="10,4 6,8 10,12"/>
       </svg>
     </button>
-    <button class="btn-icon" id="btn-nav-next" data-tooltip="Следующее фото (→)" disabled>
+    <button class="btn-icon" id="btn-nav-next" data-tooltip="Следующее фото (→)" aria-label="Следующее фото" disabled>
       <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
         <polyline points="6,4 10,8 6,12"/>
       </svg>
@@ -652,7 +652,7 @@
 
               <div class="ri-dim-field">
                 <div class="ri-dim-axis">Ш</div>
-                <input type="text" id="frame-width" value="—" aria-label="Ширина" class="ri-dim-input ri-dim-input--text" />
+                <input type="text" id="frame-width" value="—" aria-label="Ширина" inputmode="numeric" class="ri-dim-input ri-dim-input--text" />
                 <div class="ri-dim-unit">px</div>
               </div>
 
@@ -822,7 +822,7 @@
             <div class="ri-section-label">Шрифт</div>
             <div class="wm-font-row">
               <div class="ri-select-wrap wm-font-select-wrap" id="wm-font-family-wrap">
-                <button class="ri-select-btn" id="wm-font-family-btn" type="button">
+                <button class="ri-select-btn" id="wm-font-family-btn" type="button" aria-haspopup="listbox" aria-expanded="false">
                   <span class="wm-font-preview" id="wm-font-family-preview" style="font-family:'Inter',sans-serif;">Aa</span>
                   <span id="wm-font-family-label">Inter</span>
                   <svg class="ri-select-chevron" width="10" height="10" viewBox="0 0 10 10" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
@@ -862,12 +862,12 @@
                   <input type="number" id="wm-font-size" value="24" min="6" max="200" class="ri-dim-input" style="font-size:16px;" />
                 </div>
               </div>
-              <button class="wm-style-btn" id="wm-bold" data-tooltip="Жирный" title="Жирный">
+              <button class="wm-style-btn" id="wm-bold" data-tooltip="Жирный" title="Жирный" aria-pressed="false">
                 <svg width="13" height="13" viewBox="0 0 13 13" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
                   <path d="M3 2h5a3 3 0 010 5H3V2zM3 7h5.5a3 3 0 010 5H3V7z"/>
                 </svg>
               </button>
-              <button class="wm-style-btn" id="wm-italic" data-tooltip="Курсив" title="Курсив">
+              <button class="wm-style-btn" id="wm-italic" data-tooltip="Курсив" title="Курсив" aria-pressed="false">
                 <svg width="13" height="13" viewBox="0 0 13 13" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
                   <line x1="8" y1="2" x2="5" y2="11"/>
                   <line x1="5" y1="2" x2="10" y2="2"/>

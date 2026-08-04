@@ -7,7 +7,8 @@
   --color-primary:       #16624c;
   --color-primary-hover: #0f523f;
   --color-primary-light: #e8f2ee;
-  --color-primary-muted: rgba(22, 98, 76, 0.12);
+  --color-primary-rgb:   22, 98, 76;
+  --color-primary-muted: rgba(var(--color-primary-rgb), 0.12);
 
   /* Surfaces */
   --color-bg:     #f6f8f9;
