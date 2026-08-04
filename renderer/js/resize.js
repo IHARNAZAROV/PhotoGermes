@@ -39,7 +39,6 @@ function getResizeKernel(mode, oldWidth, oldHeight, newWidth, newHeight) {
 }
 
 // Expose for app.js and future modules
-window.__getResizeKernel = getResizeKernel;
 
 /* ── Split-view drag ─────────────────────────────────── */
 (function initSplitDrag() {
