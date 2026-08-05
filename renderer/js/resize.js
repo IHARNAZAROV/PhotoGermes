@@ -284,9 +284,9 @@ function _initResizeQuality() {
 let _inpW, _inpH, _inpQuality, _rSize, _rFile, _rEconomy, _lblAfter, _noEnlarge;
 
 /**
- * Called by app.js → initResizeButtons() AFTER the resize <template> is
- * stamped into the live DOM.  All getElementById calls above would return
- * null at script-parse time because the elements are inside the template.
+ * Called by app.js → initResizeButtons() at DOMContentLoaded.
+ * The resize inspector HTML is now directly in the DOM (no template),
+ * so all getElementById calls succeed immediately.
  */
 window.__initResizePanel = function () {
     _initSplitDrag();
@@ -294,15 +294,15 @@ window.__initResizePanel = function () {
     _initResizeLink();
     _initResampleDropdown();
     _initResizeQuality();
-    // Re-cache module-level refs (were null at DOMContentLoaded)
-    _inpW      = document.getElementById('resize-width')           ?? _inpW;
-    _inpH      = document.getElementById('resize-height')          ?? _inpH;
-    _inpQuality = document.getElementById('resize-quality')        ?? _inpQuality;
-    _rSize     = document.getElementById('resize-result-size')     ?? _rSize;
-    _rFile     = document.getElementById('resize-result-filesize') ?? _rFile;
-    _rEconomy  = document.getElementById('resize-result-economy')  ?? _rEconomy;
-    _lblAfter  = document.getElementById('resize-label-after')     ?? _lblAfter;
-    _noEnlarge = document.getElementById('resize-no-enlarge')      ?? _noEnlarge;
+    // Cache module-level refs used by updateResizeResult()
+    _inpW       = document.getElementById('resize-width');
+    _inpH       = document.getElementById('resize-height');
+    _inpQuality = document.getElementById('resize-quality');
+    _rSize      = document.getElementById('resize-result-size');
+    _rFile      = document.getElementById('resize-result-filesize');
+    _rEconomy   = document.getElementById('resize-result-economy');
+    _lblAfter   = document.getElementById('resize-label-after');
+    _noEnlarge  = document.getElementById('resize-no-enlarge');
 };
 
 /* ── Shared dimension calculation ───────────────────── */

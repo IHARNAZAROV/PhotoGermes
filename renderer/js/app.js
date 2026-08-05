@@ -916,7 +916,7 @@ function ensurePanelReady(toolName) {
 // ── UI init helpers ────────────────────────────────────
 function switchToTool(toolName) {
     // Stamp the panel HTML from its <template> on first visit
-    if (toolName === 'resize' || toolName === 'watermark') ensurePanelReady(toolName);
+    if (toolName === 'watermark') ensurePanelReady(toolName);
     const cropEditorView      = document.getElementById('crop-editor-view');
     const resizeEditorView    = document.getElementById('resize-editor-view');
     const watermarkEditorView = document.getElementById('watermark-editor-view');
@@ -944,7 +944,7 @@ function switchToTool(toolName) {
         if (resizeEditorView)    resizeEditorView.style.display    = isResize    ? 'flex'     : 'none';
         if (watermarkEditorView) watermarkEditorView.style.display = isWatermark ? 'flex'     : 'none';
         if (cropInspector)       cropInspector.style.display       = isCrop      ? 'contents' : 'none';
-        if (resizeInspector)     resizeInspector.style.display     = isResize    ? 'contents' : 'none';
+        if (resizeInspector)     resizeInspector.style.display     = isResize    ? 'contents'  : 'none';
         if (watermarkInspector)  watermarkInspector.style.display  = isWatermark ? 'contents' : 'none';
 
         // Перенаправить ползунок масштаба на активный вид
@@ -2405,8 +2405,7 @@ document.addEventListener('DOMContentLoaded', () => {
     initPresets();
     initEditorTransformButtons();
     initCropButtons();
-    // initResizeButtons() is called lazily inside ensurePanelReady('resize')
-    // when the resize tool is first activated.
+    initResizeButtons(); // resize inspector is now in DOM from page load
     initToggleButtons();
     initSaveButtons();
     initUndoRedo();
