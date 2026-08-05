@@ -96,6 +96,16 @@ html, body {
   border-radius: var(--radius-xl);
   box-shadow: var(--shadow-sm);
   overflow: hidden;
+  min-height: 0;   /* grid item: allow flex children to shrink & scroll */
+}
+
+/* Template-stamped inspector panels – must have a bounded height so their
+   inner .resize-inspector-body / watermark body can scroll via overflow-y:auto.
+   flex:1 alone can leave min-height:auto unresolved in Chromium; be explicit. */
+#resize-inspector-view,
+#watermark-inspector-view {
+  min-height: 0;
+  flex: 1 1 0%;   /* flex-basis:0 so the panel never claims intrinsic height */
 }
 
 /* ── Footer ── */

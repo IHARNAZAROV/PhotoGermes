@@ -1,0 +1,1 @@
+- [Chromium flex min-height scroll](chromium-flex-min-height-scroll.md) — overflow:hidden alone doesn't fix min-height:auto in deep flex chains; always add explicit min-height:0 + flex:1 1 0%.
