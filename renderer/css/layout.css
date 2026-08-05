@@ -100,18 +100,9 @@ html, body {
   position: relative; /* anchor for absolutely-positioned template panels */
 }
 
-/* Template-stamped inspector panels (resize, watermark) are taken out of the
-   flex flow and positioned to fill .app-inspector exactly.  This gives them a
-   definite height so their inner body can trigger overflow-y:auto scrolling –
-   the flex multi-level height-propagation bug in Chromium doesn't apply. */
-#resize-inspector-view,
-#watermark-inspector-view {
-  position: absolute;
-  inset: 0;
-  flex-direction: column; /* still a flex column when display:flex is set by JS */
-  overflow: hidden;
-  /* flex/min-height props are irrelevant for abs-positioned elements */
-}
+/* Template-stamped inspector panels use display:contents when visible, so their
+   children (header, body, footer) become direct flex children of .app-inspector –
+   the same structure as the crop inspector, which scrolls correctly. */
 
 /* ── Footer ── */
 .app-footer {

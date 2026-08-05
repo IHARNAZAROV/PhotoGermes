@@ -944,8 +944,8 @@ function switchToTool(toolName) {
         if (resizeEditorView)    resizeEditorView.style.display    = isResize    ? 'flex'     : 'none';
         if (watermarkEditorView) watermarkEditorView.style.display = isWatermark ? 'flex'     : 'none';
         if (cropInspector)       cropInspector.style.display       = isCrop      ? 'contents' : 'none';
-        if (resizeInspector)     resizeInspector.style.display     = isResize    ? 'flex'     : 'none';
-        if (watermarkInspector)  watermarkInspector.style.display  = isWatermark ? 'flex'     : 'none';
+        if (resizeInspector)     resizeInspector.style.display     = isResize    ? 'contents' : 'none';
+        if (watermarkInspector)  watermarkInspector.style.display  = isWatermark ? 'contents' : 'none';
 
         // Перенаправить ползунок масштаба на активный вид
         if (window.zoom?.setTarget) {

@@ -1,14 +1,14 @@
 ---
 name: Chromium flex min-height scroll bug
-description: Why overflow-y:auto on a deeply-nested flex child sometimes doesn't scroll even when overflow:hidden is set on parents.
+description: Template-stamped inspector panels (resize, watermark) must use display:contents, not display:flex, to scroll correctly.
 ---
 
 ## Rule
-When a flex child needs `overflow-y:auto` to scroll, always set **explicit** `min-height: 0` on it AND on every flex/grid ancestor in the chain. Do not rely solely on `overflow: hidden` overriding `min-height: auto` — Chromium has edge cases in multi-level nesting where this doesn't propagate.
+When a template is stamped into an intermediate container div inside `.app-inspector`, set that container's `display` to **`contents`** (not `flex`) when showing it.
 
-**Why:** Per CSS spec, `overflow != visible` on a flex item should override `min-height: auto`. But in practice, Chromium (and therefore Electron) fails to resolve `min-height:auto` correctly in 2+ deep flex chains (grid item → flex column → flex child with `flex:1`), so the child's height is never bounded and `overflow-y:auto` never triggers. The content grows to full intrinsic height; the clip comes from the ancestor `overflow:hidden`, not the scrolling element.
+**Why:** `.app-inspector` is a bounded flex column (height from CSS grid). The crop inspector uses `display:contents` so its children (header, scroll-body, footer) are **direct** flex children of `.app-inspector` — they get bounded heights and `overflow-y:auto` works. If an intermediate container uses `display:flex`, Chromium fails to propagate the grid-provided height through the multi-level flex chain, so the inner body's `overflow-y:auto` never triggers; content is clipped by a parent `overflow:hidden` with no scrollbar.
 
 **How to apply:**
-- Add `min-height: 0` to every flex/grid container in the scroll chain.
-- Use `flex: 1 1 0%` (not just `flex: 1`) on intermediate panels — `flex-basis: 0%` prevents the item from claiming its intrinsic height.
-- The actual scrolling element still needs `min-height: 0; overflow-y: auto; flex: 1`.
+- In `app.js → switchToTool()`, always show template-panel containers with `display: 'contents'`, never `display: 'flex'`.
+- The template content still needs the correct structure: `.ri-header` (flex-shrink:0) + scrollable body (flex:1; min-height:0; overflow-y:auto) + `.inspector-footer` (flex-shrink:0).
+- No special CSS needed on `#resize-inspector-view` or `#watermark-inspector-view`.
