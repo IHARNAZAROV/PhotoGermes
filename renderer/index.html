@@ -1240,22 +1240,26 @@
           <!-- Dimensions -->
           <div class="rs-card">
             <div class="rs-card-label">Размеры</div>
-            <div class="rs-dims">
-              <div class="rs-dim">
-                <span class="rs-dim-axis">Ш</span>
-                <input type="number" id="resize-width" value="70" min="1" class="rs-dim-input" />
-                <span class="rs-dim-unit" id="resize-unit-w">%</span>
+            <div class="ri-dims-card">
+              <div class="ri-dim-field">
+                <div class="ri-dim-axis">Ш</div>
+                <input type="number" id="resize-width" value="70" min="1" class="ri-dim-input" />
+                <div class="ri-dim-unit" id="resize-unit-w">%</div>
               </div>
-              <button class="rs-chain" id="resize-link-btn" data-tooltip="Сохранить пропорции" aria-label="Связать размеры">
+              <button class="ri-chain-btn active" id="resize-link-btn" data-tooltip="Сохранить пропорции">
                 <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
                   <rect x="2" y="7" width="10" height="6" rx="1.5"/>
                   <path d="M4.5 7V5a3 3 0 016 0v2"/>
                 </svg>
+                <div class="ri-chain-lines">
+                  <div class="ri-chain-line ri-chain-line--top"></div>
+                  <div class="ri-chain-line ri-chain-line--bot"></div>
+                </div>
               </button>
-              <div class="rs-dim">
-                <span class="rs-dim-axis">В</span>
-                <input type="number" id="resize-height" value="70" min="1" class="rs-dim-input" />
-                <span class="rs-dim-unit" id="resize-unit-h">%</span>
+              <div class="ri-dim-field">
+                <div class="ri-dim-axis">В</div>
+                <input type="number" id="resize-height" value="70" min="1" class="ri-dim-input" />
+                <div class="ri-dim-unit" id="resize-unit-h">%</div>
               </div>
             </div>
           </div>
@@ -1322,9 +1326,11 @@
               <span class="rs-card-label">Качество</span>
               <span class="rs-quality-val" id="resize-quality-val">90%</span>
             </div>
-            <div class="rs-slider-wrap">
-              <input type="range" class="ri-quality-slider" id="resize-quality" min="1" max="100" value="90" />
-              <div class="ri-quality-fill" id="ri-quality-fill" style="width:89%"></div>
+            <div class="wm-opacity-wrap" style="margin-top:8px;">
+              <div class="wm-slider-track">
+                <input type="range" class="wm-slider" id="resize-quality" min="1" max="100" value="90" />
+                <div class="wm-slider-fill" id="ri-quality-fill" style="width:89%;"></div>
+              </div>
             </div>
             <div class="rs-quality-hints">
               <span>Меньше файл</span>
