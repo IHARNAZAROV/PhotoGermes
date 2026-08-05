@@ -584,6 +584,7 @@
 .ep-card-title {
   font-size: var(--text-base);
   font-weight: 600;
+  line-height: var(--lh-tight);
   color: var(--color-text);
 }
 

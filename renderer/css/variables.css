@@ -40,14 +40,20 @@
   --shadow-sm: 0 1px 4px rgba(0,0,0,.08);
   --shadow-md: 0 4px 12px rgba(0,0,0,.10);
 
-  /* Typography */
+  /* Typography — minor-third scale (×1.2 per step) */
   --font-family: 'Inter', system-ui, -apple-system, sans-serif;
-  --text-xs:   11px;
-  --text-sm:   12px;
-  --text-base: 13px;
-  --text-md:   14px;
-  --text-lg:   16px;
-  --text-xl:   20px;
+  --text-2xs:  10px;   /* micro labels, version strings             */
+  --text-xs:   12px;   /* badges, timestamps, section labels  ↑11px */
+  --text-sm:   13px;   /* meta, descriptions                  ↑12px */
+  --text-base: 14px;   /* primary UI text                     ↑13px */
+  --text-md:   16px;   /* buttons, inspector headings         ↑14px */
+  --text-lg:   18px;   /* panel titles                        ↑16px */
+  --text-xl:   22px;   /* display / hero numbers              ↑20px */
+
+  /* Line-heights */
+  --lh-tight:  1.25;   /* single-line UI elements: badges, buttons  */
+  --lh-normal: 1.5;    /* body copy, descriptions                   */
+  --lh-loose:  1.7;    /* long-form prose, tooltips                 */
 
   /* Layout dimensions */
   --header-h:    68px;

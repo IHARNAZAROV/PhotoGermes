@@ -834,6 +834,19 @@ function updateCounts() {
     if (galleryCount) galleryCount.textContent = `(${count})`;
     const allBadge = document.querySelector('[data-nav="all"] .gallery-nav-badge');
     if (allBadge) allBadge.textContent = count;
+    updateSaveBtn();
+}
+
+/**
+ * Updates the header Save button label to reflect unsaved changes:
+ *   «Сохранить»       — nothing pending
+ *   «Сохранить (2)»   — 2 photos have unapplied edits in their undo stack
+ */
+function updateSaveBtn() {
+    const lbl = document.getElementById('save-btn-label');
+    if (!lbl) return;
+    const dirtyCount = photos.filter(p => photoUndoStack(p).length > 0).length;
+    lbl.textContent = dirtyCount > 0 ? `Сохранить (${dirtyCount})` : 'Сохранить';
 }
 
 // ── Apply button label / icon ───────────────────────────
@@ -850,7 +863,7 @@ function updateApplyBtn() {
         lbl.textContent  = `Применить ко всем`;
         icon.innerHTML   = ICON_MULTI;
     } else {
-        lbl.textContent  = 'Применить';
+        lbl.textContent  = 'Применить к фото';
         icon.innerHTML   = ICON_SINGLE;
     }
 }
@@ -1862,6 +1875,7 @@ function updateUndoRedoBtns() {
     const redoBtn = document.querySelector('[data-action="redo"]');
     if (undoBtn) undoBtn.disabled = !canUndo;
     if (redoBtn) redoBtn.disabled = !canRedo;
+    updateSaveBtn(); // dirty count changes whenever undo stack changes
 }
 
 function initUndoRedo() {
