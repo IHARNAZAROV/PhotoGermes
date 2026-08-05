@@ -996,9 +996,10 @@ async function applyWatermark() {
     if (btn) btn.disabled = true;
     if (indexes.length === 1 && typeof pushUndo === 'function') pushUndo();
     let okCount = 0;
+    const appliedIndexes = [];
     for (const i of indexes) {
         const ok = await applyWatermarkToPhotoCanvas(photos[i], settings, cachedLogo);
-        if (ok) { okCount++; patchThumbnail(i); }
+        if (ok) { okCount++; patchThumbnail(i); appliedIndexes.push(i); }
     }
     if (btn) btn.disabled = false;
     if (!okCount) { showToast('Не удалось применить ватермарк'); return; }
@@ -1006,6 +1007,7 @@ async function applyWatermark() {
     const wmImg = document.getElementById('wm-editor-img');
     if (wmImg) wmImg.src = photos[selectedIndex].preview || photos[selectedIndex].objectUrl;
     rebuildGallery();
+    appliedIndexes.forEach(i => window.notifyApplied?.(i, 'Ватермарк'));
     updateCounts();
     if (typeof updateUndoRedoBtns === 'function') updateUndoRedoBtns();
     pushHistory('tool', indexes.length > 1 ? `Ватермарк применён к ${okCount} фото` : `Ватермарк применён: ${photos[selectedIndex].name}`);

@@ -506,6 +506,55 @@ function showToast(message) {
     }, 2500);
 }
 
+/**
+ * Visual feedback after any operation is applied to a photo:
+ *  1. Green border flash on the editor canvas (only for the active photo)
+ *  2. Pulse ring on the gallery item
+ *  3. "✓ <label>" badge on the thumbnail — fades out after 1.8 s
+ */
+function notifyApplied(index, label) {
+    // ① Editor canvas flash
+    if (index === selectedIndex) {
+        const ph = document.getElementById('editor-placeholder');
+        if (ph && ph.classList.contains('has-photo')) {
+            ph.classList.remove('apply-flash');
+            void ph.offsetWidth; // force reflow so animation restarts
+            ph.classList.add('apply-flash');
+            setTimeout(() => ph.classList.remove('apply-flash'), 500);
+        }
+    }
+
+    // ② + ③ Gallery item pulse + badge
+    const list = elGalleryList;
+    if (!list) return;
+    const item = list.querySelector(`[data-index="${index}"]`);
+    if (!item) return;
+
+    // Pulse ring
+    item.classList.remove('apply-pulse');
+    void item.offsetWidth;
+    item.classList.add('apply-pulse');
+    setTimeout(() => item.classList.remove('apply-pulse'), 700);
+
+    // Badge
+    const thumb = item.querySelector('.gallery-thumb');
+    if (!thumb) return;
+    let badge = thumb.querySelector('.gallery-apply-badge');
+    if (!badge) {
+        badge = document.createElement('div');
+        badge.className = 'gallery-apply-badge';
+        thumb.appendChild(badge);
+    }
+    clearTimeout(badge._hideTimer);
+    badge.classList.remove('fade-out');
+    badge.textContent = '\u2713\u2009' + label; // ✓ thin-space label
+    badge._hideTimer = setTimeout(() => {
+        badge.classList.add('fade-out');
+        setTimeout(() => badge.remove(), 380);
+    }, 1800);
+}
+window.notifyApplied = notifyApplied; // expose for watermark.js
+
 // ── Keyboard shortcuts ─────────────────────────────────
 function initKeyboard() {
     document.addEventListener('keydown', e => {
@@ -1110,6 +1159,7 @@ async function applyCropCurrent() {
     if (elFooterInfo) elFooterInfo.textContent =
         `${formatRes(photo.width, photo.height)}\u00a0·\u00a0${formatSize(photo.sizeBytes)}`;
     pushHistory('crop', 'Обрезка применена: ' + photo.name);
+    notifyApplied(selectedIndex, 'Обрезка');
     showToast('Обрезка применена');
 }
 
@@ -1152,9 +1202,11 @@ async function applyToChecked() {
         p._redoStack = [];
     });
 
+    const appliedIndices = [...checkedIndices]; // capture before rebuildGallery clears DOM
     await Promise.all(targets.map(p => applyCropToPhotoCanvas(p, norm)));
 
     rebuildGallery();
+    appliedIndices.forEach(i => notifyApplied(i, 'Обрезка'));
     if (selectedIndex >= 0) {
         await loadEditorPreview(photos[selectedIndex]);
         const p = photos[selectedIndex];
@@ -1290,6 +1342,7 @@ async function applyResize() {
         `${formatRes(photo.width, photo.height)}\u00a0·\u00a0${formatSize(photo.sizeBytes)}`;
 
     pushHistory('resize', `Размер изменён: ${newWidth} × ${newHeight} px`);
+    notifyApplied(selectedIndex, 'Размер изменён');
     showToast(`Размер изменён: ${newWidth} × ${newHeight} px`);
 }
 
