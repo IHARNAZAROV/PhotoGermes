@@ -96,16 +96,21 @@ html, body {
   border-radius: var(--radius-xl);
   box-shadow: var(--shadow-sm);
   overflow: hidden;
-  min-height: 0;   /* grid item: allow flex children to shrink & scroll */
+  min-height: 0;
+  position: relative; /* anchor for absolutely-positioned template panels */
 }
 
-/* Template-stamped inspector panels – must have a bounded height so their
-   inner .resize-inspector-body / watermark body can scroll via overflow-y:auto.
-   flex:1 alone can leave min-height:auto unresolved in Chromium; be explicit. */
+/* Template-stamped inspector panels (resize, watermark) are taken out of the
+   flex flow and positioned to fill .app-inspector exactly.  This gives them a
+   definite height so their inner body can trigger overflow-y:auto scrolling –
+   the flex multi-level height-propagation bug in Chromium doesn't apply. */
 #resize-inspector-view,
 #watermark-inspector-view {
-  min-height: 0;
-  flex: 1 1 0%;   /* flex-basis:0 so the panel never claims intrinsic height */
+  position: absolute;
+  inset: 0;
+  flex-direction: column; /* still a flex column when display:flex is set by JS */
+  overflow: hidden;
+  /* flex/min-height props are irrelevant for abs-positioned elements */
 }
 
 /* ── Footer ── */
