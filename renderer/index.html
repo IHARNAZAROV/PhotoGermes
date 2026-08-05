@@ -398,6 +398,29 @@
           <div class="editor-image-placeholder" id="editor-placeholder">
             <!-- Real photo (shown when a photo is selected) -->
             <img id="editor-img" class="editor-real-img" src="" alt="" style="display:none;" />
+
+            <!-- Empty State — visible until a photo is loaded -->
+            <div class="editor-empty-state" id="editor-empty-state" aria-hidden="false">
+              <div class="editor-empty-icon">
+                <svg width="52" height="52" viewBox="0 0 52 52" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+                  <rect x="4" y="12" width="44" height="32" rx="5"/>
+                  <circle cx="18" cy="24" r="5"/>
+                  <path d="M4 35l12-12 10 10 9-11 13 14"/>
+                  <line x1="26" y1="4" x2="26" y2="1"/>
+                  <line x1="20" y1="4" x2="32" y2="4"/>
+                </svg>
+              </div>
+              <p class="editor-empty-title">Нет загруженных фотографий</p>
+              <p class="editor-empty-sub">Перетащите файлы или нажмите&nbsp;«+»</p>
+              <button class="btn btn-primary editor-empty-btn" data-action="add-photos">
+                <svg width="15" height="15" viewBox="0 0 15 15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+                  <line x1="7.5" y1="2" x2="7.5" y2="13"/>
+                  <line x1="2" y1="7.5" x2="13" y2="7.5"/>
+                </svg>
+                Добавить фото
+              </button>
+            </div>
+
             <!-- Crop overlay -->
             <div class="crop-overlay">
               <div class="crop-frame">
