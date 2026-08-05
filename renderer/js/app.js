@@ -1362,6 +1362,9 @@ async function applyResize() {
 function initResizeButtons() {
     const btn = document.getElementById('btn-apply-resize');
     if (btn) btn.addEventListener('click', applyResize);
+    // Complete all resize panel init now that the <template> is in the DOM.
+    // (IIFEs in resize.js ran at parse time when elements were still null.)
+    window.__initResizePanel?.();
 }
 
 // ── Save / Save As ──────────────────────────────────────
@@ -1665,6 +1668,20 @@ async function doSaveAs() {
         showToast('Ошибка сохранения: ' + err.message);
         console.error('[save-as]', err);
     }
+}
+
+/**
+ * Universal delegated listener: any click on button.toggle[role="switch"]
+ * flips aria-checked before specific handlers read the new value.
+ * This is the single source-of-truth for toggle state mutation.
+ */
+function initToggleButtons() {
+    document.addEventListener('click', e => {
+        const btn = e.target.closest('button.toggle[role="switch"]');
+        if (!btn) return;
+        const next = btn.getAttribute('aria-checked') !== 'true';
+        btn.setAttribute('aria-checked', String(next));
+    }, true); // capture phase → fires before bubbling listeners
 }
 
 function initSaveButtons() {
@@ -2204,11 +2221,14 @@ function initExportPage() {
     });
 
     // ── Options toggles ─────────────────────────────────
-    page.querySelectorAll('.export-toggle').forEach((toggle, i) => {
+    // aria-checked is flipped by the universal delegated listener (initToggleButtons).
+    // Here we only sync the flipped value into exportSettings via data-key.
+    page.querySelectorAll('button.toggle[data-key]').forEach(toggle => {
         toggle.addEventListener('click', () => {
-            const newState = toggle.dataset.state === 'on' ? 'off' : 'on';
-            toggle.dataset.state = newState;
-            if (TOGGLE_KEYS[i] !== undefined) exportSettings[TOGGLE_KEYS[i]] = newState === 'on';
+            // aria-checked is already flipped by the time this fires (bubbling order)
+            const key = toggle.dataset.key;
+            if (key in exportSettings)
+                exportSettings[key] = toggle.getAttribute('aria-checked') === 'true';
         });
     });
 
@@ -2309,10 +2329,11 @@ function _applyExportSettingsToUI(page) {
         customInput.disabled = s.dpi !== 'custom';
     }
 
-    // Toggles (order must match DOM order)
-    page.querySelectorAll('.export-toggle').forEach((toggle, i) => {
-        if (TOGGLE_KEYS[i] !== undefined)
-            toggle.dataset.state = s[TOGGLE_KEYS[i]] ? 'on' : 'off';
+    // Toggles — key-based, no fragile positional index
+    page.querySelectorAll('button.toggle[data-key]').forEach(toggle => {
+        const key = toggle.dataset.key;
+        if (key in s)
+            toggle.setAttribute('aria-checked', s[key] ? 'true' : 'false');
     });
 
     // Output path
@@ -2386,6 +2407,7 @@ document.addEventListener('DOMContentLoaded', () => {
     initCropButtons();
     // initResizeButtons() is called lazily inside ensurePanelReady('resize')
     // when the resize tool is first activated.
+    initToggleButtons();
     initSaveButtons();
     initUndoRedo();
     initTooltips();

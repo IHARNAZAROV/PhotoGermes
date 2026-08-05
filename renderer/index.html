@@ -1271,12 +1271,9 @@
                 <div class="ri-toggle-label">Сохранить пропорции</div>
                 <div class="ri-toggle-hint">Ширина и высота меняются вместе</div>
               </div>
-              <div class="ri-switch">
-                <input type="checkbox" id="resize-keep-ratio" checked class="ri-switch-input" />
-                <div class="ri-switch-track">
-                  <div class="ri-switch-thumb"></div>
-                </div>
-              </div>
+              <button class="toggle" role="switch" aria-checked="true" id="resize-keep-ratio">
+                <span class="toggle-thumb"></span>
+              </button>
             </label>
             <div class="ri-options-sep"></div>
             <label class="ri-toggle-row">
@@ -1284,12 +1281,9 @@
                 <div class="ri-toggle-label">Не увеличивать</div>
                 <div class="ri-toggle-hint">Если изображение меньше оригинала</div>
               </div>
-              <div class="ri-switch">
-                <input type="checkbox" id="resize-no-enlarge" class="ri-switch-input" />
-                <div class="ri-switch-track">
-                  <div class="ri-switch-thumb"></div>
-                </div>
-              </div>
+              <button class="toggle" role="switch" aria-checked="false" id="resize-no-enlarge">
+                <span class="toggle-thumb"></span>
+              </button>
             </label>
           </div>
 
@@ -1616,28 +1610,28 @@
                   <div class="export-option-label">Сохранить EXIF-данные</div>
                   <div class="export-option-sub">Геолокация, камера, дата съёмки</div>
                 </div>
-                <div class="export-toggle" data-state="on"><div class="export-toggle-thumb"></div></div>
+                <button class="toggle" role="switch" aria-checked="true" data-key="keepExif"><span class="toggle-thumb"></span></button>
               </label>
               <label class="export-option-row">
                 <div class="export-option-info">
                   <div class="export-option-label">Добавить цветовой профиль</div>
                   <div class="export-option-sub">Встроить sRGB ICC-профиль</div>
                 </div>
-                <div class="export-toggle" data-state="on"><div class="export-toggle-thumb"></div></div>
+                <button class="toggle" role="switch" aria-checked="true" data-key="colorProfile"><span class="toggle-thumb"></span></button>
               </label>
               <label class="export-option-row">
                 <div class="export-option-info">
                   <div class="export-option-label">Прогрессивная загрузка</div>
                   <div class="export-option-sub">Для JPEG и WebP — постепенный показ при загрузке</div>
                 </div>
-                <div class="export-toggle" data-state="off"><div class="export-toggle-thumb"></div></div>
+                <button class="toggle" role="switch" aria-checked="false" data-key="progressive"><span class="toggle-thumb"></span></button>
               </label>
               <label class="export-option-row">
                 <div class="export-option-info">
                   <div class="export-option-label">Оптимизировать для веба</div>
                   <div class="export-option-sub">Переместить метаданные в начало файла</div>
                 </div>
-                <div class="export-toggle" data-state="off"><div class="export-toggle-thumb"></div></div>
+                <button class="toggle" role="switch" aria-checked="false" data-key="webOptimize"><span class="toggle-thumb"></span></button>
               </label>
             </div>
           </div>
@@ -1847,27 +1841,21 @@
                 <div class="export-option-label">Сохранить EXIF-данные</div>
                 <div class="export-option-sub">Геолокация, камера, дата съёмки</div>
               </div>
-              <div class="export-toggle" data-state="on">
-                <div class="export-toggle-thumb"></div>
-              </div>
+              <button class="toggle" role="switch" aria-checked="true" data-key="keepExif"><span class="toggle-thumb"></span></button>
             </label>
             <label class="export-option-row">
               <div class="export-option-info">
                 <div class="export-option-label">Добавить цветовой профиль</div>
                 <div class="export-option-sub">Встроить sRGB ICC-профиль</div>
               </div>
-              <div class="export-toggle" data-state="on">
-                <div class="export-toggle-thumb"></div>
-              </div>
+              <button class="toggle" role="switch" aria-checked="true" data-key="colorProfile"><span class="toggle-thumb"></span></button>
             </label>
             <label class="export-option-row">
               <div class="export-option-info">
                 <div class="export-option-label">Прогрессивная загрузка</div>
                 <div class="export-option-sub">Для JPEG и WebP (постепенный показ)</div>
               </div>
-              <div class="export-toggle" data-state="off">
-                <div class="export-toggle-thumb"></div>
-              </div>
+              <button class="toggle" role="switch" aria-checked="false" data-key="progressive"><span class="toggle-thumb"></span></button>
             </label>
           </div>
         </div>

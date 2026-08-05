@@ -41,7 +41,10 @@ function getResizeKernel(mode, oldWidth, oldHeight, newWidth, newHeight) {
 // Expose for app.js and future modules
 
 /* ── Split-view drag ─────────────────────────────────── */
-(function initSplitDrag() {
+// NOTE: all init functions below are called by window.__initResizePanel()
+// AFTER the <template> is stamped into the DOM. Do NOT call them as IIFEs —
+// the template elements are null at script-parse time.
+function _initSplitDrag() {
     const container = document.getElementById('resize-split-container');
     const leftPanel = document.getElementById('resize-split-left');
     const divider   = document.getElementById('resize-divider');
@@ -119,10 +122,10 @@ function getResizeKernel(mode, oldWidth, oldHeight, newWidth, newHeight) {
             setPosition(Math.max(min, Math.min(max, curW)));
         }).observe(container);
     }
-})();
+}
 
 /* ── Mode toggle (% / px) — pill indicator ───────────── */
-(function initResizeMode() {
+function _initResizeMode() {
     const btnPct    = document.getElementById('resize-mode-pct');
     const btnPx     = document.getElementById('resize-mode-px');
     const indicator = document.getElementById('ri-pill-indicator');
@@ -161,27 +164,38 @@ function getResizeKernel(mode, oldWidth, oldHeight, newWidth, newHeight) {
     btnPx.addEventListener('click',  () => switchMode('px'));
 
     window.__resizeMode = () => mode;
-})();
+}
 
 /* ── Linked width / height ───────────────────────────── */
-(function initResizeLink() {
+function _initResizeLink() {
     const inpW    = document.getElementById('resize-width');
     const inpH    = document.getElementById('resize-height');
     const linkBtn = document.getElementById('resize-link-btn');
     const keepCb  = document.getElementById('resize-keep-ratio');
     if (!inpW || !inpH) return;
 
-    let linked = true; // mirror keepCb
+    let linked = true; // mirrors resize-keep-ratio toggle
+
+    function isKeepRatioOn() {
+        return keepCb ? keepCb.getAttribute('aria-checked') === 'true' : true;
+    }
 
     function syncLink() {
-        linked = keepCb ? keepCb.checked : true;
+        linked = isKeepRatioOn();
         if (linkBtn) linkBtn.classList.toggle('active', linked);
     }
 
-    if (keepCb) keepCb.addEventListener('change', syncLink);
+    // aria-checked is flipped by the universal listener (capture phase) before
+    // this click handler fires, so we can read the already-updated value.
+    if (keepCb) keepCb.addEventListener('click', syncLink);
     if (linkBtn) {
         linkBtn.addEventListener('click', () => {
-            if (keepCb) { keepCb.checked = !keepCb.checked; syncLink(); }
+            if (keepCb) {
+                // Mirror the link-button toggle into the keep-ratio button
+                const next = !isKeepRatioOn();
+                keepCb.setAttribute('aria-checked', String(next));
+                syncLink();
+            }
         });
     }
 
@@ -214,10 +228,10 @@ function getResizeKernel(mode, oldWidth, oldHeight, newWidth, newHeight) {
     });
 
     syncLink();
-})();
+}
 
 /* ── Custom resample dropdown ────────────────────────── */
-(function initResampleDropdown() {
+function _initResampleDropdown() {
     const wrap     = document.getElementById('resize-resample-wrap');
     const btn      = document.getElementById('resize-resample-btn');
     const labelEl  = document.getElementById('resize-resample-label');
@@ -247,10 +261,10 @@ function getResizeKernel(mode, oldWidth, oldHeight, newWidth, newHeight) {
     document.addEventListener('click', e => {
         if (!wrap.contains(e.target)) close();
     });
-})();
+}
 
 /* ── Quality slider ──────────────────────────────────── */
-(function initResizeQuality() {
+function _initResizeQuality() {
     const slider   = document.getElementById('resize-quality');
     const label    = document.getElementById('resize-quality-val');
     const fillBar  = document.getElementById('ri-quality-fill');
@@ -264,21 +278,32 @@ function getResizeKernel(mode, oldWidth, oldHeight, newWidth, newHeight) {
 
     slider.addEventListener('input', () => { updateFill(); updateResizeResult(); });
     updateFill(); // init
-})();
+}
 
-/* ── Cached DOM references (queried on every slider/input event) ─────── */
+/* ── Cached DOM references ───────────────────────────── */
 let _inpW, _inpH, _inpQuality, _rSize, _rFile, _rEconomy, _lblAfter, _noEnlarge;
 
-document.addEventListener('DOMContentLoaded', () => {
-    _inpW      = document.getElementById('resize-width');
-    _inpH      = document.getElementById('resize-height');
-    _inpQuality = document.getElementById('resize-quality');
-    _rSize     = document.getElementById('resize-result-size');
-    _rFile     = document.getElementById('resize-result-filesize');
-    _rEconomy  = document.getElementById('resize-result-economy');
-    _lblAfter  = document.getElementById('resize-label-after');
-    _noEnlarge = document.getElementById('resize-no-enlarge');
-});
+/**
+ * Called by app.js → initResizeButtons() AFTER the resize <template> is
+ * stamped into the live DOM.  All getElementById calls above would return
+ * null at script-parse time because the elements are inside the template.
+ */
+window.__initResizePanel = function () {
+    _initSplitDrag();
+    _initResizeMode();
+    _initResizeLink();
+    _initResampleDropdown();
+    _initResizeQuality();
+    // Re-cache module-level refs (were null at DOMContentLoaded)
+    _inpW      = document.getElementById('resize-width')           ?? _inpW;
+    _inpH      = document.getElementById('resize-height')          ?? _inpH;
+    _inpQuality = document.getElementById('resize-quality')        ?? _inpQuality;
+    _rSize     = document.getElementById('resize-result-size')     ?? _rSize;
+    _rFile     = document.getElementById('resize-result-filesize') ?? _rFile;
+    _rEconomy  = document.getElementById('resize-result-economy')  ?? _rEconomy;
+    _lblAfter  = document.getElementById('resize-label-after')     ?? _lblAfter;
+    _noEnlarge = document.getElementById('resize-no-enlarge')      ?? _noEnlarge;
+};
 
 /* ── Shared dimension calculation ───────────────────── */
 /**
@@ -364,7 +389,7 @@ window.__resizeGetParams = function () {
     const photo   = window.__resizeGetPhoto?.();
     const mode      = window.__resizeMode?.() ?? 'pct';
     const quality   = Number(_inpQuality?.value ?? 90);
-    const noEnlarge = _noEnlarge?.checked ?? false;
+    const noEnlarge = _noEnlarge?.getAttribute('aria-checked') === 'true';
 
     if (!photo || !photo.width || !photo.height) return null;
 

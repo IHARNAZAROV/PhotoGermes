@@ -50,7 +50,7 @@ html, body {
   grid-column: 1;
   display: grid;
   /* Left columns use fr so they shrink first; editor is protected with a minimum */
-  grid-template-columns: minmax(160px, 2fr) minmax(190px, 2.5fr) minmax(450px, 5.5fr) var(--inspector-w);
+  grid-template-columns: minmax(160px, 2fr) minmax(190px, 2.5fr) minmax(450px, 5.5fr) minmax(var(--inspector-w), var(--inspector-w));
   grid-template-rows: 1fr;
   overflow: hidden;
   padding: 10px;

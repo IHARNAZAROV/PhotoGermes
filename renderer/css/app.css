@@ -884,29 +884,7 @@
   margin-top: 1px;
 }
 
-.export-toggle {
-  width: 36px;
-  height: 20px;
-  border-radius: 10px;
-  background: var(--color-border2);
-  position: relative;
-  flex-shrink: 0;
-  transition: background .2s;
-  cursor: pointer;
-}
-.export-toggle[data-state="on"] { background: var(--color-primary); }
-.export-toggle-thumb {
-  position: absolute;
-  top: 2px;
-  left: 2px;
-  width: 16px;
-  height: 16px;
-  border-radius: 50%;
-  background: #fff;
-  box-shadow: 0 1px 3px rgba(0,0,0,.2);
-  transition: transform .2s;
-}
-.export-toggle[data-state="on"] .export-toggle-thumb { transform: translateX(16px); }
+/* .export-toggle and .export-toggle-thumb replaced by unified button.toggle in components.css */
 
 /* Footer */
 .export-footer {
