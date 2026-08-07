@@ -1,5 +1,6 @@
 /* ========================================================
-   Layout — Фотоцентр ГермесГарант
+   Layout — Фотоцентр ГермесГарант v2
+   5-area: header | sidebar + editor + inspector | filmstrip
    ======================================================== */
 
 *, *::before, *::after {
@@ -11,7 +12,7 @@
 html, body {
   width: 100%;
   height: 100%;
-  overflow: auto;
+  overflow: hidden;
   font-family: var(--font-family);
   font-size: var(--text-base);
   line-height: var(--lh-normal);
@@ -20,13 +21,13 @@ html, body {
   -webkit-font-smoothing: antialiased;
 }
 
-/* Root grid */
+/* ── Root grid: header | main | filmstrip ── */
 .app-root {
   display: grid;
-  grid-template-rows: var(--header-h) 1fr var(--footer-h);
+  grid-template-rows: var(--header-h) 1fr var(--filmstrip-h);
   grid-template-columns: 1fr;
   height: 100vh;
-  min-width: 1160px;
+  min-width: 1100px;
   min-height: 700px;
 }
 
@@ -36,25 +37,25 @@ html, body {
   grid-column: 1;
   display: flex;
   align-items: center;
-  gap: 5px;
-  padding: 0 16px;
+  gap: 4px;
+  padding: 0 20px;
   background: var(--color-panel);
   border-bottom: 1px solid var(--color-border);
   box-shadow: var(--shadow-xs);
   z-index: 10;
 }
 
-/* ── Main area ── */
+/* ── Main area (sidebar + editor + inspector) — 3 columns ── */
 .app-main {
   grid-row: 2;
   grid-column: 1;
   display: grid;
-  /* Left columns use fr so they shrink first; editor is protected with a minimum */
-  grid-template-columns: minmax(160px, 2fr) minmax(190px, 2.5fr) minmax(450px, 5.5fr) minmax(var(--inspector-w), var(--inspector-w));
+  grid-template-columns: var(--sidebar-w) 1fr var(--inspector-w);
   grid-template-rows: 1fr;
   overflow: hidden;
   padding: 10px;
-  gap: 8px;
+  gap: 10px;
+  background: var(--color-bg);
 }
 
 /* ── Left Sidebar ── */
@@ -66,19 +67,11 @@ html, body {
   box-shadow: var(--shadow-sm);
   overflow-y: auto;
   overflow-x: hidden;
+  min-height: 0;
+  min-width: 0;
 }
 
-/* ── Gallery ── */
-.app-gallery {
-  display: flex;
-  flex-direction: column;
-  background: var(--color-panel);
-  border-radius: var(--radius-xl);
-  box-shadow: var(--shadow-sm);
-  overflow: hidden;
-}
-
-/* ── Editor ── */
+/* ── Editor (central canvas area) ── */
 .app-editor {
   display: flex;
   flex-direction: column;
@@ -86,9 +79,11 @@ html, body {
   border-radius: var(--radius-xl);
   box-shadow: var(--shadow-sm);
   overflow: hidden;
+  position: relative;
+  min-width: 0;
 }
 
-/* ── Inspector ── */
+/* ── Inspector (right panel) ── */
 .app-inspector {
   display: flex;
   flex-direction: column;
@@ -97,23 +92,29 @@ html, body {
   box-shadow: var(--shadow-sm);
   overflow: hidden;
   min-height: 0;
-  position: relative; /* anchor for absolutely-positioned template panels */
+  position: relative;
 }
 
-/* Template-stamped inspector panels use display:contents when visible, so their
-   children (header, body, footer) become direct flex children of .app-inspector –
-   the same structure as the crop inspector, which scrolls correctly. */
+/* ── Export page spans editor + inspector columns ── */
+.app-export-page {
+  grid-column: 2 / 4;
+  grid-row: 1;
+}
 
-/* ── Footer ── */
-.app-footer {
+/* ── Filmstrip (gallery) — row 3 of root ── */
+.app-gallery {
   grid-row: 3;
   grid-column: 1;
   display: flex;
   align-items: center;
-  gap: 16px;
-  padding: 0 20px;
+  gap: 10px;
+  padding: 0 14px;
   background: var(--color-panel);
   border-top: 1px solid var(--color-border);
-  font-size: var(--text-sm);
-  color: var(--color-muted);
+  overflow: hidden;
+}
+
+/* ── Footer: hidden — DOM kept for JS ── */
+.app-footer {
+  display: none !important;
 }

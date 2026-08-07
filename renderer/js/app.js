@@ -54,22 +54,34 @@ function escapeHtml(str) {
 
 function renderHistoryPanel() {
     const list = document.getElementById('history-list');
-    if (!list) return;
+    const sidebarList = document.getElementById('sidebar-history-list');
+    if (!list && !sidebarList) return;
+
+    const emptyHtml = `
+      <div class="history-placeholder">
+        <svg width="48" height="48" viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="24" cy="24" r="19"/>
+          <polyline points="24,14 24,24 30,30"/>
+          <path d="M10 10l4 4M38 10l-4 4"/>
+        </svg>
+        <p>История действий пуста.<br/>Начните редактирование — каждое действие будет сохраняться здесь.</p>
+      </div>`;
+
+    const sidebarEmptyHtml = `
+      <div class="sidebar-history-empty">
+        <svg width="28" height="28" viewBox="0 0 28 28" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="14" cy="14" r="11"/><polyline points="14,8 14,14 18,18"/>
+        </svg>
+        <span>Нет действий</span>
+      </div>`;
 
     if (actionHistory.length === 0) {
-        list.innerHTML = `
-          <div class="history-placeholder">
-            <svg width="48" height="48" viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
-              <circle cx="24" cy="24" r="19"/>
-              <polyline points="24,14 24,24 30,30"/>
-              <path d="M10 10l4 4M38 10l-4 4"/>
-            </svg>
-            <p>История действий пуста.<br/>Начните редактирование — каждое действие будет сохраняться здесь.</p>
-          </div>`;
+        if (list) list.innerHTML = emptyHtml;
+        if (sidebarList) sidebarList.innerHTML = sidebarEmptyHtml;
         return;
     }
 
-    list.innerHTML = actionHistory.map((entry, i) => {
+    const entriesHtml = actionHistory.map((entry, i) => {
         const icon = HISTORY_ICONS[entry.type] || HISTORY_ICONS.tool;
         const isFirst = i === 0;
         return `
@@ -85,6 +97,9 @@ function renderHistoryPanel() {
             </div>
           </div>`;
     }).join('');
+
+    if (list) list.innerHTML = entriesHtml;
+    if (sidebarList) sidebarList.innerHTML = entriesHtml;
 }
 
 let selectedIndex    = -1;   // photo open in editor
@@ -190,6 +205,11 @@ function renderEditorEmpty() {
     const footerInfo = elFooterInfo;
     if (footerFile) footerFile.textContent = '—';
     if (footerInfo) footerInfo.textContent = '';
+    // Reset header center file info
+    const hdrName = document.getElementById('header-filename');
+    const hdrDims = document.getElementById('header-filedims');
+    if (hdrName) hdrName.textContent = '—';
+    if (hdrDims) hdrDims.textContent = 'Нет файла';
     updateSelectionUI();
 }
 
@@ -629,6 +649,13 @@ async function selectPhoto(index) {
     if (titleEl)    titleEl.textContent    = `Редактирование: ${photo.name}`;
     if (footerFile) footerFile.textContent = photo.name;
     if (footerInfo) footerInfo.textContent = `${formatRes(photo.width, photo.height)}  ·  ${formatSize(photo.sizeBytes)}`;
+    // Update header center file info
+    const hdrName = document.getElementById('header-filename');
+    const hdrDims = document.getElementById('header-filedims');
+    if (hdrName) hdrName.textContent = photo.name;
+    if (hdrDims) hdrDims.textContent = photo.width && photo.height
+        ? `${photo.width} × ${photo.height}`
+        : 'Загрузка...';
     updateSelectionUI();
 
     // Restore this photo's own transform state (each photo remembers its own)
@@ -834,6 +861,8 @@ function updateCounts() {
     if (galleryCount) galleryCount.textContent = `(${count})`;
     const allBadge = document.querySelector('[data-nav="all"] .gallery-nav-badge');
     if (allBadge) allBadge.textContent = count;
+    const filmstripCount = document.getElementById('filmstrip-count');
+    if (filmstripCount) filmstripCount.textContent = count;
     updateSaveBtn();
 }
 
@@ -931,11 +960,15 @@ function switchToTool(toolName) {
     const isResize    = toolName === 'resize';
     const isWatermark = toolName === 'watermark';
     const isExport    = toolName === 'export';
+    const isStub      = toolName === 'stub';
+    // Stub tools show the crop canvas + crop controls (so no broken editing state).
+    // A toast tells the user the selected feature is coming soon.
     const isCrop      = !isResize && !isWatermark && !isExport;
 
     // Show/hide the full export page and toggle editor+inspector panels
     if (exportPage)    exportPage.style.display    = isExport ? 'flex' : 'none';
-    if (appGallery)    appGallery.style.display    = isExport ? 'none' : '';
+    // NOTE: appGallery is now the root-grid filmstrip row (grid-row:3) — never hide it.
+    // The export page spans grid-column 2/4 inside .app-main, so the filmstrip stays visible.
     if (appEditor)     appEditor.style.display     = isExport ? 'none' : '';
     if (appInspector)  appInspector.style.display  = isExport ? 'none' : '';
 
@@ -946,6 +979,15 @@ function switchToTool(toolName) {
         if (cropInspector)       cropInspector.style.display       = isCrop      ? 'contents' : 'none';
         if (resizeInspector)     resizeInspector.style.display     = isResize    ? 'contents'  : 'none';
         if (watermarkInspector)  watermarkInspector.style.display  = isWatermark ? 'contents' : 'none';
+        // Stub inspector always hidden — stub tools fall back to crop UI (editor + inspector).
+        const stubInspector = document.getElementById('stub-inspector-view');
+        if (stubInspector) stubInspector.style.display = 'none';
+        // Notify user when a stub (not-yet-implemented) tool is activated
+        if (isStub) {
+            const activeCard = document.querySelector('.tool-card.active');
+            const label = activeCard?.querySelector('.tool-title')?.textContent || 'Инструмент';
+            showToast(`«${label}» — скоро будет доступно`, 3000);
+        }
 
         // Перенаправить ползунок масштаба на активный вид
         if (window.zoom?.setTarget) {
@@ -997,13 +1039,13 @@ let activeTool = 'crop';
 
 function initToolCards() {
     const toolCards = document.querySelectorAll('.tool-card');
-    const toolNames = ['crop', 'resize', 'watermark', 'export'];
 
-    toolCards.forEach((card, idx) => {
+    toolCards.forEach((card) => {
         card.addEventListener('click', () => {
             toolCards.forEach(c => c.classList.remove('active'));
             card.classList.add('active');
-            activeTool = toolNames[idx] ?? 'crop';
+            // Use data-tool attribute; placeholder tools fall back to 'crop'
+            activeTool = card.dataset.tool || 'crop';
             switchToTool(activeTool);
         });
     });
@@ -1888,18 +1930,93 @@ function updateUndoRedoBtns() {
     const photo   = selectedIndex >= 0 ? photos[selectedIndex] : null;
     const canUndo = photo ? photoUndoStack(photo).length > 0 : false;
     const canRedo = photo ? photoRedoStack(photo).length > 0 : false;
-    const undoBtn = document.querySelector('[data-action="undo"]');
-    const redoBtn = document.querySelector('[data-action="redo"]');
-    if (undoBtn) undoBtn.disabled = !canUndo;
-    if (redoBtn) redoBtn.disabled = !canRedo;
+    // Target ALL undo/redo buttons (header + floating toolbar)
+    document.querySelectorAll('[data-action="undo"]').forEach(btn => { btn.disabled = !canUndo; });
+    document.querySelectorAll('[data-action="redo"]').forEach(btn => { btn.disabled = !canRedo; });
     updateSaveBtn(); // dirty count changes whenever undo stack changes
 }
 
 function initUndoRedo() {
-    const undoBtn = document.querySelector('[data-action="undo"]');
-    const redoBtn = document.querySelector('[data-action="redo"]');
-    if (undoBtn) undoBtn.addEventListener('click', doUndo);
-    if (redoBtn) redoBtn.addEventListener('click', doRedo);
+    // Attach listeners to ALL undo/redo buttons (header + floating toolbar)
+    document.querySelectorAll('[data-action="undo"]').forEach(btn => btn.addEventListener('click', doUndo));
+    document.querySelectorAll('[data-action="redo"]').forEach(btn => btn.addEventListener('click', doRedo));
+}
+
+function initFloatingToolbar() {
+    // ── Zoom controls ──────────────────────────────────
+    const zoomOut = document.getElementById('ft-zoom-out');
+    const zoomIn  = document.getElementById('ft-zoom-in');
+    const zoomFit = document.getElementById('ft-zoom-fit');
+
+    if (zoomOut) zoomOut.addEventListener('click', () => window.zoom?.out());
+    if (zoomIn)  zoomIn.addEventListener('click',  () => window.zoom?.in());
+    if (zoomFit) zoomFit.addEventListener('click', () => window.zoom?.reset());
+
+    // ── Hand tool — pan mode (grab cursor on canvas) ───
+    const ftHand = document.getElementById('ft-hand');
+    if (ftHand) {
+        ftHand.addEventListener('click', () => {
+            const editorWrap = document.querySelector('.editor-canvas-wrap');
+            const active = ftHand.classList.toggle('ft-active');
+            if (editorWrap) editorWrap.classList.toggle('pan-mode', active);
+        });
+    }
+
+    // ── Grid overlay ───────────────────────────────────
+    const ftGrid = document.getElementById('ft-grid');
+    if (ftGrid) {
+        ftGrid.addEventListener('click', () => {
+            const editorWrap = document.querySelector('.editor-canvas-wrap');
+            const active = ftGrid.classList.toggle('ft-active');
+            if (editorWrap) editorWrap.classList.toggle('show-grid', active);
+        });
+    }
+
+    // ── Guides (crosshair rulers) ─────────────────────
+    const ftGuides = document.getElementById('ft-guides');
+    if (ftGuides) {
+        ftGuides.addEventListener('click', () => {
+            const editorArea = document.querySelector('.app-editor');
+            const active = ftGuides.classList.toggle('ft-active');
+            if (editorArea) editorArea.classList.toggle('show-guides', active);
+        });
+    }
+
+    // ── Preview (hide toolbar for clean view, click canvas to exit) ──
+    const ftPreview = document.getElementById('ft-preview');
+    const ftToolbar = document.getElementById('floating-toolbar');
+    if (ftPreview && ftToolbar) {
+        ftPreview.addEventListener('click', () => {
+            const active = ftPreview.classList.toggle('ft-active');
+            // Collapse toolbar to exit button only
+            ftToolbar.classList.toggle('ft-preview-mode', active);
+        });
+    }
+
+    // ── Fullscreen ────────────────────────────────────
+    const ftFullscreen = document.getElementById('ft-fullscreen');
+    if (ftFullscreen) {
+        ftFullscreen.addEventListener('click', () => {
+            if (!document.fullscreenElement) {
+                document.documentElement.requestFullscreen?.().catch(() => {});
+            } else {
+                document.exitFullscreen?.().catch(() => {});
+            }
+        });
+        document.addEventListener('fullscreenchange', () => {
+            ftFullscreen.classList.toggle('ft-active', !!document.fullscreenElement);
+        });
+    }
+
+    // ── Keyboard shortcuts for toolbar toggles ────────
+    document.addEventListener('keydown', (e) => {
+        if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
+        if (e.key === 'h' || e.key === 'H') ftHand?.click();
+        if (e.key === 'g' || e.key === 'G') ftGrid?.click();
+        if (e.key === 'r' || e.key === 'R') ftGuides?.click();
+        if (e.key === 'p' || e.key === 'P') ftPreview?.click();
+        if (e.key === 'f' || e.key === 'F') ftFullscreen?.click();
+    });
 }
 
 // ── JS Tooltip system (position:fixed so no overflow:hidden clipping) ──
@@ -2415,55 +2532,9 @@ document.addEventListener('DOMContentLoaded', () => {
     initAboutModal();
     initExportPage();
     initStraighten();
-    initInfoCarousel();
+    initFloatingToolbar();
+    // initInfoCarousel removed — carousel HTML was replaced by sidebar history section
 });
 
-// ── Info card carousel ──────────────────────────────────
-function initInfoCarousel() {
-    const slides = Array.from(document.querySelectorAll('.app-info-slide'));
-    const dots   = Array.from(document.querySelectorAll('#app-info-dots .app-info-dot'));
-    if (!slides.length) return;
-
-    let current = 0;
-    let timer   = null;
-
-    function goTo(next) {
-        if (next === current) return;
-        const prev = current;
-        current = next;
-
-        // animate out
-        slides[prev].classList.add('exit');
-        slides[prev].classList.remove('active');
-
-        // animate in
-        slides[current].classList.add('active');
-
-        // clean up exit class after transition
-        slides[prev].addEventListener('transitionend', function handler() {
-            slides[prev].classList.remove('exit');
-            slides[prev].removeEventListener('transitionend', handler);
-        });
-
-        dots.forEach((d, i) => d.classList.toggle('active', i === current));
-    }
-
-    function next() { goTo((current + 1) % slides.length); }
-
-    function startTimer() { timer = setInterval(next, 4000); }
-    function resetTimer()  { clearInterval(timer); startTimer(); }
-
-    dots.forEach(dot => {
-        dot.addEventListener('click', () => {
-            goTo(Number(dot.dataset.slide));
-            resetTimer();
-        });
-    });
-
-    // pause on hover
-    const card = document.getElementById('app-info-card');
-    card.addEventListener('mouseenter', () => clearInterval(timer));
-    card.addEventListener('mouseleave', startTimer);
-
-    startTimer();
-}
+// initInfoCarousel removed — the info-card carousel HTML was replaced
+// by the sidebar history section in the v2 redesign.
