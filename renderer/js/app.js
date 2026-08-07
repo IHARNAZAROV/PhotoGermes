@@ -1404,6 +1404,61 @@ async function applyResize() {
 function initResizeButtons() {
     const btn = document.getElementById('btn-apply-resize');
     if (btn) btn.addEventListener('click', applyResize);
+
+    // ── Zoom dropdown ─────────────────────────────────────
+    const zoomToggle = document.getElementById('resize-zoom-toggle');
+    if (zoomToggle) {
+        // Build dropdown once
+        const PRESETS = [25, 50, 75, 100, 125, 150, 200];
+        const dropdown = document.createElement('div');
+        dropdown.className = 'resize-zoom-dropdown';
+        dropdown.innerHTML = PRESETS.map(p =>
+            `<button class="resize-zoom-preset" data-zoom="${p}">${p}%</button>`
+        ).join('');
+        dropdown.style.cssText =
+            'display:none;position:absolute;z-index:200;background:var(--color-panel);' +
+            'border:1px solid var(--color-border);border-radius:var(--radius-md);' +
+            'box-shadow:var(--shadow-md);padding:4px;min-width:90px;';
+        zoomToggle.style.position = 'relative';
+        zoomToggle.parentElement.style.position = 'relative';
+        zoomToggle.parentElement.appendChild(dropdown);
+
+        // Position below the button
+        function openDropdown() {
+            const rect = zoomToggle.getBoundingClientRect();
+            const pRect = zoomToggle.parentElement.getBoundingClientRect();
+            dropdown.style.display = 'flex';
+            dropdown.style.flexDirection = 'column';
+            dropdown.style.top = (rect.bottom - pRect.top + 4) + 'px';
+            dropdown.style.left = (rect.left - pRect.left) + 'px';
+        }
+
+        zoomToggle.addEventListener('click', (e) => {
+            e.stopPropagation();
+            if (dropdown.style.display === 'none') openDropdown();
+            else dropdown.style.display = 'none';
+        });
+
+        dropdown.addEventListener('click', (e) => {
+            const preset = e.target.closest('[data-zoom]');
+            if (!preset) return;
+            window.zoom?.set(Number(preset.dataset.zoom));
+            dropdown.style.display = 'none';
+        });
+
+        document.addEventListener('click', () => { dropdown.style.display = 'none'; });
+    }
+
+    // ── Grid overlay ──────────────────────────────────────
+    const gridToggle = document.getElementById('resize-grid-toggle');
+    if (gridToggle) {
+        gridToggle.addEventListener('click', () => {
+            const splitArea = document.getElementById('resize-split-container');
+            const active = gridToggle.classList.toggle('btn-icon--active');
+            if (splitArea) splitArea.classList.toggle('show-grid', active);
+        });
+    }
+
     // Complete all resize panel init now that the <template> is in the DOM.
     // (IIFEs in resize.js ran at parse time when elements were still null.)
     window.__initResizePanel?.();

@@ -1075,6 +1075,39 @@
 .sidebar-history-list .history-entry-label { font-size: var(--text-xs); }
 .sidebar-history-list .history-entry-time { font-size: 10px; }
 
+/* ── Resize zoom dropdown presets ── */
+.resize-zoom-preset {
+  display: block;
+  width: 100%;
+  padding: 6px 12px;
+  text-align: left;
+  font-size: var(--text-xs);
+  color: var(--color-text);
+  background: none;
+  border: none;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  transition: background var(--transition);
+}
+.resize-zoom-preset:hover {
+  background: var(--color-primary-muted);
+  color: var(--color-primary);
+}
+
+/* ── Resize grid overlay ── */
+#resize-split-container.show-grid {
+  background-image:
+    linear-gradient(rgba(255,255,255,.07) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255,255,255,.07) 1px, transparent 1px);
+  background-size: 32px 32px;
+}
+
+/* ── Active state for btn-icon in resize toolbar ── */
+.btn-icon--active {
+  background: var(--color-primary-muted) !important;
+  color: var(--color-primary) !important;
+}
+
 /* ── Filmstrip gallery items ── */
 .app-gallery .gallery-header,
 .app-gallery .gallery-footer {
