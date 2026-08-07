@@ -84,6 +84,16 @@
       <span class="btn-label">Сохранить как…</span>
     </button>
 
+    <!-- Export settings (opens export page) -->
+    <button class="btn btn-outline" data-action="export-tool" data-tooltip="Настройки экспорта"
+            onclick="document.querySelector('[data-tool=export]')?.click()">
+      <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M8 2v8M5 7l3 3 3-3"/>
+        <path d="M3 13h10"/>
+      </svg>
+      <span class="btn-label">Экспорт</span>
+    </button>
+
     <div class="header-sep"></div>
 
     <!-- History -->

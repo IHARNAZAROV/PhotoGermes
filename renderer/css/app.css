@@ -1077,10 +1077,10 @@
 
 /* ── Filmstrip gallery items ── */
 .app-gallery .gallery-header,
-.app-gallery .gallery-footer,
-.app-gallery .gallery-sel-bar {
+.app-gallery .gallery-footer {
   display: none !important;
 }
+/* gallery-sel-bar is hidden by default via .filmstrip-sel-bar; JS adds .visible to show it */
 
 /* Filmstrip left controls */
 .filmstrip-left {
