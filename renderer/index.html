@@ -1602,11 +1602,8 @@
         Добавить
       </button>
 
-      <!-- Selection controls — always in DOM; JS toggles disabled/visible states -->
-      <label class="filmstrip-sel-all-label" data-tooltip="Выбрать все фото">
-        <input type="checkbox" id="gallery-select-all" class="gallery-select-all-cb"/>
-        <span class="filmstrip-sel-all-box"></span>
-      </label>
+      <!-- gallery-select-all hidden — JS still reads its state; use Ctrl+A to select all -->
+      <input type="checkbox" id="gallery-select-all" class="gallery-select-all-cb" style="display:none;" aria-hidden="true"/>
 
       <!-- Selection bar: hidden by default, shown by JS when checkedIndices.size > 0 -->
       <div class="gallery-sel-bar filmstrip-sel-bar" id="gallery-sel-bar">
