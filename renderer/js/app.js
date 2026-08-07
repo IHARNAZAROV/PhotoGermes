@@ -945,7 +945,7 @@ function ensurePanelReady(toolName) {
 // ── UI init helpers ────────────────────────────────────
 function switchToTool(toolName) {
     // Stamp the panel HTML from its <template> on first visit
-    if (toolName === 'watermark') ensurePanelReady(toolName);
+    if (toolName === 'watermark' || toolName === 'resize') ensurePanelReady(toolName);
     const cropEditorView      = document.getElementById('crop-editor-view');
     const resizeEditorView    = document.getElementById('resize-editor-view');
     const watermarkEditorView = document.getElementById('watermark-editor-view');
