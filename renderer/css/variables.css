@@ -1,52 +1,113 @@
 /* ========================================================
    CSS Custom Properties — Фотоцентр ГермесГарант v2
-   Design: Windows 11 Fluent 2 + Apple minimalism
    ======================================================== */
 
 :root {
-  /* Brand colours — #18A05E accent (spec) */
-  --color-primary:       #18A05E;
-  --color-primary-hover: #148f52;
-  --color-primary-light: #EEF9F3;
-  --color-primary-rgb:   24, 160, 94;
-  --color-primary-muted: rgba(var(--color-primary-rgb), 0.12);
+  /* ── User-defined brand tokens ── */
+  --brand:        #155945;
+  --brand-dark:   #0D3D2C;
+  --brand-mid:    #2F7A63;
+  --brand-light:  #D9ECE4;
+  --brand-xlight: #EDF7F2;
 
-  /* Surfaces */
-  --color-bg:      #FAFBFC;
-  --color-panel:   #FFFFFF;
-  --color-panel2:  #F4F6F9;
-  --color-canvas:  #F3F5F7;
+  --bg:           #F6F8F7;
+  --surface:      #ffffff;
+  --surface-2:    #F9FAFB;
+  --border:       #E3EDE8;
+  --border-light: #EEF5F1;
 
-  /* Borders */
-  --color-border:  #E7EAF0;
-  --color-border2: #D1D5DB;
+  --text:         #1A2E25;
+  --text-2:       #3D5248;
+  --text-muted:   #7A8F87;
 
-  /* Text */
-  --color-text:  #1A1D23;
-  --color-muted: #6B7280;
-  --color-faint: #9CA3AF;
+  --input-bg:     #ffffff;
+  --input-bdr:    #D1DDD8;
+  --input-h:      36px;
 
-  /* Semantic */
-  --color-danger:  #EF4444;
-  --color-warning: #F59E0B;
-  --color-success: #18A05E;
+  --dirty:        #B45309;
+  --dirty-bg:     #FFFBF0;
+  --dirty-bdr:    #F5A623;
+
+  --error-bg:     #FEF2F2;
+  --error-bdr:    #FECACA;
+  --error-text:   #DC2626;
+
+  --success:      #16a34a;
+  --success-bg:   #f0fdf4;
+  --success-bdr:  #bbf7d0;
+  --warning:      #d97706;
+  --warning-bg:   #fffbeb;
+  --warning-bdr:  #fde68a;
+  --info:         #2563eb;
+  --info-bg:      #eff6ff;
+  --info-bdr:     #bfdbfe;
+
+  --sp-1:  4px;
+  --sp-2:  8px;
+  --sp-3:  12px;
+  --sp-4:  16px;
+  --sp-5:  24px;
+  --sp-6:  32px;
+
+  --toolbar-h:  52px;
+  --status-h:   26px;
+
+  --font:      'Segoe UI', 'Inter', system-ui, -apple-system, sans-serif;
+  --fs-2xs:    10px;
+  --fs-xs:     11px;
+  --fs-sm:     12px;
+  --fs-base:   13px;
+  --fs-hdr:    14px;
+  --fs-title:  15px;
+
+  --r-sm:   6px;
+  --r-md:   10px;
+  --r-lg:   14px;
+  --r-xl:   18px;
+
+  --shadow-sm:    0 1px 3px rgba(21,89,69,.06), 0 1px 2px rgba(21,89,69,.04);
+  --shadow-card:  0 1px 4px rgba(21,89,69,.07), 0 2px 8px rgba(21,89,69,.04);
+  --shadow-btn:   0 1px 2px rgba(21,89,69,.08);
+  --shadow-raise: 0 4px 16px rgba(21,89,69,.14), 0 1px 4px rgba(21,89,69,.08);
+
+  /* ── Aliases — existing code uses these names ── */
+  --color-primary:       var(--brand);
+  --color-primary-hover: var(--brand-dark);
+  --color-primary-light: var(--brand-xlight);
+  --color-primary-muted: rgba(21,89,69,.12);
+  --color-primary-rgb:   21, 89, 69;
+
+  --color-bg:      var(--bg);
+  --color-panel:   var(--surface);
+  --color-panel2:  var(--surface-2);
+  --color-canvas:  #F0F4F2;
+
+  --color-border:  var(--border);
+  --color-border2: var(--border-light);
+
+  --color-text:  var(--text);
+  --color-muted: var(--text-muted);
+  --color-faint: #9BADA6;
+
+  --color-danger:  var(--error-text);
+  --color-warning: var(--warning);
+  --color-success: var(--success);
 
   /* Radius */
-  --radius-sm:  6px;
-  --radius-md:  10px;
-  --radius-lg:  14px;
-  --radius-xl:  16px;
+  --radius-sm:  var(--r-sm);
+  --radius-md:  var(--r-md);
+  --radius-lg:  var(--r-lg);
+  --radius-xl:  var(--r-xl);
   --radius-2xl: 20px;
 
-  /* Shadows — soft, floating panels */
-  --shadow-xs: 0 1px 3px rgba(0,0,0,.04);
-  --shadow-sm: 0 2px 8px rgba(0,0,0,.06), 0 0 0 1px rgba(0,0,0,.03);
-  --shadow-md: 0 4px 16px rgba(0,0,0,.08), 0 0 0 1px rgba(0,0,0,.03);
-  --shadow-lg: 0 8px 32px rgba(0,0,0,.12), 0 0 0 1px rgba(0,0,0,.04);
-  --shadow-float: 0 8px 24px rgba(0,0,0,.14), 0 2px 6px rgba(0,0,0,.08);
+  /* Shadows */
+  --shadow-xs:    0 1px 3px rgba(21,89,69,.04);
+  --shadow-md:    0 4px 16px rgba(21,89,69,.10), 0 0 0 1px rgba(21,89,69,.04);
+  --shadow-lg:    0 8px 32px rgba(21,89,69,.14), 0 0 0 1px rgba(21,89,69,.05);
+  --shadow-float: 0 8px 24px rgba(21,89,69,.18), 0 2px 6px rgba(21,89,69,.10);
 
-  /* Typography — Inter */
-  --font-family: 'Inter', system-ui, -apple-system, sans-serif;
+  /* Typography */
+  --font-family: var(--font);
   --text-2xs:  10px;
   --text-xs:   12px;
   --text-sm:   13px;
@@ -56,7 +117,6 @@
   --text-xl:   20px;
   --text-2xl:  28px;
 
-  /* Line-heights */
   --lh-tight:  1.25;
   --lh-normal: 1.5;
   --lh-loose:  1.7;
@@ -68,6 +128,6 @@
   --filmstrip-h: 112px;
 
   /* Transitions */
-  --transition: 150ms ease;
+  --transition:    150ms ease;
   --transition-md: 200ms ease;
 }

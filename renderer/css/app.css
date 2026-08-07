@@ -1092,16 +1092,23 @@
   width: 88px;
 }
 .filmstrip-add-btn.btn {
-  height: 70px !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
   flex-direction: column !important;
+  height: 70px !important;
   gap: 4px !important;
   border-radius: var(--radius-lg) !important;
-  padding: 0 !important;
+  padding: 0 8px !important;
   font-size: var(--text-xs) !important;
+  font-weight: 600 !important;
   background: var(--color-primary) !important;
   color: #fff !important;
   box-shadow: 0 2px 8px rgba(var(--color-primary-rgb), .3) !important;
   transition: all var(--transition) !important;
+  width: 100% !important;
+  line-height: 1.2 !important;
+  text-align: center !important;
 }
 .filmstrip-add-btn.btn:hover {
   background: var(--color-primary-hover) !important;
