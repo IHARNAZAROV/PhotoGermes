@@ -25,6 +25,6 @@
     "electron-store": "^11.0.2",
     "exif-parser": "^0.1.12",
     "exif-reader": "^2.0.3",
-    "sharp": "^0.35.3"
+    "sharp": "^0.35.4"
   }
 }
